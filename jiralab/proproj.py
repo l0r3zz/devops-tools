@@ -19,6 +19,9 @@ It defines classes_and_methods
 
 import sys
 import os
+from jira.client import JIRA
+import getpass
+
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -28,9 +31,9 @@ __version__ = 0.1
 __date__ = '2012-10-28'
 __updated__ = '2012-10-28'
 
-DEBUG = 1
+DEBUG = 0
 TESTRUN = 0
-PROFILE = 0
+
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -41,6 +44,19 @@ class CLIError(Exception):
         return self.msg
     def __unicode__(self):
         return self.msg
+
+class JIRAauth():
+    def __init__(self,args):
+        if (not args.user):
+            user = raw_input("Username [%s]: " % getpass.getuser())
+            if not user:
+                args.user = getpass.getuser()
+            args.user = user
+        if (not args.password):
+            args.password = getpass.getpass()
+
+        self.user = args.user
+        self.password = args.password
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
@@ -72,64 +88,58 @@ USAGE
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-        parser.add_argument("-r", "--recursive", dest="recurse", action="store_true", help="recurse into subfolders [default: %(default)s]")
-        parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
-        parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
-        parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
+        parser.add_argument("-y", "--yestoall", dest="yestoall", action="store_true",default=False, help="answer 'yes' to all [y/n] questions")
+        parser.add_argument("-u", "--user", dest="user", default=None,help="user to access JIRA")
+        parser.add_argument("-p", "--password", dest="password", default=None,help="password to access JIRA")
+        parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
+        parser.add_argument("-d", "--dbfront", dest="dbfront", help="DB frontend (example: srwd00dbs008.stubcorp.dev)" )
+        parser.add_argument("-b", "--dbback", dest="dbback", help="backend db server (example: srwd00dbs015.stubcorp.dev" )
+        parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
-        parser.add_argument(dest="paths", help="paths to folder(s) with source file(s) [default: %(default)s]", metavar="path", nargs='+')
+
         
         # Process arguments
         args = parser.parse_args()
         
-        paths = args.paths
-        verbose = args.verbose
-        recurse = args.recurse
-        inpat = args.include
-        expat = args.exclude
+        authtoken = JIRAauth(args)
+        jira_options = { 'server': 'https://jira.stubcorp.dev/', 'basic_auth': (args.user, args.password) }
+        jira = JIRA(jira_options)
+        print( "Creating ticket for Environment: %s with release %s using host %s as the DB front end and %s as the DB backend" %\
+               (args.env,args.release,args.dbfront,args.dbback))
+        envid = args.env
+        envnum = envid[-2:] #just the number
+        summary = "%s: TEST Configure readiness for code deploy" % envid
         
-        if verbose > 0:
-            print("Verbose mode on")
-            if recurse:
-                print("Recursive mode on")
-            else:
-                print("Recursive mode off")
+        proproj_dict = {
+                        'project': {'key':'PROPROJ'},
+                        'issuetype': {'name':'Task'},
+                        #'assignee': authtoken.user,
+                        #'customfield_10170': envid,
+                        'summary': 'test',
+                        'description': 'test',
+                        #'customfield_10130': args.release
+                        }
         
-        if inpat and expat and inpat == expat:
-            raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
-        
-        for inpath in paths:
-            ### do something with inpath ###
-            print(inpath)
-        return 0
+        new_proproj = jira.create_issue(fields=proproj_dict)
+
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-    except Exception, e:
-        if DEBUG or TESTRUN:
-            raise(e)
-        indent = len(program_name) * " "
-        sys.stderr.write(program_name + ": " + repr(e) + "\n")
-        sys.stderr.write(indent + "  for help use --help")
-        return 2
+#    except Exception, e:
+#        if DEBUG or TESTRUN:
+#            raise(e)
+#        indent = len(program_name) * " "
+#        sys.stderr.write(program_name + ": " + repr(e) + "\n")
+#        sys.stderr.write(indent + "  for help use --help")
+#        return 2
+    
 
 if __name__ == "__main__":
     if DEBUG:
         sys.argv.append("-h")
-        sys.argv.append("-v")
-        sys.argv.append("-r")
+        sys.argv.append("-V")
     if TESTRUN:
         import doctest
         doctest.testmod()
-    if PROFILE:
-        import cProfile
-        import pstats
-        profile_filename = 'proproj_profile.txt'
-        cProfile.run('main()', profile_filename)
-        statsfile = open("profile_stats.txt", "wb")
-        p = pstats.Stats(profile_filename, stream=statsfile)
-        stats = p.strip_dirs().sort_stats('cumulative')
-        stats.print_stats()
-        statsfile.close()
-        sys.exit(0)
+
     sys.exit(main())
