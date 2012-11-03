@@ -114,13 +114,17 @@ USAGE
                         'project': {'key':'PROPROJ'},
                         'issuetype': {'name':'Task'},
                         #'assignee': authtoken.user,
-                        #'customfield_10170': envid,
+                        'customfield_10170': envid,
                         'summary': 'test',
                         'description': 'test',
-                        #'customfield_10130': args.release
+                        #'customfield_10130': args.release,
                         }
-        
+#        projects = jira.projects()
+#        for p in projects:
+#            print p.name
+            
         new_proproj = jira.create_issue(fields=proproj_dict)
+        #new_proproj = jira.create_issue(project={"key":"PROPROJ"},summary="test",description="test",issuetype={"name":"Task"})
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
