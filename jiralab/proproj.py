@@ -108,20 +108,37 @@ USAGE
                (args.env,args.release,args.dbfront,args.dbback))
         envid = args.env.upper()
         envnum = envid[-2:] #just the number
-        summary = "%s: TEST Configure readiness for code deploy" % envid
+        pp_summary = "%s: TEST Configure readiness for code deploy" % envid
+        db_summary = "%s: TEST Create Delphix Database for %s environment" % (envid,args.release)
         
+        # Create the PROPROJ ticket
         proproj_dict = {
                         'project': {'key':'PROPROJ'},
                         'issuetype': {'name':'Task'},
-                        #'assignee': authtoken.user,
+                        'assignee': {'name': authtoken.user},
                         'customfield_10170': {'value':envid},
-                        'summary': summary,
-                        'description': summary,
-                        #'customfield_10130': args.release,
-                        }
-            
+                        'summary': pp_summary,
+                        'description': pp_summary,
+                        'customfield_10130': {'value': args.release},
+                        }       
         new_proproj = jira.create_issue(fields=proproj_dict)
-
+        
+        #Create the DB ticket
+        db_dict = {
+                        'project': {'key':'DB'},
+                        'issuetype': {'name':'Task'},
+                        'assignee': {'name': authtoken.user},
+                        'customfield_10170': {'value':envid},
+                        'customfield_10100': {'value':'unspecified'},
+                        'components': [{'name':'General'}],
+                        'summary': db_summary,
+                        'description': db_summary,
+                        'customfield_10130': {'value': args.release},
+                        }
+        new_db = jira.create_issue(fields=db_dict)
+        
+        # Now block the PROPROJ ticket with the DB ticket.
+        link = jira.create_issue_link(type={'value':'blocks'},inwardIssue=new_db, outwardIssue=new_proproj)
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
