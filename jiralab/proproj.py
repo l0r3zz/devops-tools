@@ -3,15 +3,11 @@
 '''
 proproj -- Create a Provisioning project in JIRA and kick off provisioning processes
 
-proproj is a standalone cli program 
-
-It defines classes_and_methods
-
 @author:     geowhite
         
 @copyright:  2012 StubHub. All rights reserved.
         
-@license:    license
+@license:    Apache License 2.0
 
 @contact:    geowhite@stubhub.com
 @deffield    updated: Updated
@@ -28,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.2
+__version__ = 0.3
 __date__ = '2012-10-28'
-__updated__ = '2012-11-04'
+__updated__ = '2012-11-05'
 DEBUG = 0
 TESTRUN = 0
 
@@ -54,11 +50,11 @@ class JIRAauth():
         if (not args.user) and (not args.password):
             try:
                 for line in open(self.pass_vault,'r'):
-                    arg.user = getpass.getuser()
-                    arg.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
+                    args.user = getpass.getuser()
+                    args.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
                     
-            except IOerror,e :
-                continue
+            except IOError,e :
+                pass
         else:
             if (not args.user):
                 user = raw_input("Username [%s]: " % getpass.getuser())
@@ -130,6 +126,7 @@ USAGE
                         'issuetype': {'name':'Task'},
                         'assignee': {'name': authtoken.user},
                         'customfield_10170': {'value':envid},
+                        'components': [{'name':'decommission'},{'name':'tokenization'}],
                         'summary': pp_summary,
                         'description': pp_summary,
                         'customfield_10130': {'value': args.release},
@@ -151,9 +148,9 @@ USAGE
         new_db = jira.create_issue(fields=db_dict)
         
         # Now block the PROPROJ ticket with the DB ticket.
-        link = jira.create_issue_link(type="Blocks",inwardIssue=new_proproj.key, outwardIssue=new_db.key)
-        new_db.delete()
-        new_proproj.delete()
+        link = jira.create_issue_link(type="Dependency",inwardIssue=new_proproj.key, outwardIssue=new_db.key)
+
+        print( "TIckets %s, %s created." % (new_proproj.key,new_db.key))
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
