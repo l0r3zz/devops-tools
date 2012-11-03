@@ -102,8 +102,8 @@ USAGE
         args = parser.parse_args()
         
         authtoken = JIRAauth(args)
-        jira_options = { 'server': 'https://jira.stubcorp.dev/', 'basic_auth': (args.user, args.password) }
-        jira = JIRA(jira_options)
+        jira_options = { 'server': 'https://jira.stubcorp.dev/' }
+        jira = JIRA(jira_options,basic_auth= (args.user,args.password))
         print( "Creating ticket for Environment: %s with release %s using host %s as the DB front end and %s as the DB backend" %\
                (args.env,args.release,args.dbfront,args.dbback))
         envid = args.env
