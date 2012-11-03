@@ -138,7 +138,7 @@ USAGE
         new_db = jira.create_issue(fields=db_dict)
         
         # Now block the PROPROJ ticket with the DB ticket.
-        link = jira.create_issue_link(type={'value':'blocks'},inwardIssue=new_db, outwardIssue=new_proproj)
+        link = jira.create_issue_link(type="Blocks",inwardIssue=new_db.key, outwardIssue=new_proproj.key)
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
