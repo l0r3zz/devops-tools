@@ -27,9 +27,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2012-10-28'
-__updated__ = '2012-10-28'
+__updated__ = '2012-11-04'
 
 DEBUG = 0
 TESTRUN = 0
@@ -106,7 +106,7 @@ USAGE
         jira = JIRA(jira_options,basic_auth= (args.user,args.password))
         print( "Creating ticket for Environment: %s with release %s using host %s as the DB front end and %s as the DB backend" %\
                (args.env,args.release,args.dbfront,args.dbback))
-        envid = args.env
+        envid = args.env.upper()
         envnum = envid[-2:] #just the number
         summary = "%s: TEST Configure readiness for code deploy" % envid
         
@@ -114,17 +114,14 @@ USAGE
                         'project': {'key':'PROPROJ'},
                         'issuetype': {'name':'Task'},
                         #'assignee': authtoken.user,
-                        'customfield_10170': envid,
-                        'summary': 'test',
-                        'description': 'test',
+                        'customfield_10170': {'value':envid},
+                        'summary': summary,
+                        'description': summary,
                         #'customfield_10130': args.release,
                         }
-#        projects = jira.projects()
-#        for p in projects:
-#            print p.name
             
         new_proproj = jira.create_issue(fields=proproj_dict)
-        #new_proproj = jira.create_issue(project={"key":"PROPROJ"},summary="test",description="test",issuetype={"name":"Task"})
+
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
