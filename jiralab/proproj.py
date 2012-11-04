@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.4
 __date__ = '2012-10-28'
-__updated__ = '2012-11-05'
+__updated__ = '2012-11-06'
 DEBUG = 0
 TESTRUN = 0
 
@@ -66,6 +66,7 @@ class JIRAauth():
             args.user = user
         if (not args.password):
             args.password = getpass.getpass()
+            
         self.pass_vault = "./.%s-devops_vault" % args.user  
         pwf = open(self.pass_vault,'w')
         pwf.write(aes.encrypt(args.password,self._salt,AES_BLOCKSIZE))
