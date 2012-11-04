@@ -16,22 +16,19 @@ proproj -- Create a Provisioning project in JIRA and kick off provisioning proce
 import sys
 import os
 from jira.client import JIRA
-import getpass
-import aes
+import jiralab
+import json
 
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.4
+__version__ = 0.5
 __date__ = '2012-10-28'
-__updated__ = '2012-11-06'
+__updated__ = '2012-11-07'
 DEBUG = 0
 TESTRUN = 0
-
-AES_BLOCKSIZE = 128
-
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -43,37 +40,7 @@ class CLIError(Exception):
     def __unicode__(self):
         return self.msg
 
-class JIRAauth():
-    def __init__(self,args):
 
-        self._salt ="c0ffee31337bea75"
-        if (not args.password):
-            if args.user :
-                self.pass_vault = "./.%s-devops_vault" % args.user
-            else:
-                args.user = getpass.getuser()
-                self.pass_vault = "./.%s-devops_vault" % args.user
-            try:
-                for line in open(self.pass_vault,'r'):
-                    args.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
-            except IOError,e :
-                args.password = None
-
-        if (not args.user):
-            user = raw_input("Username [%s]: " % getpass.getuser())
-            if not user:
-                args.user = getpass.getuser()
-            args.user = user
-        if (not args.password):
-            args.password = getpass.getpass()
-            
-        self.pass_vault = "./.%s-devops_vault" % args.user  
-        pwf = open(self.pass_vault,'w')
-        pwf.write(aes.encrypt(args.password,self._salt,AES_BLOCKSIZE))
-        pwf.close()
-            
-        
-        
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
@@ -118,10 +85,11 @@ USAGE
         # Process arguments
         args = parser.parse_args()
         
-        authtoken = JIRAauth(args)
+        authtoken = jiralab.auth(args)
         jira_options = { 'server': 'https://jira.stubcorp.dev/' }
         jira = JIRA(jira_options,basic_auth= (args.user,args.password))
-        print( "Creating ticket for Environment: %s with release %s using host %s as the DB front end and %s as the DB backend" %\
+        if DEBUG: 
+            print( "Creating ticket for Environment: %s with release %s using host %s as the DB front end and %s as the DB backend" %\
                (args.env,args.release,args.dbfront,args.dbback))
         envid = args.env.upper()
         envnum = envid[-2:] #just the number
@@ -158,18 +126,20 @@ USAGE
         # Now block the PROPROJ ticket with the DB ticket.
         link = jira.create_issue_link(type="Dependency",inwardIssue=new_proproj.key, outwardIssue=new_db.key)
 
-        print( "TIckets %s, %s created." % (new_proproj.key,new_db.key))
+        result_dict = { "envid": envid, "proproj": new_proproj.key, "dbtask": new_db.key, }
+        print( json.dumps(result_dict,sort_keys=True))
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-#    except Exception, e:
-#        if DEBUG or TESTRUN:
-#            raise(e)
-#        indent = len(program_name) * " "
-#        sys.stderr.write(program_name + ": " + repr(e) + "\n")
-#        sys.stderr.write(indent + "  for help use --help")
-#        return 2
+    
+    except Exception, e:
+        if DEBUG or TESTRUN:
+            raise(e)
+        indent = len(program_name) * " "
+        sys.stderr.write(program_name + ": " + repr(e) + "\n")
+        sys.stderr.write(indent + "  for help use --help")
+        return 2
     
 
 if __name__ == "__main__":
