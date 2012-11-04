@@ -72,7 +72,6 @@ USAGE
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-        parser.add_argument("-y", "--yestoall", dest="yestoall", action="store_true",default=False, help="answer 'yes' to all [y/n] questions")
         parser.add_argument("-u", "--user", dest="user", default=None,help="user to access JIRA")
         parser.add_argument("-p", "--password", dest="password", default=None,help="password to access JIRA")
         parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
@@ -126,6 +125,7 @@ USAGE
         # Now block the PROPROJ ticket with the DB ticket.
         link = jira.create_issue_link(type="Dependency",inwardIssue=new_proproj.key, outwardIssue=new_db.key)
 
+        # output a JSON dict so we can use it as piped input into a latter stage.
         result_dict = { "envid": envid, "proproj": new_proproj.key, "dbtask": new_db.key, }
         print( json.dumps(result_dict,sort_keys=True))
 
