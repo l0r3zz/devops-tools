@@ -33,6 +33,7 @@ __updated__ = '2012-11-04'
 
 DEBUG = 0
 TESTRUN = 0
+_salt ="c0ffee31337bea75"
 
 
 class CLIError(Exception):
@@ -47,13 +48,23 @@ class CLIError(Exception):
 
 class JIRAauth():
     def __init__(self,args):
-        if (not args.user):
-            user = raw_input("Username [%s]: " % getpass.getuser())
-            if not user:
-                args.user = getpass.getuser()
-            args.user = user
-        if (not args.password):
-            args.password = getpass.getpass()
+        pass_vault = "./.%s-devops_vault" % getpass.getuser()
+        if (not args.user) and (not args.password):
+            try:
+                for line in open(pass_vault,'r'):
+                    arg.user = getpass.getuser()
+                    arg.password = line.rstrip('\n')
+                    
+            except IOerror,e :
+                continue
+        else:
+            if (not args.user):
+                user = raw_input("Username [%s]: " % getpass.getuser())
+                if not user:
+                    args.user = getpass.getuser()
+                args.user = user
+            if (not args.password):
+                args.password = getpass.getpass()
 
         self.user = args.user
         self.password = args.password
@@ -138,7 +149,9 @@ USAGE
         new_db = jira.create_issue(fields=db_dict)
         
         # Now block the PROPROJ ticket with the DB ticket.
-        link = jira.create_issue_link(type="Blocks",inwardIssue=new_db.key, outwardIssue=new_proproj.key)
+        link = jira.create_issue_link(type="Blocks",inwardIssue=new_proproj.key, outwardIssue=new_db.key)
+        new_db.delete()
+        new_proproj.delete()
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
