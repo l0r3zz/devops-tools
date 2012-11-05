@@ -21,6 +21,7 @@ import sys
 import os
 from jira.client import JIRA
 import getpass
+import aes
 
 
 from argparse import ArgumentParser
@@ -30,10 +31,10 @@ __all__ = []
 __version__ = 0.2
 __date__ = '2012-10-28'
 __updated__ = '2012-11-04'
-
 DEBUG = 0
 TESTRUN = 0
-_salt ="c0ffee31337bea75"
+
+AES_BLOCKSIZE = 128
 
 
 class CLIError(Exception):
@@ -48,12 +49,13 @@ class CLIError(Exception):
 
 class JIRAauth():
     def __init__(self,args):
-        pass_vault = "./.%s-devops_vault" % getpass.getuser()
+        self.pass_vault = "./.%s-devops_vault" % getpass.getuser()
+        self._salt ="c0ffee31337bea75"
         if (not args.user) and (not args.password):
             try:
-                for line in open(pass_vault,'r'):
+                for line in open(self.pass_vault,'r'):
                     arg.user = getpass.getuser()
-                    arg.password = line.rstrip('\n')
+                    arg.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
                     
             except IOerror,e :
                 continue
