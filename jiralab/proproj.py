@@ -51,29 +51,26 @@ class JIRAauth():
             if args.user :
                 self.pass_vault = "./.%s-devops_vault" % args.user
             else:
-                self.pass_vault = "./.%s-devops_vault" % getpass.getuser()
+                args.user = getpass.getuser()
+                self.pass_vault = "./.%s-devops_vault" % args.user
             try:
                 for line in open(self.pass_vault,'r'):
-                    args.user = getpass.getuser()
                     args.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
-                    
             except IOError,e :
-                pass
-        else:
-            if (not args.user):
-                user = raw_input("Username [%s]: " % getpass.getuser())
-                if not user:
-                    args.user = getpass.getuser()
-                args.user = user
-            if (not args.password):
-                args.password = getpass.getpass()
-            self.pass_vault = "./.%s-devops_vault" % args.user  
-            pwf = open(self.pass_vault,'w')
-            pwf.write(aes.encrypt(args.password,self._salt,AES_BLOCKSIZE))
-            pwf.close()
+                args.password = None
+
+        if (not args.user):
+            user = raw_input("Username [%s]: " % getpass.getuser())
+            if not user:
+                args.user = getpass.getuser()
+            args.user = user
+        if (not args.password):
+            args.password = getpass.getpass()
+        self.pass_vault = "./.%s-devops_vault" % args.user  
+        pwf = open(self.pass_vault,'w')
+        pwf.write(aes.encrypt(args.password,self._salt,AES_BLOCKSIZE))
+        pwf.close()
             
-        self.user = args.user
-        self.password = args.password
         
         
 
@@ -134,7 +131,7 @@ USAGE
         proproj_dict = {
                         'project': {'key':'PROPROJ'},
                         'issuetype': {'name':'Task'},
-                        'assignee': {'name': authtoken.user},
+                        'assignee': {'name': args.user},
                         'customfield_10170': {'value':envid},
                         'components': [{'name':'decommission'},{'name':'tokenization'}],
                         'summary': pp_summary,
@@ -147,7 +144,7 @@ USAGE
         db_dict = {
                         'project': {'key':'DB'},
                         'issuetype': {'name':'Task'},
-                        'assignee': {'name': authtoken.user},
+                        'assignee': {'name': args.user},
                         'customfield_10170': {'value':envid},
                         'customfield_10100': {'value':'unspecified'},
                         'components': [{'name':'General'}],
