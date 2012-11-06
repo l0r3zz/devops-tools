@@ -124,8 +124,8 @@ USAGE
                (args.env,args.release,args.dbfront,args.dbback))
         envid = args.env.upper()
         envnum = envid[-2:] #just the number
-        pp_summary = "%s: TEST Configure readiness for code deploy" % envid
-        db_summary = "%s: TEST Create Delphix Database for %s environment" % (envid,args.release)
+        pp_summary = "%s: Configure readiness for code deploy" % envid
+        db_summary = "%s: Create Delphix Database for %s environment" % (envid,args.release)
         
         # Create the PROPROJ ticket
         proproj_dict = {
