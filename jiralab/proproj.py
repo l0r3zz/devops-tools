@@ -45,9 +45,13 @@ class CLIError(Exception):
 
 class JIRAauth():
     def __init__(self,args):
-        self.pass_vault = "./.%s-devops_vault" % getpass.getuser()
+
         self._salt ="c0ffee31337bea75"
-        if (not args.user) and (not args.password):
+        if (not args.password):
+            if args.user :
+                self.pass_vault = "./.%s-devops_vault" % args.user
+            else:
+                self.pass_vault = "./.%s-devops_vault" % getpass.getuser()
             try:
                 for line in open(self.pass_vault,'r'):
                     args.user = getpass.getuser()
@@ -63,9 +67,15 @@ class JIRAauth():
                 args.user = user
             if (not args.password):
                 args.password = getpass.getpass()
-
+            self.pass_vault = "./.%s-devops_vault" % args.user  
+            pwf = open(self.pass_vault,'w')
+            pwf.write(aes.encrypt(args.password,self._salt,AES_BLOCKSIZE))
+            pwf.close()
+            
         self.user = args.user
         self.password = args.password
+        
+        
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
