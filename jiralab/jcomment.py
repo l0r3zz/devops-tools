@@ -91,7 +91,8 @@ USAGE
         jira_options = { 'server': 'https://jira.stubcorp.dev/' }
         jira = JIRA(jira_options,basic_auth= (args.user,args.password))
         if DEBUG: 
-            print( "Adding comment to issue: %s" % args.issueid)        
+            print( "Adding comment to issue: %s" % args.issueid)
+                    
         jira.add_comment(issueid, args.text)
 
     except KeyboardInterrupt:
