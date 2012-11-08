@@ -79,6 +79,7 @@ USAGE
         parser.add_argument("-p", "--password", dest="password", default=None,help="password to access JIRA")
         parser.add_argument("-i", "--issue", dest="issueid", default=None,help="JIRA issue ID")
         parser.add_argument("-t", "--text", dest="text", help="text to add to the comment field of the ticket" )
+        parser.add_argument("-f", "--file", dest="ifile",default=None, help="input file, default=STDIN" )
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
 
         
@@ -92,8 +93,23 @@ USAGE
         jira = JIRA(jira_options,basic_auth= (args.user,args.password))
         if DEBUG: 
             print( "Adding comment to issue: %s" % args.issueid)
-                    
-        jira.add_comment(issueid, args.text)
+        if args.ifile:
+            if args.ifile == '-':
+                fp = sys.stdin
+            else:
+                fp = open(args.ifile, 'r')
+            piped_text = fp.read()
+        else:
+            piped_text = None
+        
+        if piped_text :
+            body_text = "{code}\n%s\n{code}" % piped_text
+        else:
+            body_text = ""
+            
+        comment_text = "%s\n%s" % (args.text,body_text)
+                
+        jira.add_comment(issueid, comment_text)
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
