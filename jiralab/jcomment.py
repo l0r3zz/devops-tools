@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/bin/python
 # encoding: utf-8
 '''
 jcomment -- annotate JIRA tickets from any command line
@@ -85,12 +85,9 @@ USAGE
         
         # Process arguments
         args = parser.parse_args()
-        
-        # Get login information
         authtoken = jiralab.auth(args)
         issueid = args.issueid.upper()
-        jira_options = { 'server': 'https://jira.stubcorp.dev/' }
-        jira = JIRA(jira_options,basic_auth= (args.user,args.password))
+
         if DEBUG: 
             print( "Adding comment to issue: %s" % args.issueid)
         if args.ifile:
@@ -108,7 +105,8 @@ USAGE
             body_text = ""
             
         comment_text = "%s\n%s" % (args.text,body_text)
-                
+        jira_options = { 'server': 'https://jira.stubcorp.dev/' }
+        jira = JIRA(jira_options,basic_auth= (args.user,args.password))                
         jira.add_comment(issueid, comment_text)
 
     except KeyboardInterrupt:
