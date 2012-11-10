@@ -26,13 +26,14 @@ import jiralab
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
+from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.6
 __date__ = '2012-11-04'
-__updated__ = '2012-11-04'
+__updated__ = '2012-11-10'
 
-DEBUG = 0
+
 TESTRUN = 0
 
 class CLIError(Exception):
@@ -47,7 +48,7 @@ class CLIError(Exception):
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
-    
+    DEBUG = 0
     if argv is None:
         argv = sys.argv
     else:
@@ -58,53 +59,59 @@ def main(argv=None): # IGNORE:C0111
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
     program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
-    program_license = '''%s
-
-  Created by user_name on %s.
-  Copyright 2012 organization_name. All rights reserved.
-  
-  Licensed under the Apache License 2.0
-  http://www.apache.org/licenses/LICENSE-2.0
-  
-  Distributed on an "AS IS" basis without warranties
-  or conditions of any kind, either express or implied.
-
-USAGE
-''' % (program_shortdesc, str(__date__))
-
+ 
     try:
         # Setup argument parser
-        parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+        parser = ArgumentParser(description=program_shortdesc, formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-u", "--user", dest="user", default=None,help="user to access JIRA")
         parser.add_argument("-p", "--password", dest="password", default=None,help="password to access JIRA")
         parser.add_argument("-i", "--issue", dest="issueid", default=None,help="JIRA issue ID")
-        parser.add_argument("-t", "--text", dest="text", help="text to add to the comment field of the ticket" )
-        parser.add_argument("-f", "--file", dest="ifile",default=None, help="input file, default=STDIN" )
-        parser.add_argument('-V', '--version', action='version', version=program_version_message)
+        parser.add_argument("-t", "--text", dest="text", help='"text" (in quotes) to add to the comment field IN BOLD' )
+        parser.add_argument("-f", "--file", dest="ifile",nargs="?",const="-",default=None, help="input file, if no value, assume stdin" )
+        parser.add_argument('-v', '--version', action='version', version=program_version_message)
+        parser.add_argument('-D', '--debug', dest="debug", action='store_true',help="turn on DEBUG switch")
+        parser.add_argument('rem', nargs=REMAINDER ,help="rest of the command is the comment")
 
         
         # Process arguments
+        if len(sys.argv) == 1:
+            parser.print_usage()
+            exit(1)
+            
         args = parser.parse_args()
+        
+        if args.debug:
+            DEBUG = True
+            
         authtoken = jiralab.auth(args)
+        
+        if not args.issueid:
+            sys.stderr.write(program_name + ": please provide issue id\n")
+            parser.print_usage()
+            exit(1)
+            
         issueid = args.issueid.upper()
 
         if DEBUG: 
             print( "Adding comment to issue: %s" % args.issueid)
+            
         if args.ifile:
             if args.ifile == '-':
                 fp = sys.stdin
             else:
                 fp = open(args.ifile, 'r')
+                
             piped_text = fp.read()
-        else:
-            piped_text = None
-        
-        if piped_text :
             body_text = "{code}\n%s\n{code}" % piped_text
         else:
+            piped_text = None
             body_text = ""
+        
+        if args.text:
+            comment_text = "*%s*\n %s\n%s" % (args.text, " ".join(args.rem),body_text)
+        else:
+            comment_text = "%s\n%s" % (" ".join(args.rem),body_text)
             
-        comment_text = "%s\n%s" % (args.text,body_text)
         jira_options = { 'server': 'https://jira.stubcorp.dev/' }
         jira = JIRA(jira_options,basic_auth= (args.user,args.password))                
         jira.add_comment(issueid, comment_text)
@@ -116,13 +123,12 @@ USAGE
         if DEBUG or TESTRUN:
             raise(e)
         indent = len(program_name) * " "
-        sys.stderr.write(program_name + ": " + repr(e) + "\n")
+        sys.stderr.write(program_name + ": " + str(e) + "\n")
         sys.stderr.write(indent + "  for help use --help")
         return 2
 
 if __name__ == "__main__":
-    if DEBUG:
-        pass
+
     if TESTRUN:
         import doctest
         doctest.testmod()

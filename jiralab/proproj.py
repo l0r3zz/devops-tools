@@ -24,10 +24,10 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.5
+__version__ = 0.6
 __date__ = '2012-10-28'
-__updated__ = '2012-11-07'
-DEBUG = 0
+__updated__ = '2012-11-10'
+
 TESTRUN = 0
 
 class CLIError(Exception):
@@ -44,7 +44,7 @@ class CLIError(Exception):
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
-    
+    DEBUG = 0
     if argv is None:
         argv = sys.argv
     else:
@@ -55,41 +55,33 @@ def main(argv=None): # IGNORE:C0111
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
     program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
-    program_license = '''%s
-
-  Created by geowhite on %s.
-  Copyright 2012 StubHub. All rights reserved.
-  
-  Licensed under the Apache License 2.0
-  http://www.apache.org/licenses/LICENSE-2.0
-  
-  Distributed on an "AS IS" basis without warranties
-  or conditions of any kind, either express or implied.
-
-USAGE
-''' % (program_shortdesc, str(__date__))
 
     try:
         # Setup argument parser
-        parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+        parser = ArgumentParser(description=program_shortdesc, formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-u", "--user", dest="user", default=None,help="user to access JIRA")
         parser.add_argument("-p", "--password", dest="password", default=None,help="password to access JIRA")
         parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
-        parser.add_argument("-d", "--dbfront", dest="dbfront", help="DB frontend (example: srwd00dbs008.stubcorp.dev)" )
-        parser.add_argument("-b", "--dbback", dest="dbback", help="backend db server (example: srwd00dbs015.stubcorp.dev" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
-        parser.add_argument('-V', '--version', action='version', version=program_version_message)
-
+        parser.add_argument('-v', '--version', action='version', version=program_version_message)
+        parser.add_argument('-D', '--debug', dest="debug", action='store_true',help="turn on DEBUG switch")
         
         # Process arguments
+        if len(sys.argv) == 1:
+            parser.print_usage()
+            exit(1)
+            
         args = parser.parse_args()
         
+        if args.debug:
+            DEBUG = True
+                   
         authtoken = jiralab.auth(args)
         jira_options = { 'server': 'https://jira.stubcorp.dev/' }
         jira = JIRA(jira_options,basic_auth= (args.user,args.password))
         if DEBUG: 
-            print( "Creating ticket for Environment: %s with release %s using host %s as the DB front end and %s as the DB backend" %\
-               (args.env,args.release,args.dbfront,args.dbback))
+            print( "Creating ticket for Environment: %s with release %s " %\
+               (args.env,args.release))
         envid = args.env.upper()
         envnum = envid[-2:] #just the number
         pp_summary = "%s: Configure readiness for code deploy" % envid
@@ -137,15 +129,13 @@ USAGE
         if DEBUG or TESTRUN:
             raise(e)
         indent = len(program_name) * " "
-        sys.stderr.write(program_name + ": " + repr(e) + "\n")
+        sys.stderr.write(program_name + ": " + str(e) + "\n")
         sys.stderr.write(indent + "  for help use --help")
         return 2
     
 
 if __name__ == "__main__":
-    if DEBUG:
-        sys.argv.append("-h")
-        sys.argv.append("-V")
+
     if TESTRUN:
         import doctest
         doctest.testmod()
