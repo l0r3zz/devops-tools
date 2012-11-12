@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.6
+__version__ = 0.61
 __date__ = '2012-10-28'
-__updated__ = '2012-11-10'
+__updated__ = '2012-11-12'
 
 TESTRUN = 0
 
@@ -68,7 +68,7 @@ def main(argv=None): # IGNORE:C0111
         
         # Process arguments
         if len(sys.argv) == 1:
-            parser.print_usage()
+            parser.print_help()
             exit(1)
             
         args = parser.parse_args()
@@ -130,7 +130,7 @@ def main(argv=None): # IGNORE:C0111
             raise(e)
         indent = len(program_name) * " "
         sys.stderr.write(program_name + ": " + str(e) + "\n")
-        sys.stderr.write(indent + "  for help use --help")
+        sys.stderr.write(indent + "  for help use --help\n")
         return 2
     
 
