@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.61
+__version__ = 0.62
 __date__ = '2012-10-28'
-__updated__ = '2012-11-12'
+__updated__ = '2012-11-14'
 
 TESTRUN = 0
 
@@ -73,6 +73,11 @@ def main(argv=None): # IGNORE:C0111
             
         args = parser.parse_args()
         
+        if not args.release:
+            print("No release specified\n")
+            parser.print_help()
+            exit(1)      
+             
         if args.debug:
             DEBUG = True
                    
