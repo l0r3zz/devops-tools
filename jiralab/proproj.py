@@ -81,7 +81,7 @@ def main(argv=None): # IGNORE:C0111
         if args.debug:
             DEBUG = True
                    
-        authtoken = jiralab.auth(args)
+        authtoken = jiralab.Auth(args)
         jira_options = { 'server': 'https://jira.stubcorp.dev/' }
         jira = JIRA(jira_options,basic_auth= (args.user,args.password))
         if DEBUG: 

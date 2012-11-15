@@ -83,7 +83,7 @@ def main(argv=None): # IGNORE:C0111
         if args.debug:
             DEBUG = True
             
-        authtoken = jiralab.auth(args)
+        authtoken = jiralab.Auth(args)
         
         if not args.issueid:
             sys.stderr.write(program_name + ": please provide issue id\n")

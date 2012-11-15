@@ -14,14 +14,21 @@ jiralab -- useful classes and methods to work with JIRA tickets
 '''
 import getpass
 import aes
+import sys
+import pexpect
+import pxssh
 
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2012-11-04'
-__updated__ = '2012-11-07'
+__updated__ = '2012-11-14'
 
-class auth():
+# Specialized Exceptions
+class JIRALAB_CLI_TypeError(TypeError): pass
+class JIRALAB_CLI_ValueError(ValueError): pass
+
+class Auth():
     """
     Gather user name and password information from either a dict (the dict from argparse workd fine)
     """
@@ -58,5 +65,52 @@ class auth():
         self.password = args.password
         return
             
-        
-        
+class CliHelper:
+    '''Helper class to do  CLI login, command stream execution
+    and file transfers '''
+
+    def __init__(self, host, port=22, debug=False):
+        self.host = host
+        self.port = port
+        self.debug = debug
+        self.session = pxssh.pxssh()
+  
+
+    def login(self, user="admin", password="admin", timeout=30):
+        self.user = user
+        self.password = password
+        self.timeout = timeout
+        try:
+            self.session.login(self.host, self.user, self.password,
+                               terminal_type='ansi', original_prompt='[#$]',
+                               login_timeout=10, port=self.port,
+                               auto_prompt_reset=True)
+            
+        except pxssh.ExceptionPxssh, e:
+            self.login = False
+            raise(e)
+
+        self.session.PROMPT = "#"
+        self.before = None
+        self.after = None
+        self.login = True
+
+    def logout(self):
+            self.session.logout()
+    
+    def _consume_prompt(self):
+        # consume the prompt (this is done a lot)
+        self.session.expect([pexpect.TIMEOUT, self.session.PROMPT], self.timeout)
+    
+    def docmd(self, cmd, match,notimeout=False,consumeprompt=True,timeout=self.timeout):
+            search_list = match
+            if notimeout:
+                search_list.insert(pexpect.TIMEOUT)
+                
+            self.session.sendline(cmd)
+            rval = self.session.expect(search_list, timeout)
+            self.before = self.session.before
+            self.after = self.session.after
+            if consumeprompt:
+                self._consume_prompt()
+            return rval 
