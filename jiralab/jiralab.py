@@ -90,9 +90,10 @@ class CliHelper:
             self.login = False
             raise(e)
 
-        self.session.PROMPT = "#"
+        self.session.PROMPT = "$ "
         self.before = None
         self.after = None
+        self.PROMPT = self.session.PROMPT
         self.login = True
 
     def logout(self):
