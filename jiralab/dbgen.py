@@ -112,13 +112,25 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev",["$"],consumeprompt=False)
         print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
         
+        # become the oracle user
         rval = reg_session.docmd("sudo su - oracle",["oracle>"],consumeprompt=False)
         print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
         
+        # Delete the old database
         rval = reg_session.docmd("/nas/reg/bin/delphix-delete-db D08DE88",["oracle>"],consumeprompt=False,timeout=60)
         print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
-        exit()
 
+
+        # Create a new one
+        rval = reg_session.docmd("/nas/reg/bin/delphix-provision-db 88 rb1215 08 15 STBSREP Ecomm /opt/oracle/product/10gr2_home1",["oracle>"],consumeprompt=False,timeout=1500)
+        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+
+        # Perform custom steps
+        rval = reg_session.docmd("/nas/reg/bin/delphix-tokenize-db 88",["oracle>"],consumeprompt=False,timeout=1500)
+        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+
+        exit()
+        
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
