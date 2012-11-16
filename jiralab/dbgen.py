@@ -77,21 +77,22 @@ def main(argv=None): # IGNORE:C0111
             
         args = parser.parse_args()
         exit_status =0
+        
         if not args.release:
-            print("No release specified\n")
-            parser.print_help()
+            print("ERROR: No release specified")
             exit_status = 1
         if not args.env:
-            print("No environment spcified\n")
-            parser.print_help()
+            print("ERROR: No environment specified")
             exit_status = 1
-        if not areg.frontdb or not args.backdb:
-            print ("Please provide correct database locations")
-            parser.print_help()
-            exit_status =1 
-            
+        if not args.frontdb or not args.backdb:
+            print ("ERROR: Please provide correct database locations")
+            exit_status =1
+
         if exit_status:
+            print("\n")
+            parser.print_help()
             exit(exit_status)
+
              
         if args.debug:
             DEBUG = True
@@ -102,7 +103,7 @@ def main(argv=None): # IGNORE:C0111
 
         reg_session = jiralab.CliHelper(REGSERVER)
         reg_session.login(authtoken.user,authtoken.password)
-        rval = reg_session.docmd("sudo -i -u relmgt",[reg_session.PROMPT],consumeprompt=False)
+        rval = reg_session.docmd("sudo -i -u relmgt",["$"],consumeprompt=False)
         print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
         exit()
 
