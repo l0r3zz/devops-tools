@@ -103,7 +103,19 @@ def main(argv=None): # IGNORE:C0111
 
         reg_session = jiralab.CliHelper(REGSERVER)
         reg_session.login(authtoken.user,authtoken.password)
+        
+        # Login to the reg server
         rval = reg_session.docmd("sudo -i -u relmgt",["$"],consumeprompt=False)
+        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+
+        #login to the db server
+        rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev",["$"],consumeprompt=False)
+        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+        
+        rval = reg_session.docmd("sudo su - oracle",["oracle>"],consumeprompt=False)
+        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+        
+        rval = reg_session.docmd("/nas/reg/bin/delphix-delete-db D08DE88",["oracle>"],consumeprompt=False,timeout=60)
         print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
         exit()
 
