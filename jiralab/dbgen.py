@@ -65,8 +65,6 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-p", "--password", dest="password", default=None,help="password to access JIRA")
         parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
-        parser.add_argument("-f", "--frontend", dest="frontdb", help="frontend database (example: srwd00dbs008" )
-        parser.add_argument("-b", "--backend", dest="backdb", help="backend database (example: srwd00dbs015" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug", action='store_true',help="turn on DEBUG switch")
         
@@ -84,10 +82,6 @@ def main(argv=None): # IGNORE:C0111
         if not args.env:
             print("ERROR: No environment specified")
             exit_status = 1
-        if not args.frontdb or not args.backdb:
-            print ("ERROR: Please provide correct database locations")
-            exit_status =1
-
         if exit_status:
             print("\n")
             parser.print_help()
@@ -96,7 +90,10 @@ def main(argv=None): # IGNORE:C0111
              
         if args.debug:
             DEBUG = True
-                   
+            
+        envid = args.env.upper()
+        envnum = envid[-2:] #just the number
+          
         authtoken = jiralab.Auth(args)
 #        jira_options = { 'server': 'https://jira.stubcorp.dev/' }
 #        jira = JIRA(jira_options,basic_auth= (args.user,args.password))
@@ -116,18 +113,11 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd("sudo su - oracle",["oracle>"],consumeprompt=False)
         print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
         
-        # Delete the old database
-        rval = reg_session.docmd("/nas/reg/bin/delphix-delete-db D08DE88",["oracle>"],consumeprompt=False,timeout=60)
+        # Run the auto provision script
+        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm" % (envnum, args.release)
+        rval = reg_session.docmd(auto_provision,["Successfully Tokenized"],timeout=2100)
         print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
 
-
-        # Create a new one
-        rval = reg_session.docmd("/nas/reg/bin/delphix-provision-db 88 rb1215 08 15 STBSREP Ecomm /opt/oracle/product/10gr2_home1",["oracle>"],consumeprompt=False,timeout=1500)
-        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
-
-        # Perform custom steps
-        rval = reg_session.docmd("/nas/reg/bin/delphix-tokenize-db 88",["oracle>"],consumeprompt=False,timeout=1500)
-        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
 
         exit()
         
