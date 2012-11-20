@@ -20,9 +20,9 @@ import pxssh
 
 
 __all__ = []
-__version__ = 0.2
+__version__ = 0.3
 __date__ = '2012-11-04'
-__updated__ = '2012-11-14'
+__updated__ = '2012-11-20'
 
 # Specialized Exceptions
 class JIRALAB_CLI_TypeError(TypeError): pass
