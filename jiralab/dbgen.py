@@ -102,21 +102,24 @@ def main(argv=None): # IGNORE:C0111
         reg_session.login(authtoken.user,authtoken.password)
         
         # Login to the reg server
-        rval = reg_session.docmd("sudo -i -u relmgt",["$"],consumeprompt=False)
-        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+        rval = reg_session.docmd("sudo -i -u relmgt",[])
+        print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
 
         #login to the db server
-        rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev",["$"],consumeprompt=False)
-        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
-        
+        rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev", ["yes" ])
+        print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+        if rval == 1:
+            rval = reg_session.docmd("yes",[])
+            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+
         # become the oracle user
         rval = reg_session.docmd("sudo su - oracle",["oracle>"],consumeprompt=False)
-        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+        print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
         
         # Run the auto provision script
         auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm" % (envnum, args.release)
-        rval = reg_session.docmd(auto_provision,["Successfully Tokenized"],timeout=2100)
-        print ("Rval= %d; before: %s, after: %s" % (rval, reg_session.before, reg_session.after))
+        rval = reg_session.docmd(auto_provision_cmd,["Tokenized"],timeout=2400)
+        print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
 
 
         exit()

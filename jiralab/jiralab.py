@@ -101,11 +101,11 @@ class CliHelper:
     
     def _consume_prompt(self):
         # consume the prompt (this is done a lot)
-        self.session.expect([pexpect.TIMEOUT, self.session.PROMPT], self.timeout)
+        return self.session.expect([pexpect.TIMEOUT, self.session.PROMPT], self.timeout)
 
     def set_prompt(self,prompt):
         rval = self.PROMPT
-        self.PROMPT = self.session.PROMPT = PROMPT
+        self.PROMPT = self.session.PROMPT = prompt
         return rval
     
     def docmd(self, cmd, match,notimeout=False,consumeprompt=True,timeout=30):
@@ -113,8 +113,7 @@ class CliHelper:
 
             if not len(match):
                 self.session.sendline(cmd)
-                _consume_prompt()
-                return None
+                return self._consume_prompt()
             
             if not notimeout:
                 search_list.insert(0,pexpect.TIMEOUT)
