@@ -1,7 +1,8 @@
-#!/usr/bin/python
+#!/usr/local/bin/python2.7
 # encoding: utf-8
 '''
-dbgen -- Create Delphix based Databases
+env-o-matic - Basic automation to buildout a virtual environment given an ENVIRONMENT ID
+              and ENV request ticket
 
 @author:     geowhite
         
@@ -9,25 +10,24 @@ dbgen -- Create Delphix based Databases
         
 @license:    Apache License 2.0
 
-@contact:    geowhite@stubhub.com
+@contact:    geowhite@stubhub.com    
+
 '''
 
 import sys
 import os
-import jiralab
-import json
-
-
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.2
-__date__ = '2012-11-15'
+__version__ = 0.1
+__date__ = '2012-11-20'
 __updated__ = '2012-11-20'
 
+DEBUG = 1
 TESTRUN = 0
+PROFILE = 0
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -38,8 +38,6 @@ class CLIError(Exception):
         return self.msg
     def __unicode__(self):
         return self.msg
-
-
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
@@ -62,6 +60,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-u", "--user", dest="user", default=None,help="user to access JIRA")
         parser.add_argument("-p", "--password", dest="password", default=None,help="password to access JIRA")
         parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
+        parser.add_argument("-q", "--envreq", dest="envreq", help="environment request issue ID (example: ENV_707" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug", action='store_true',help="turn on DEBUG switch")
@@ -79,6 +78,9 @@ def main(argv=None): # IGNORE:C0111
             exit_status = 1
         if not args.env:
             print("ERROR: No environment specified")
+            exit_status = 1
+        if not args.envreq:
+            print("ERROR: No environment request ticket")
             exit_status = 1
         if exit_status:
             print("\n")
@@ -106,39 +108,10 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
 
-        #login to the db server
-        print("Logging into DB Server : srwd00dbs008")
-        rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev", ["yes" ])
-        if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-        if rval == 1:
-            rval = reg_session.docmd("yes",[])
-            if DEBUG:
-                print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
 
-        # become the oracle user
-        print("Becoming oracle user")
-        rval = reg_session.docmd("sudo su - oracle",["oracle>"],consumeprompt=False)
-        if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-        
-        # Run the auto provision script
-        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm" % (envnum, args.release)
-        rval = reg_session.docmd(auto_provision_cmd,["Tokenized","Error"],timeout=2400)
-        if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-        if rval == 1:
-            print("%s%s\nSuccess. Exiting.\n" %(reg_session.before, reg_session.after))
-            exit(0)
-        else:
-            print ("Error occurred" )
-            exit(2)
-
-        
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-    
     except Exception, e:
         if DEBUG or TESTRUN:
             raise(e)
@@ -146,7 +119,6 @@ def main(argv=None): # IGNORE:C0111
         sys.stderr.write(program_name + ": " + str(e) + "\n")
         sys.stderr.write(indent + "  for help use --help\n")
         return 2
-    
 
 if __name__ == "__main__":
 
