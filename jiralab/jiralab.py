@@ -76,7 +76,7 @@ class CliHelper:
         self.session = pxssh.pxssh()
   
 
-    def login(self, user="admin", password="admin", prompt="$ ",timeout=30):
+    def login(self, user="admin", password="admin", prompt="[#$]",timeout=30):
         self.user = user
         self.password = password
         self.timeout = timeout
@@ -84,7 +84,8 @@ class CliHelper:
             self.session.login(self.host, self.user, self.password,
                                terminal_type='ansi', original_prompt='[#$]',
                                login_timeout=10, port=self.port,
-                               auto_prompt_reset=True)
+                               auto_prompt_reset=False)
+            self.session.prompt()
             
         except pxssh.ExceptionPxssh, e:
             self.login = False
@@ -101,7 +102,10 @@ class CliHelper:
     
     def _consume_prompt(self):
         # consume the prompt (this is done a lot)
-        return self.session.expect([pexpect.TIMEOUT, self.session.PROMPT], self.timeout)
+        self.before = self.session.before
+        self.after = self.session.after
+        while self.session.prompt(timeout=1):
+            pass
 
     def set_prompt(self,prompt):
         rval = self.PROMPT
@@ -113,7 +117,8 @@ class CliHelper:
 
             if not len(match):
                 self.session.sendline(cmd)
-                return self._consume_prompt()
+                self._consume_prompt()
+                return 1
             
             if not notimeout:
                 search_list.insert(0,pexpect.TIMEOUT)

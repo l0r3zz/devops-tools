@@ -16,6 +16,8 @@ env-o-matic - Basic automation to buildout a virtual environment given an ENVIRO
 
 import sys
 import os
+import jiralab
+import json
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -100,7 +102,9 @@ def main(argv=None): # IGNORE:C0111
         # Login to the reg server
         print ("Logging into %s" % REGSERVER)
         reg_session = jiralab.CliHelper(REGSERVER)
-        reg_session.login(authtoken.user,authtoken.password)
+        rval = reg_session.login(authtoken.user,authtoken.password,prompt="[~]")
+        reg_session._consume_prompt()
+
         
 
         print ("Becoming relmgt")
@@ -108,7 +112,12 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
 
-
+        # Create a PROPROJ and DB ticket for the ENV
+        print ("Creating JIRA issues")
+        rval = reg_session.docmd("proproj -u %s -e %s -r %s" % (args.user, args.env, args.release),[])
+        if DEBUG:
+            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0

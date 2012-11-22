@@ -98,7 +98,7 @@ def main(argv=None): # IGNORE:C0111
         # Login to the reg server
         print ("Logging into %s" % REGSERVER)
         reg_session = jiralab.CliHelper(REGSERVER)
-        reg_session.login(authtoken.user,authtoken.password)
+        reg_session.login(authtoken.user,authtoken.password,prompt="~")
         
 
         print ("Becoming relmgt")
