@@ -109,13 +109,14 @@ def main(argv=None): # IGNORE:C0111
         
 
         print ("Becoming relmgt")
-        rval = reg_session.docmd("sudo -i -u relmgt",[])
+        rval = reg_session.docmd("sudo -i -u relmgt",[reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
 
         # Create a PROPROJ and DB ticket for the ENV
         print ("Creating JIRA issues")
-        rval = reg_session.docmd("proproj -u %s -e %s -r %s" % (args.user, args.env, args.release),[])
+        # 
+        rval = reg_session.docmd("proproj -u %s -e %s -r %s" % (args.user, args.env, args.release),["\{*\}", reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             
