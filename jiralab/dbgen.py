@@ -112,17 +112,17 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev", ["yes", reg_session.session.PROMPT ],consumeprompt=False)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-        if rval == 1:
+        if rval == 1: # need to add ssh key
             rval = reg_session.docmd("yes",[reg_session.session.PROMPT ],consumeprompt=False)
             if DEBUG:
                 print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-            if rval != 1:
+            if rval != 1: #something else printed
                 print("Could not log into srwd00dbs008. Exiting")
                 exit(2)
-        elif rval == 2:
+        elif rval == 2: # go right in
             if DEBUG:
                 print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-        else:
+        else: # BAD
             if DEBUG:
                 print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             print("Something bad happened, exiting")
