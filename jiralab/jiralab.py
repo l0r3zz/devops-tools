@@ -20,9 +20,9 @@ import pxssh
 
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.4
 __date__ = '2012-11-04'
-__updated__ = '2012-11-20'
+__updated__ = '2012-11-26'
 
 # Specialized Exceptions
 class JIRALAB_CLI_TypeError(TypeError): pass
@@ -85,7 +85,7 @@ class CliHelper:
                                terminal_type='ansi', original_prompt='[#$]',
                                login_timeout=10, port=self.port,
                                auto_prompt_reset=False)
-            self.session.prompt()
+            #self.session.prompt()
             
         except pxssh.ExceptionPxssh, e:
             self.login = False
@@ -93,8 +93,8 @@ class CliHelper:
 
         self.session.PROMPT = prompt
         self.PROMPT = self.session.PROMPT
-        self.before = None
-        self.after = None
+        self.before = self.session.before
+        self.after = self.session.after
         self.login = True
 
     def logout(self):
@@ -104,8 +104,8 @@ class CliHelper:
         # consume the prompt (this is done a lot)
         self.before = self.session.before
         self.after = self.session.after
-        while self.session.prompt(timeout=1):
-            pass
+        self.session.prompt(timeout=1)
+
 
     def set_prompt(self,prompt):
         rval = self.PROMPT

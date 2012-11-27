@@ -23,9 +23,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.2
+__version__ = 0.3
 __date__ = '2012-11-15'
-__updated__ = '2012-11-20'
+__updated__ = '2012-11-26'
 
 TESTRUN = 0
 
@@ -98,8 +98,9 @@ def main(argv=None): # IGNORE:C0111
         # Login to the reg server
         print ("Logging into %s" % REGSERVER)
         reg_session = jiralab.CliHelper(REGSERVER)
-        reg_session.login(authtoken.user,authtoken.password,prompt="~")
-        
+        reg_session.login(authtoken.user,authtoken.password,prompt="\$[ ]")
+        if DEBUG:
+            print ("before: %s\nafter: %s" % (reg_session.before, reg_session.after))        
 
         print ("Becoming relmgt")
         rval = reg_session.docmd("sudo -i -u relmgt",[])
@@ -108,13 +109,24 @@ def main(argv=None): # IGNORE:C0111
 
         #login to the db server
         print("Logging into DB Server : srwd00dbs008")
-        rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev", ["yes" ])
+        rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev", ["yes", reg_session.session.PROMPT ],consumeprompt=False)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
         if rval == 1:
-            rval = reg_session.docmd("yes",[])
+            rval = reg_session.docmd("yes",[reg_session.session.PROMPT ],consumeprompt=False)
             if DEBUG:
                 print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            if rval != 1:
+                print("Could not log into srwd00dbs008. Exiting")
+                exit(2)
+        elif rval == 2:
+            if DEBUG:
+                print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+        else:
+            if DEBUG:
+                print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            print("Something bad happened, exiting")
+            exit(2)                        
 
         # become the oracle user
         print("Becoming oracle user")

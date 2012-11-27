@@ -102,8 +102,9 @@ def main(argv=None): # IGNORE:C0111
         # Login to the reg server
         print ("Logging into %s" % REGSERVER)
         reg_session = jiralab.CliHelper(REGSERVER)
-        rval = reg_session.login(authtoken.user,authtoken.password,prompt="[~]")
-        reg_session._consume_prompt()
+        rval = reg_session.login(authtoken.user,authtoken.password,prompt="\$[ ]")
+        if DEBUG:
+            print ("before: %s\nafter: %s" % (reg_session.before, reg_session.after)) 
 
         
 
