@@ -119,7 +119,30 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd("proproj -u %s -e %s -r %s" % (args.user, args.env, args.release),["\{*\}", reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+        if rval == 1 :
+            PPRESULT = 1
+            proproj_result_string = (reg_session.before + reg_session.after).split("\n")
+            proproj_result_dict = json.loads(proproj_result_string[PPRESULT])
+            if DEBUG ==1:
+                print("Proproj result string: %s \n" % proproj_result_string)
+        else:
+            print("Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
+            exit(2)
+
+        print("Building Database, this may take up to 40 minutes...")
+        dbgen_build_cmd = ' dbgen -u %s -e %s -r %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
+            (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
+        rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT])
+        if DEBUG:
+            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             
+        print("Performing Automatic Validation of %s \n" % envid)
+        env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
+            (envnum, args.user, proproj_result_dict["proproj"])
+        rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT])
+        if DEBUG:
+            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+                
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0

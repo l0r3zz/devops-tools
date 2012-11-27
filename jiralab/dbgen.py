@@ -23,7 +23,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.4
 __date__ = '2012-11-15'
 __updated__ = '2012-11-26'
 
@@ -135,6 +135,7 @@ def main(argv=None): # IGNORE:C0111
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
         
         # Run the auto provision script
+        print("Running the auto-provision script")
         auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm" % (envnum, args.release)
         rval = reg_session.docmd(auto_provision_cmd,["Tokenized","Error"],timeout=2400)
         if DEBUG:
@@ -143,7 +144,7 @@ def main(argv=None): # IGNORE:C0111
             print("%s%s\nSuccess. Exiting.\n" %(reg_session.before, reg_session.after))
             exit(0)
         else:
-            print ("Error occurred" )
+            print ("Error occurred: %s%s\n" % (reg_session.before, reg_sesion.after) )
             exit(2)
 
         
