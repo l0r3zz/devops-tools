@@ -23,9 +23,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.4
 __date__ = '2012-11-20'
-__updated__ = '2012-11-27'
+__updated__ = '2012-11-28'
 
 DEBUG = 1
 TESTRUN = 0
@@ -130,9 +130,9 @@ def main(argv=None): # IGNORE:C0111
             print("Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
             exit(2)
         
-        # Stsrt re-imaging     
+        # Start re-imaging     
         print("Reimaging %s, this may take over 1 Hour!..." % envid)
-        reimage_cmd = ' provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
+        reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
             ( envid_lower, args.user, proproj_result_dict["proproj"])
         rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
         if DEBUG:
@@ -140,7 +140,7 @@ def main(argv=None): # IGNORE:C0111
             
 
         print("Building Database, this may take up to 40 minutes...")
-        dbgen_build_cmd = ' dbgen -u %s -e %s -r %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
+        dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
             (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
         rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=2400)
         if DEBUG:
