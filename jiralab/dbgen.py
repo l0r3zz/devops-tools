@@ -147,7 +147,8 @@ def main(argv=None): # IGNORE:C0111
             print ("Error occurred: %s%s\n" % (reg_session.before, reg_session.after) )
             exit(2)
 
-        
+        print("Execution Complete. Exiting.")
+        exit(0)
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
