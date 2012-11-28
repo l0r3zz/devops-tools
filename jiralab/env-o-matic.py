@@ -23,9 +23,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.2
+__version__ = 0.3
 __date__ = '2012-11-20'
-__updated__ = '2012-11-26'
+__updated__ = '2012-11-27'
 
 DEBUG = 1
 TESTRUN = 0
@@ -94,6 +94,7 @@ def main(argv=None): # IGNORE:C0111
             DEBUG = True
             
         envid = args.env.upper()
+        envid_lower = args.env.lower()
         envnum = envid[-2:] #just the number
           
         authtoken = jiralab.Auth(args)
@@ -128,21 +129,33 @@ def main(argv=None): # IGNORE:C0111
         else:
             print("Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
             exit(2)
+        
+        # Stsrt re-imaging     
+        print("Reimaging %s, this may take over 1 Hour!..." % envid)
+        reimage_cmd = ' provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
+            ( envid_lower, args.user, proproj_result_dict["proproj"])
+        rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
+        if DEBUG:
+            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            
 
         print("Building Database, this may take up to 40 minutes...")
         dbgen_build_cmd = ' dbgen -u %s -e %s -r %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
             (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
-        rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT])
+        rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=2400)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             
         print("Performing Automatic Validation of %s \n" % envid)
         env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
             (envnum, args.user, proproj_result_dict["proproj"])
-        rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT])
+        rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1000)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-                
+         
+        print("Execution Complete. Exiting.\n")
+        exit(0)
+        
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
