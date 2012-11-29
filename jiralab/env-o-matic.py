@@ -18,16 +18,16 @@ import sys
 import os
 import jiralab
 import json
+import time
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.41
+__version__ = 0.5
 __date__ = '2012-11-20'
-__updated__ = '2012-11-28'
+__updated__ = '2012-11-29'
 
-DEBUG = 1
 TESTRUN = 0
 PROFILE = 0
 
@@ -65,7 +65,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-q", "--envreq", dest="envreq", help="environment request issue ID (example: ENV_707" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
-        parser.add_argument('-D', '--debug', dest="debug", action='store_true',help="turn on DEBUG switch")
+        parser.add_argument('-D', '--debug', dest="debug", action='count', default=0, help="turn on DEBUG additional Ds increase verbosity")
         
         # Process arguments
         if len(sys.argv) == 1:
@@ -92,10 +92,12 @@ def main(argv=None): # IGNORE:C0111
              
         if args.debug:
             DEBUG = True
+        else:
+            DEBUG = False
             
-        envid = args.env.upper()
-        envid_lower = args.env.lower()
-        envnum = envid[-2:] #just the number
+        envid = args.env.upper()       # insure UPPERCASE environment name
+        envid_lower = args.env.lower() # insure lowercase environment name
+        envnum = envid[-2:]            #just the number
           
         authtoken = jiralab.Auth(args)
 
@@ -108,7 +110,6 @@ def main(argv=None): # IGNORE:C0111
             print ("before: %s\nafter: %s" % (reg_session.before, reg_session.after)) 
 
         
-
         print ("Becoming relmgt")
         rval = reg_session.docmd("sudo -i -u relmgt",[reg_session.session.PROMPT])
         if DEBUG:
@@ -116,21 +117,25 @@ def main(argv=None): # IGNORE:C0111
 
         # Create a PROPROJ and DB ticket for the ENV
         print ("Creating JIRA issues")
-        # 
-        rval = reg_session.docmd("proproj -u %s -e %s -r %s" % (args.user, args.env, args.release),["\{*\}", reg_session.session.PROMPT])
+        # if -DDD turn on debugging for proproj
+        if args.debug > 2:
+            proproj_cmd =  "proproj -u %s -e %s -r %s -D" % (args.user, args.env, args.release)
+        else:
+            proproj_cmd =  "proproj -u %s -e %s -r %s" % (args.user, args.env, args.release)
+        rval = reg_session.docmd(proproj_cmd, ["\{*\}", reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
         if rval == 1 :
             PPRESULT = 1
             proproj_result_string = (reg_session.before + reg_session.after).split("\n")
             proproj_result_dict = json.loads(proproj_result_string[PPRESULT])
-            print("Ticket Creation Structure:: %s \n" % proproj_result_string)
+            print("Ticket Creation Structure:: %s \n" % proproj_result_string[PPRESULT])
         else:
             print("Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
             exit(2)
         
         # Start re-imaging     
-        print("Reimaging %s, this may take over 1 Hour!..." % envid)
+        print("Reimaging %s, ..." % envid)
         reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
             ( envid_lower, args.user, proproj_result_dict["proproj"])
         rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
@@ -139,16 +144,24 @@ def main(argv=None): # IGNORE:C0111
             
 
         print("Building Database, this may take up to 40 minutes...")
-        dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
-            (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
-        rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=2400)
+        # If -DD turn on debugging for dbgen
+        if args.debug > 1:
+            dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s -D |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
+                (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
+        else:
+            dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s  |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
+                (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
+        rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             
+        print("Sleeping 5 minutes\n")
+        time.sleep(300)
+
         print("Performing Automatic Validation of %s \n" % envid)
         env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
             (envnum, args.user, proproj_result_dict["proproj"])
-        rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1000)
+        rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1800)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
          
@@ -173,3 +186,4 @@ if __name__ == "__main__":
         doctest.testmod()
 
     sys.exit(main())
+
