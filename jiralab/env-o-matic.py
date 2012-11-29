@@ -23,7 +23,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.4
+__version__ = 0.41
 __date__ = '2012-11-20'
 __updated__ = '2012-11-28'
 
@@ -124,8 +124,7 @@ def main(argv=None): # IGNORE:C0111
             PPRESULT = 1
             proproj_result_string = (reg_session.before + reg_session.after).split("\n")
             proproj_result_dict = json.loads(proproj_result_string[PPRESULT])
-            if DEBUG ==1:
-                print("Proproj result string: %s \n" % proproj_result_string)
+            print("Ticket Creation Structure:: %s \n" % proproj_result_string)
         else:
             print("Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
             exit(2)
