@@ -3,15 +3,10 @@
 '''
 env-o-matic - Basic automation to buildout a virtual environment given an ENVIRONMENT ID
               and ENV request ticket
-
-@author:     geowhite
-        
+@author:     geowhite 
 @copyright:  2012 StubHub. All rights reserved.
-        
 @license:    Apache License 2.0
-
 @contact:    geowhite@stubhub.com    
-
 '''
 
 import sys
