@@ -2,13 +2,9 @@
 # encoding: utf-8
 '''
 dbgen -- Create Delphix based Databases
-
 @author:     geowhite
-
 @copyright:  2012 StubHub. All rights reserved.
-
 @license:    Apache License 2.0
-
 @contact:    geowhite@stubhub.com
 '''
 
@@ -20,9 +16,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.4
+__version__ = 0.5
 __date__ = '2012-11-15'
-__updated__ = '2012-11-26'
+__updated__ = '2012-11-30'
 
 TESTRUN = 0
 
@@ -156,7 +152,7 @@ def main(argv=None):  # IGNORE:C0111
         auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm"\
             % (envnum, args.release)
         rval = reg_session.docmd(auto_provision_cmd,
-                        ["Tokenized", "Error"], timeout=2400)
+                        ["Tokenized", "Error"], timeout=3600)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
