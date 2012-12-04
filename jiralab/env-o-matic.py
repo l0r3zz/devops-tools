@@ -11,6 +11,7 @@ env-o-matic - Basic automation to buildout a virtual environment given an ENVIRO
 
 import sys
 import os
+from jira.client import JIRA
 import jiralab
 import json
 import time
@@ -21,7 +22,7 @@ from argparse import RawDescriptionHelpFormatter
 __all__ = []
 __version__ = 0.6
 __date__ = '2012-11-20'
-__updated__ = '2012-12-1'
+__updated__ = '2012-12-3'
 
 TESTRUN = 0
 PROFILE = 0
@@ -60,7 +61,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-q", "--envreq", dest="envreq", default=None, help="environment request issue ID (example: ENV_707" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
-        parser.add_argument('--skipreimage', action='store_true', dest=skip_reimage, default=False, help="set to skip the re-image operation")
+        parser.add_argument('--skipreimage', action='store_true', dest="skip_reimage", default=False, help="set to skip the re-image operation")
         parser.add_argument('-D', '--debug', dest="debug", action='count', default=0, help="turn on DEBUG additional Ds increase verbosity")
         
         # Process arguments
@@ -116,10 +117,7 @@ def main(argv=None): # IGNORE:C0111
         else:
             jira_release = args.release
 
-        if args.debug > 2:
-            proproj_cmd =  "proproj -u %s -e %s -r %s -D" % (args.user, args.env, jira_release)
-        else:
-            proproj_cmd =  "proproj -u %s -e %s -r %s" % (args.user, args.env, jira_release)
+        proproj_cmd =  "proproj -u %s -e %s -r %s " % (args.user, args.env, jira_release)
         rval = reg_session.docmd(proproj_cmd, ["\{*\}", reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
@@ -139,14 +137,17 @@ def main(argv=None): # IGNORE:C0111
             jira = JIRA(jira_options,basic_auth= (args.user,args.password))
             link = jira.create_issue_link(type="Dependency", inwardIssue=args.envreq,
                                       outwardIssue=proproj_result_dict["proproj"])
-        
-        # Start re-imaging     
-        print("Reimaging %s, ..." % envid)
-        reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
-            ( envid_lower, args.user, proproj_result_dict["proproj"])
-        rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
-        if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+
+        if args.skip_reimage:
+            print("Skipping the re-image of %s\n" % envid)
+        else:        
+            # Start re-imaging     
+            print("Reimaging %s, ..." % envid)
+            reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
+                ( envid_lower, args.user, proproj_result_dict["proproj"])
+            rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
+            if DEBUG:
+                print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             
 
         print("Building Database, this may take up to 40 minutes...")
