@@ -20,9 +20,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.6
+__version__ = 0.7
 __date__ = '2012-11-20'
-__updated__ = '2012-12-3'
+__updated__ = '2012-12-11'
 
 TESTRUN = 0
 PROFILE = 0
@@ -97,14 +97,14 @@ def main(argv=None): # IGNORE:C0111
 
 
         # Login to the reg server
-        print ("Logging into %s" % REGSERVER)
+        print ("Logging into %s  @ %s UTC" % (REGSERVER, time.asctime(time.gmtime(time.time()))))
         reg_session = jiralab.CliHelper(REGSERVER)
         rval = reg_session.login(authtoken.user,authtoken.password,prompt="\$[ ]")
         if DEBUG:
             print ("before: %s\nafter: %s" % (reg_session.before, reg_session.after)) 
 
         
-        print ("Becoming relmgt")
+        print ("Becoming relmgt @ %s UTC" % time.asctime(time.gmtime(time.time())))
         rval = reg_session.docmd("sudo -i -u relmgt",[reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
@@ -142,15 +142,18 @@ def main(argv=None): # IGNORE:C0111
             print("Skipping the re-image of %s\n" % envid)
         else:        
             # Start re-imaging     
-            print("Reimaging %s, ..." % envid)
+            print("Reimaging %s start @ %s UTC, ...\n" % (envid,
+                            time.asctime(time.gmtime(time.time()))))
             reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
                 ( envid_lower, args.user, proproj_result_dict["proproj"])
             rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
             if DEBUG:
-                print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+                print ("Rval= %d; \nbefore: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            print("Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
             
 
-        print("Building Database, this may take up to 40 minutes...")
+        print("Building Database start @ %s UTC,"
+                  " this may take up to 1 hour..." % time.asctime(time.gmtime(time.time())))
         # If -DD turn on debugging for dbgen
         if args.debug > 1:
             dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s -D |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
@@ -161,7 +164,8 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-            
+        print("=Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
+
         print("Sleeping 5 minutes\n")
         time.sleep(300)
 
@@ -172,7 +176,7 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
          
-        print("Execution Complete. Exiting.\n")
+        print("Execution Complete @ %s UTC. Exiting.\n" %  time.asctime(time.gmtime(time.time())))
         exit(0)
         
     except KeyboardInterrupt:
