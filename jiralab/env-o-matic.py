@@ -164,7 +164,7 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-        print("=Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
+        print("Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
 
         print("Sleeping 5 minutes\n")
         time.sleep(300)
