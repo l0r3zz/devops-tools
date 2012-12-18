@@ -16,9 +16,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.5
+__version__ = 0.6
 __date__ = '2012-11-15'
-__updated__ = '2012-11-30'
+__updated__ = '2012-12-18'
 
 TESTRUN = 0
 
@@ -106,7 +106,7 @@ def main(argv=None):  # IGNORE:C0111
                         reg_session.after))
 
         print ("Becoming relmgt")
-        rval = reg_session.docmd("sudo -i -u relmgt", [])
+        rval = reg_session.docmd("sudo -i -u relmgt", [reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
@@ -115,7 +115,7 @@ def main(argv=None):  # IGNORE:C0111
         print("Logging into DB Server : srwd00dbs008")
         rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev",
                         ["yes", reg_session.session.PROMPT],
-                        consumeprompt=False)
+                        timeout=60)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
