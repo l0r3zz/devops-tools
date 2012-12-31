@@ -12,8 +12,8 @@ import getpass
 import aes
 import sys
 import os
-import pexpect
-import pxssh
+#import pexpect
+#import pxssh
 
 
 __all__ = []
