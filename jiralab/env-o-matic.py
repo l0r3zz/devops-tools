@@ -93,13 +93,13 @@ def main(argv=None): # IGNORE:C0111
         envid_lower = args.env.lower() # insure lowercase environment name
         envnum = envid[-2:]            #just the number
           
-        authtoken = jiralab.Auth(args)
+        auth = jiralab.Auth(args)
 
 
         # Login to the reg server
         print ("Logging into %s  @ %s UTC" % (REGSERVER, time.asctime(time.gmtime(time.time()))))
         reg_session = jiralab.CliHelper(REGSERVER)
-        rval = reg_session.login(authtoken.user,authtoken.password,prompt="\$[ ]")
+        rval = reg_session.login(auth.user,auth.password,prompt="\$[ ]")
         if DEBUG:
             print ("before: %s\nafter: %s" % (reg_session.before, reg_session.after)) 
 
@@ -117,7 +117,7 @@ def main(argv=None): # IGNORE:C0111
         else:
             jira_release = args.release
 
-        proproj_cmd =  "proproj -u %s -e %s -r %s " % (args.user, args.env, jira_release)
+        proproj_cmd =  "proproj -u %s -e %s -r %s " % (auth.user, args.env, jira_release)
         rval = reg_session.docmd(proproj_cmd, ["\{*\}", reg_session.session.PROMPT])
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
@@ -134,7 +134,7 @@ def main(argv=None): # IGNORE:C0111
         if args.envreq:
             print("Linking propoj:%s to ENV request:%s\n" % (proproj_result_dict["proproj"], args.envreq))
             jira_options = { 'server': 'https://jira.stubcorp.dev/' }
-            jira = JIRA(jira_options,basic_auth= (args.user,args.password))
+            jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
             link = jira.create_issue_link(type="Dependency", inwardIssue=args.envreq,
                                       outwardIssue=proproj_result_dict["proproj"])
 
@@ -145,7 +145,7 @@ def main(argv=None): # IGNORE:C0111
             print("Reimaging %s start @ %s UTC, ...\n" % (envid,
                             time.asctime(time.gmtime(time.time()))))
             reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
-                ( envid_lower, args.user, proproj_result_dict["proproj"])
+                ( envid_lower, auth.user, proproj_result_dict["proproj"])
             rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
             if DEBUG:
                 print ("Rval= %d; \nbefore: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
@@ -157,10 +157,10 @@ def main(argv=None): # IGNORE:C0111
         # If -DD turn on debugging for dbgen
         if args.debug > 1:
             dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s -D |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
-                (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
+                (args.user, envid, args.release, auth.user, proproj_result_dict["dbtask"])
         else:
             dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s  |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
-                (args.user, envid, args.release, args.user, proproj_result_dict["dbtask"])
+                (auth.user, envid, auth.release, auth.user, proproj_result_dict["dbtask"])
         rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
@@ -171,7 +171,7 @@ def main(argv=None): # IGNORE:C0111
 
         print("Performing Automatic Validation of %s \n" % envid)
         env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
-            (envnum, args.user, proproj_result_dict["proproj"])
+            (envnum, auth.user, proproj_result_dict["proproj"])
         rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1800)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))

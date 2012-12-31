@@ -16,9 +16,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.6
+__version__ = 0.7
 __date__ = '2012-11-15'
-__updated__ = '2012-12-18'
+__updated__ = '2012-12-30'
 
 TESTRUN = 0
 
@@ -95,12 +95,12 @@ def main(argv=None):  # IGNORE:C0111
         envid = args.env.upper()
         envnum = envid[-2:]  # just the number
 
-        authtoken = jiralab.Auth(args)
+        auth = jiralab.Auth(args)
 
         # Login to the reg server
         print("Logging into %s" % REGSERVER)
         reg_session = jiralab.CliHelper(REGSERVER)
-        reg_session.login(authtoken.user, authtoken.password, prompt="\$[ ]")
+        reg_session.login(auth.user, auth.password, prompt="\$[ ]")
         if DEBUG:
             print("before: %s\nafter: %s" % (reg_session.before,
                         reg_session.after))

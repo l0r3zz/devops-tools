@@ -2,68 +2,80 @@
 # encoding: utf-8
 '''
 jiralab -- useful classes and methods to work with JIRA tickets
-
-@author:     geowhite
-        
-@copyright:  2012 StubHub. All rights reserved.
-        
+@author:     geowhite 
+@copyright:  2012 StubHub. All rights reserved.   
 @license:    Apache License 2.0
-
 @contact:    geowhite@stubhub.com
 
 '''
 import getpass
 import aes
 import sys
+import os
 import pexpect
 import pxssh
 
 
 __all__ = []
-__version__ = 0.4
+__version__ = 0.5
 __date__ = '2012-11-04'
-__updated__ = '2012-11-26'
+__updated__ = '2012-12-29'
 
 # Specialized Exceptions
 class JIRALAB_CLI_TypeError(TypeError): pass
 class JIRALAB_CLI_ValueError(ValueError): pass
-
+class JIRALAB_AUTH_ValueError(ValueError): pass
 class Auth():
     """
-    Gather user name and password information from either a dict (the dict from argparse workd fine)
+    Gather user name and password information from either a dict (the dict from argparse works fine)
     """
     def __init__(self,args):
         AES_BLOCKSIZE = 128
         self._salt = "c0ffee31337bea75"
-        vault_file = "./.jiralab_vault-%s"
+        vault_file = ".jiralab_vault-%s"
         
-        if (not args.password):
-            if args.user :
-                self.pass_vault = vault_file % args.user
-            else:
-                args.user = getpass.getuser()
-                self.pass_vault = vault_file % args.user
-            try:
-                for line in open(self.pass_vault,'r'):
-                    args.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
-            except IOError :
-                args.password = None
-
-        if (not args.user):
-            user = raw_input("Username [%s]: " % getpass.getuser())
-            if not user:
-                args.user = getpass.getuser()
-            args.user = user
-        if (not args.password):
-            args.password = getpass.getpass()
-            
-        self.pass_vault = vault_file % args.user  
-        pwf = open(self.pass_vault,'w')
-        pwf.write(aes.encrypt(args.password,self._salt,AES_BLOCKSIZE))
-        pwf.close()
         self.user = args.user
         self.password = args.password
-        return
+
+        # Let's make sure we have the username
+        # If no username provided use the user that is running the process 
+        if (not self.user):
+            user = raw_input("Username [%s]: " % getpass.getuser())
+            if not user:
+                self.user = getpass.getuser()
+                args.user = self.user
+            args.user = user
+            self.user = user
+            
+        # set up some paths to search for the vault file
+        pass_vault_path =   [
+                            ("~%s/" % args.user) + (vault_file % self.user),
+                            "./" + (vault_file % self.user),
+                            ]
+                           
+        # Execute this block if a password was not provided as an argument
+        if (not self.password):
+            # Iterate through a list of the paths, precedence set by position
+            for path in pass_vault_path : 
+                if os.path.isfile(path)and os.access(path, os.R_OK):
+                    for line in open(path,'r'):
+                        self.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
+                        args.password = self.password
+                    return # username and password set
+            # We looked everywhere for the password vault and could not find it, so ask for password
+            self.password = getpass.getpass()
+            args.password = self.password
+
+        for path in pass_vault_path : 
+            try:
+                pwf = open(path,'w')
+            except IOError:
+                continue
+            pwf.write(aes.encrypt(self.password,self._salt,AES_BLOCKSIZE))
+            pwf.close()
+            return
+        raise JIRALAB_AUTH_ValueError("Can't write vault file")
+
             
 class CliHelper:
     '''Helper class to do  CLI login, command stream execution

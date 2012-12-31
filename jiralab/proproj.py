@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.62
+__version__ = 0.7
 __date__ = '2012-10-28'
-__updated__ = '2012-11-14'
+__updated__ = '2012-12-30'
 
 TESTRUN = 0
 
@@ -81,9 +81,9 @@ def main(argv=None): # IGNORE:C0111
         if args.debug:
             DEBUG = True
                    
-        authtoken = jiralab.Auth(args)
+        auth = jiralab.Auth(args)
         jira_options = { 'server': 'https://jira.stubcorp.dev/' }
-        jira = JIRA(jira_options,basic_auth= (args.user,args.password))
+        jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
         if DEBUG: 
             print( "Creating ticket for Environment: %s with release %s " %\
                (args.env,args.release))
@@ -96,7 +96,7 @@ def main(argv=None): # IGNORE:C0111
         proproj_dict = {
                         'project': {'key':'PROPROJ'},
                         'issuetype': {'name':'Task'},
-                        'assignee': {'name': args.user},
+                        'assignee': {'name': auth.user},
                         'customfield_10170': {'value':envid},
                         'components': [{'name':'decommission'},{'name':'tokenization'}],
                         'summary': pp_summary,
@@ -109,7 +109,7 @@ def main(argv=None): # IGNORE:C0111
         db_dict = {
                         'project': {'key':'DB'},
                         'issuetype': {'name':'Task'},
-                        'assignee': {'name': args.user},
+                        'assignee': {'name': auth.user},
                         'customfield_10170': {'value':envid},
                         'customfield_10100': {'value':'unspecified'},
                         'components': [{'name':'General'}],
