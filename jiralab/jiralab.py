@@ -19,7 +19,7 @@ import os
 __all__ = []
 __version__ = 0.5
 __date__ = '2012-11-04'
-__updated__ = '2012-12-29'
+__updated__ = '2013-01-2'
 
 # Specialized Exceptions
 class JIRALAB_CLI_TypeError(TypeError): pass
@@ -32,11 +32,12 @@ class Auth():
     def __init__(self,args):
         AES_BLOCKSIZE = 128
         self._salt = "c0ffee31337bea75"
-        vault_file = ".jiralab_vault-%s"
+        self.vault_file = ".jiralab_vault-%s"
         
         self.user = args.user
         self.password = args.password
 
+    def getcred(self):
         # Let's make sure we have the username
         # If no username provided use the user that is running the process 
         if (not self.user):
@@ -49,8 +50,8 @@ class Auth():
             
         # set up some paths to search for the vault file
         pass_vault_path =   [
-                            ("~%s/" % args.user) + (vault_file % self.user),
-                            "./" + (vault_file % self.user),
+                            ("~%s/" % self.user) + (self.vault_file % self.user),
+                            "./" + (self.vault_file % self.user),
                             ]
                            
         # Execute this block if a password was not provided as an argument

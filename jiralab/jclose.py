@@ -27,9 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2012-12-04'
-__updated__ = '2012-12-04'
+__updated__ = '2013-02-2'
 
 
 TESTRUN = 0
@@ -100,7 +100,8 @@ def main(argv=None):  # IGNORE:C0111
             DEBUG = True
         # Get username and password from the token file or if one doesn't
         # exist. Create one.
-        authtoken = jiralab.Auth(args)
+        auth = jiralab.Auth(args)
+        auth.cred()
 
         if not args.issueid:
             sys.stderr.write(program_name + ": please provide issue id\n")

@@ -29,7 +29,7 @@ from argparse import REMAINDER
 __all__ = []
 __version__ = 0.7
 __date__ = '2012-11-04'
-__updated__ = '2012-12-30'
+__updated__ = '2013-01-02'
 
 
 TESTRUN = 0
@@ -97,6 +97,7 @@ def main(argv=None):  # IGNORE:C0111
         # Get username and password from the token file or if one doesn't
         # exist. Create one.
         auth = jiralab.Auth(args)
+        auth.getcred()
 
         if not args.issueid:
             sys.stderr.write(program_name + ": please provide issue id\n")

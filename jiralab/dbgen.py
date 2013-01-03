@@ -18,7 +18,7 @@ from argparse import RawDescriptionHelpFormatter
 __all__ = []
 __version__ = 0.7
 __date__ = '2012-11-15'
-__updated__ = '2012-12-30'
+__updated__ = '2013-01-02'
 
 TESTRUN = 0
 
@@ -96,6 +96,7 @@ def main(argv=None):  # IGNORE:C0111
         envnum = envid[-2:]  # just the number
 
         auth = jiralab.Auth(args)
+        auth.getcred()
 
         # Login to the reg server
         print("Logging into %s" % REGSERVER)

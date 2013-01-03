@@ -26,7 +26,7 @@ from argparse import RawDescriptionHelpFormatter
 __all__ = []
 __version__ = 0.7
 __date__ = '2012-10-28'
-__updated__ = '2012-12-30'
+__updated__ = '2013-01-2'
 
 TESTRUN = 0
 
@@ -82,6 +82,7 @@ def main(argv=None): # IGNORE:C0111
             DEBUG = True
                    
         auth = jiralab.Auth(args)
+        auth.getcred()
         jira_options = { 'server': 'https://jira.stubcorp.dev/' }
         jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
         if DEBUG: 
