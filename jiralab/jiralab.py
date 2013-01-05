@@ -33,7 +33,7 @@ class Auth():
     """
     Gather user name and password information from either a dict (the dict from argparse works fine)
     """
-    def __init__(self,args):
+    def __init__(self, args):
 
         self._salt = "c0ffee31337bea75"
         self.vault_file = ".jiralab_vault-%s"
@@ -43,7 +43,7 @@ class Auth():
 
     def getcred(self):
         # Let's make sure we have the username
-        # If no username provided use the user that is running the process 
+        # If no username provided use the user that is running the process
         if (not self.user):
             user = raw_input("Username [%s]: " % getpass.getuser())
             if not user:
@@ -52,23 +52,24 @@ class Auth():
             self.user = user
 
         # set up some paths to search for the vault file
-        pass_vault_path =   [
-                            ("~%s/" % self.user) + (self.vault_file % self.user),
+        pass_vault_path = [
+                          ("~%s/" % self.user) + (self.vault_file % self.user),
                             "./" + (self.vault_file % self.user),
-                            ]
+                          ]
 
         # Execute this block if a password was not provided as an argument
         if (not self.password):
             # Iterate through a list of the paths, precedence set by position
-            for path in pass_vault_path : 
+            for path in pass_vault_path:
                 if os.path.isfile(path)and os.access(path, os.R_OK):
-                    for line in open(path,'r'):
-                        self.password = aes.decrypt(line.rstrip('\n'),self._salt,AES_BLOCKSIZE)
+                    for line in open(path, 'r'):
+                        self.password = aes.decrypt(line.rstrip('\n'),
+                            self._salt,AES_BLOCKSIZE)
                     return  # username and password set
             # We looked everywhere for the password vault and could not find it, so ask for password
             self.password = getpass.getpass()
 
-        for path in pass_vault_path :
+        for path in pass_vault_path:
             try:
                 pwf = open(path, 'w')
             except IOError:
