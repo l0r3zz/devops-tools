@@ -63,7 +63,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
         parser.add_argument("-q", "--envreq", dest="envreq", default=None, help="environment request issue ID (example: ENV_707" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
-        parser.add_argument("-l", "--logfile", dest="logfile", default="./.emvomatic.log",  help="file to log to" )
+        parser.add_argument("-l", "--logfile", dest="logfile", default="./.envomatic.log",  help="file to log to" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
         parser.add_argument('--skipreimage', action='store_true', dest="skip_reimage", default=False, help="set to skip the re-image operation")
         parser.add_argument('-D', '--debug', dest="debug", action='count', default=0, help="turn on DEBUG additional Ds increase verbosity")
@@ -88,8 +88,8 @@ def main(argv=None): # IGNORE:C0111
             exit(exit_status)
 
         # Start Logging
-        log = mylog.logg('env-o-matic',llevel='WARN',gmt=TRUE,
-                          lfile=args.logfile,cnsl=TRUE)
+        log = mylog.logg('env-o-matic',llevel='INFO',gmt=True,
+                          lfile=args.logfile, cnsl=True)
         log.info('program start : %s' % args)
 
              
@@ -159,10 +159,10 @@ def main(argv=None): # IGNORE:C0111
             rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
             if DEBUG:
                 log.debug ("Rval= %d; \nbefore: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-            print("Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
+            log.info("Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
             
 
-        print("Building Database start @ %s UTC,"
+        log.info("Building Database start @ %s UTC,"
                   " this may take up to 1 hour..." % time.asctime(time.gmtime(time.time())))
         # If -DD turn on debugging for dbgen
         if args.debug > 1:
@@ -170,7 +170,7 @@ def main(argv=None): # IGNORE:C0111
                 (args.user, envid, args.release, auth.user, proproj_result_dict["dbtask"])
         else:
             dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s  |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
-                (auth.user, envid, auth.release, auth.user, proproj_result_dict["dbtask"])
+                (auth.user, envid, args.release, auth.user, proproj_result_dict["dbtask"])
         rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
         if DEBUG:
             log.debug ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
