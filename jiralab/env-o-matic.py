@@ -163,7 +163,7 @@ def main(argv=None): # IGNORE:C0111
             rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; \nbefore: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-            log.info("eom.reimg.sone: Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
+            log.info("eom.reimg.done: Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
             
 
         log.info("eom.dbcreate.start: Building Database start @ %s UTC,"
