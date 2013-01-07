@@ -21,9 +21,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.7
+__version__ = 0.71
 __date__ = '2012-11-20'
-__updated__ = '2013-01-02'
+__updated__ = '2013-01-06'
 
 TESTRUN = 0
 PROFILE = 0
@@ -63,7 +63,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
         parser.add_argument("-q", "--envreq", dest="envreq", default=None, help="environment request issue ID (example: ENV_707" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
-        parser.add_argument("-l", "--logfile", dest="logfile", default="./.envomatic.log",  help="file to log to" )
+        parser.add_argument("-l", "--logfile", dest="logfile", default=None,  help="file to log to (if none, log to console" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
         parser.add_argument('--skipreimage', action='store_true', dest="skip_reimage", default=False, help="set to skip the re-image operation")
         parser.add_argument('-D', '--debug', dest="debug", action='count', default=0, help="turn on DEBUG additional Ds increase verbosity")
@@ -88,9 +88,13 @@ def main(argv=None): # IGNORE:C0111
             exit(exit_status)
 
         # Start Logging
-        log = mylog.logg('env-o-matic',llevel='INFO',gmt=True,
-                          lfile=args.logfile, cnsl=True)
-        log.info('program start : %s' % args)
+        if args.logfile: 
+            log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
+                              lfile=args.logfile, cnsl=False)
+        else:
+            log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
+                              cnsl=True, sh=sys.stdout)            
+        log.info('eom.start: %s' % args)
 
              
         if args.debug:
@@ -107,20 +111,20 @@ def main(argv=None): # IGNORE:C0111
 
 
         # Login to the reg server
-        log.info ("Logging into %s  @ %s UTC" % (REGSERVER, time.asctime(time.gmtime(time.time()))))
+        log.info ("eom.login: Logging into %s  @ %s UTC" % (REGSERVER, time.asctime(time.gmtime(time.time()))))
         reg_session = jiralab.CliHelper(REGSERVER)
         rval = reg_session.login(auth.user,auth.password,prompt="\$[ ]")
         if DEBUG:
-            log.debug ("before: %s\nafter: %s" % (reg_session.before, reg_session.after)) 
+            log.debug ("eom.deb: before: %s\nafter: %s" % (reg_session.before, reg_session.after)) 
 
         
-        log.info ("Becoming relmgt @ %s UTC" % time.asctime(time.gmtime(time.time())))
+        log.info ("eom.relmgt: Becoming relmgt @ %s UTC" % time.asctime(time.gmtime(time.time())))
         rval = reg_session.docmd("sudo -i -u relmgt",[reg_session.session.PROMPT])
         if DEBUG:
-            log.debug ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
 
         # Create a PROPROJ and DB ticket for the ENV
-        log.info ("Creating JIRA issues")
+        log.info ("eom.cjira: Creating JIRA issues")
         # if -DDD turn on debugging for proproj
         if args.release[-2:] == "_1":
             jira_release = args.release[:-2] + "_bugfix"
@@ -130,39 +134,39 @@ def main(argv=None): # IGNORE:C0111
         proproj_cmd =  "proproj -u %s -e %s -r %s " % (auth.user, args.env, jira_release)
         rval = reg_session.docmd(proproj_cmd, ["\{*\}", reg_session.session.PROMPT])
         if DEBUG:
-            log.debug ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
         if rval == 1 :
             PPRESULT = 1
             proproj_result_string = (reg_session.before + reg_session.after).split("\n")
             proproj_result_dict = json.loads(proproj_result_string[PPRESULT])
-            log.info("Ticket Creation Structure:: %s \n" % proproj_result_string[PPRESULT])
+            log.info("eom.tcreat: Ticket Creation Structure:: %s \n" % proproj_result_string[PPRESULT])
         else:
-            log.error("Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
+            log.error("eom.tcreat.err: Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
             exit(2)
         
         # If there is an ENV ticket, link the proproj to it.
         if args.envreq:
-            log.info("Linking propoj:%s to ENV request:%s\n" % (proproj_result_dict["proproj"], args.envreq))
+            log.info("eom.tlink: Linking propoj:%s to ENV request:%s\n" % (proproj_result_dict["proproj"], args.envreq))
             jira_options = { 'server': 'https://jira.stubcorp.dev/' }
             jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
             link = jira.create_issue_link(type="Dependency", inwardIssue=args.envreq,
                                       outwardIssue=proproj_result_dict["proproj"])
 
         if args.skip_reimage:
-            log.info("Skipping the re-image of %s\n" % envid)
+            log.info("eom.noreimg: Skipping the re-image of %s\n" % envid)
         else:        
             # Start re-imaging     
-            log.info("Reimaging %s start @ %s UTC, ...\n" % (envid,
+            log.info("eom.reimg.start: Reimaging %s start @ %s UTC, ...\n" % (envid,
                             time.asctime(time.gmtime(time.time()))))
             reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
                 ( envid_lower, auth.user, proproj_result_dict["proproj"])
             rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
             if DEBUG:
-                log.debug ("Rval= %d; \nbefore: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-            log.info("Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
+                log.debug ("eom.deb: Rval= %d; \nbefore: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            log.info("eom.reimg.sone: Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
             
 
-        log.info("Building Database start @ %s UTC,"
+        log.info("eom.dbcreate.start: Building Database start @ %s UTC,"
                   " this may take up to 1 hour..." % time.asctime(time.gmtime(time.time())))
         # If -DD turn on debugging for dbgen
         if args.debug > 1:
@@ -173,20 +177,20 @@ def main(argv=None): # IGNORE:C0111
                 (auth.user, envid, args.release, auth.user, proproj_result_dict["dbtask"])
         rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
         if DEBUG:
-            log.debug ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-        log.info("Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+        log.info("eom.dbcreate.done: Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
 
-        log.info("Sleeping 5 minutes\n")
+        log.info("eom.sleep5: Sleeping 5 minutes\n")
         time.sleep(300)
 
-        log.info("Performing Automatic Validation of %s \n" % envid)
+        log.info("eom.envval: Performing Automatic Validation of %s \n" % envid)
         env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
             (envnum, auth.user, proproj_result_dict["proproj"])
         rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1800)
         if DEBUG:
-            log.debug ("Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
          
-        log.info("Execution Complete @ %s UTC. Exiting.\n" %  time.asctime(time.gmtime(time.time())))
+        log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %  time.asctime(time.gmtime(time.time())))
         exit(0)
         
     except KeyboardInterrupt:

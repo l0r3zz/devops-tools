@@ -66,16 +66,16 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False, cnsl=None, sh=No
 
     try:
         if lfile :
-           fh = logging.FileHandler(lfile)
-           fh.setFormatter(formatter)
-           log.addHandler(fh)
+            fh = logging.FileHandler(lfile)
+            fh.setFormatter(formatter)
+            log.addHandler(fh)
     except IOError :
         print("Can't open location %s" % fh)
     if cnsl :
         if sh :
-           ch = logging.StreamHandler(sh)
+            ch = logging.StreamHandler(sh)
         else:
-           ch = logging.StreamHandler()
+            ch = logging.StreamHandler()
         ch.setFormatter(formatter)
         log.addHandler(ch)
     return log
