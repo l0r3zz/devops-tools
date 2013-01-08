@@ -21,7 +21,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.71
+__version__ = 0.8
 __date__ = '2012-11-20'
 __updated__ = '2013-01-06'
 
@@ -90,7 +90,7 @@ def main(argv=None): # IGNORE:C0111
         # Start Logging
         if args.logfile: 
             log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
-                              lfile=args.logfile, cnsl=False)
+                              lfile=args.logfile, cnsl=True)
         else:
             log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
                               cnsl=True, sh=sys.stdout)            
@@ -139,24 +139,24 @@ def main(argv=None): # IGNORE:C0111
             PPRESULT = 1
             proproj_result_string = (reg_session.before + reg_session.after).split("\n")
             proproj_result_dict = json.loads(proproj_result_string[PPRESULT])
-            log.info("eom.tcreat: Ticket Creation Structure:: %s \n" % proproj_result_string[PPRESULT])
+            log.info("eom.tcreat: Ticket Creation Structure:: %s" % proproj_result_string[PPRESULT])
         else:
             log.error("eom.tcreat.err: Error in ticket creation: %s%s \nExiting.\n" %(reg_session.before, reg_session.after))
             exit(2)
         
         # If there is an ENV ticket, link the proproj to it.
         if args.envreq:
-            log.info("eom.tlink: Linking propoj:%s to ENV request:%s\n" % (proproj_result_dict["proproj"], args.envreq))
+            log.info("eom.tlink: Linking propoj:%s to ENV request:%s" % (proproj_result_dict["proproj"], args.envreq))
             jira_options = { 'server': 'https://jira.stubcorp.dev/' }
             jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
             link = jira.create_issue_link(type="Dependency", inwardIssue=args.envreq,
                                       outwardIssue=proproj_result_dict["proproj"])
 
         if args.skip_reimage:
-            log.info("eom.noreimg: Skipping the re-image of %s\n" % envid)
+            log.info("eom.noreimg: Skipping the re-image of %s" % envid)
         else:        
             # Start re-imaging     
-            log.info("eom.reimg.start: Reimaging %s start @ %s UTC, ...\n" % (envid,
+            log.info("eom.reimg.start: Reimaging %s start @ %s UTC, ..." % (envid,
                             time.asctime(time.gmtime(time.time()))))
             reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
                 ( envid_lower, auth.user, proproj_result_dict["proproj"])

@@ -8,25 +8,26 @@
 #   limitations under the License.
 
 
-
 """
 Mylog module
-Subclasses standard python logging module and adds some convenience to it's use.
+Subclasses standard python logging module and adds some convenience to it's use
 Like being able to set GMT timestamps
 """
 import sys
 import time
 import logging
 
-def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False, cnsl=None, sh=None):
+
+def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False,
+         cnsl=None, sh=None):
     r"""
     Constructor for logging module
     string:label     set the name of the logging provider
-    string:lfile     pathname of file to log to, default is no logging to a 
+    string:lfile     pathname of file to log to, default is no logging to a
                      file
     string:llevel    string of the loglevel
     string:fmt       custom format string, default will use built-in
-    bool:gmt         set to True to log in the machines vision of GMT time 
+    bool:gmt         set to True to log in the machines vision of GMT time
                      and reflect it in the logs
     bool:cnsl        set to True if you want to log to console
     int:sh           file descriptor for log stream defaults to sys.stderr
@@ -34,7 +35,7 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False, cnsl=None, sh=No
     returns:         a singleton object
     ************************* doctest *************************************
     # when invoking mylog() set sh=sys.stdout this is needed for doctest
-    >>> t = logg("test logger", cnsl=True, sh=sys.stdout) 
+    >>> t = logg("test logger", cnsl=True, sh=sys.stdout)
     >>> print t # doctest: +ELLIPSIS
     <...logging.Logger object at 0x...>
     >>> t.warn("hello world!") #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -43,7 +44,7 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False, cnsl=None, sh=No
     2... ERROR    :test logger [...] should see this
     >>> t.info("should not see this")
     >>> t.debug("0x1337")  # or this
-    >>> 
+    >>>
     ***********************************************************************
     """
 
@@ -53,26 +54,29 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False, cnsl=None, sh=No
     if not isinstance(n_level, int):
         raise ValueError('Invalid log level: %s' % llevel)
     log.setLevel(n_level)
-    if fmt :
+    if fmt:
         formatter = fmt
-    elif gmt :
+    elif gmt:
         formatter = logging.Formatter(
-            '%(asctime)s:Z %(levelname)s: %(name)s:%(lineno)d] %(message)s')
-    else :
+            '%(asctime)s %(levelname)s: %(name)s:[%(process)d] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S +0000')
+    else:
         formatter = logging.Formatter(
-            '%(asctime)s %(levelname)s: %(name)s:%(lineno)d] %(message)s')     
+            '%(asctime)s %(levelname)s: %(name)s:[%(process)d] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S +0000')
     if gmt:
         logging.Formatter.converter = time.gmtime
 
     try:
-        if lfile :
+        if lfile:
             fh = logging.FileHandler(lfile)
             fh.setFormatter(formatter)
             log.addHandler(fh)
-    except IOError :
+    except IOError:
         print("Can't open location %s" % fh)
-    if cnsl :
-        if sh :
+
+    if cnsl:
+        if sh:
             ch = logging.StreamHandler(sh)
         else:
             ch = logging.StreamHandler()
@@ -80,8 +84,9 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False, cnsl=None, sh=No
         log.addHandler(ch)
     return log
 
+
 def printlog(logger, msg, level="WARN"):
-    print( '%s:%s' % (level.upper(), msg))
+    print('%s:%s' % (level.upper(), msg))
     if level.upper() == 'INFO':
         logger.info(msg)
     elif level.upper() == 'WARN' or level.upper() == 'WARNING':
@@ -93,8 +98,9 @@ def printlog(logger, msg, level="WARN"):
     elif level.upper() == 'DEBUG':
         logger.debug(msg)
 
+
 def main():
-    logger = logg("Test Logger",llevel='INFO', cnsl=True,sh=sys.stdout)
+    logger = logg("Test Logger", level='INFO', cnsl=True, sh=sys.stdout)
     logger.info("Hello World")
     logger.warn("Danger Will Robinson")
     logger.critical("Time to Die")
@@ -103,6 +109,6 @@ def main():
 #    doctest.testmod()
 #    return 0
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     main()
     sys.exit(0)
