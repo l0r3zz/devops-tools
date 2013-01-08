@@ -21,9 +21,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.8
+__version__ = 0.88
 __date__ = '2012-11-20'
-__updated__ = '2013-01-06'
+__updated__ = '2013-01-08'
 
 TESTRUN = 0
 PROFILE = 0
@@ -63,7 +63,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-e", "--env", dest="env", help="environment name to provision (example: srwd03" )
         parser.add_argument("-q", "--envreq", dest="envreq", default=None, help="environment request issue ID (example: ENV_707" )
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
-        parser.add_argument("-l", "--logfile", dest="logfile", default=None,  help="file to log to (if none, log to console" )
+        parser.add_argument("-l", "--logfile", dest="logfile", default="/nas/reg/log/jiralab/env-o-matic.log",  help="file to log to (if none, log to console" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
         parser.add_argument('--skipreimage', action='store_true', dest="skip_reimage", default=False, help="set to skip the re-image operation")
         parser.add_argument('-D', '--debug', dest="debug", action='count', default=0, help="turn on DEBUG additional Ds increase verbosity")
