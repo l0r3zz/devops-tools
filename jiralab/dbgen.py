@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.8
+__version__ = 0.9
 __date__ = '2012-11-15'
-__updated__ = '2013-01-20'
+__updated__ = '2013-01-28'
 
 TESTRUN = 0
 
@@ -165,20 +165,32 @@ def main(argv=None):  # IGNORE:C0111
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
         if rval == 1:
-            print("%s%s\nSuccess. Exiting.\n" % (reg_session.before,
+            print("%s%s\nSuccess.\n" % (reg_session.before,
                         reg_session.after))
             sn_search_space = re.search('DBNAME\:[ ]+(?P<sn>D(08|19|16)DE[0-9]{2})', reg_session.before)
             if sn_search_space: # make sure we found something
                 service_name = sn_search_space.group("sn")
                 print("\nDBNAME: %s" % service_name)
+                dbpatch_cmd = "/nas/reg/bin/env_setup_patch/scripts/dbgenpatch %s" % service_name
+                # apply autopatchs if present.
+                print("Dropping back to relmgt")
+                rval = reg_session.docmd("exit", [reg_session.session.PROMPT])
+                if DEBUG:
+                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                reg_session.before, reg_session.after))
+                print("Running DB post patching scripts")
+                rval = reg_session.docmd(dbpatch_cmd,[reg_session.session.PROMPT], timeout=600)
+                if DEBUG:
+                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                reg_session.before, reg_session.after))
+                print("Patching complete")
+            print("Exiting.")
             exit(0)
         else:
             print ("Error occurred: %s%s\n" % (reg_session.before,
                         reg_session.after))
             exit(2)
 
-        print("Execution Complete. Exiting.")
-        exit(0)
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
