@@ -3,7 +3,7 @@
 '''
 dbgen -- Create Delphix based Databases
 @author:     geowhite
-@copyright:  2012 StubHub. All rights reserved.
+@copyright:  2013 StubHub. All rights reserved.
 @license:    Apache License 2.0
 @contact:    geowhite@stubhub.com
 '''
@@ -171,19 +171,27 @@ def main(argv=None):  # IGNORE:C0111
             if sn_search_space: # make sure we found something
                 service_name = sn_search_space.group("sn")
                 print("\nDBNAME: %s" % service_name)
-                dbpatch_cmd = "/nas/reg/bin/env_setup_patch/scripts/dbgenpatch %s" % service_name
-                # apply autopatchs if present.
-                print("Dropping back to relmgt")
-                rval = reg_session.docmd("exit", [reg_session.session.PROMPT])
-                if DEBUG:
-                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                reg_session.before, reg_session.after))
-                print("Running DB post patching scripts")
-                rval = reg_session.docmd(dbpatch_cmd,[reg_session.session.PROMPT], timeout=600)
-                if DEBUG:
-                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                reg_session.before, reg_session.after))
-                print("Patching complete")
+                if args.postpatch:            
+                    dbpatch_cmd = "%s %s" % (args.postpatch,service_name)
+
+                    # apply autopatchs if present.
+                    print("Dropping back to relmgt")
+                    rval = reg_session.docmd("exit", [reg_session.session.PROMPT])
+                    if DEBUG:
+                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+                    print("Dropping back to %s" % REGSERVER)
+                    rval = reg_session.docmd("exit", [reg_session.session.PROMPT])
+                    if DEBUG:
+                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+
+                    print("Running DB post patching scripts")
+                    rval = reg_session.docmd(dbpatch_cmd,[reg_session.session.PROMPT], timeout=600)
+                    if DEBUG:
+                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+                    print("Patching complete")
             print("Exiting.")
             exit(0)
         else:
