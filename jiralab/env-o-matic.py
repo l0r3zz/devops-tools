@@ -23,7 +23,7 @@ from argparse import RawDescriptionHelpFormatter
 __all__ = []
 __version__ = 0.91
 __date__ = '2012-11-20'
-__updated__ = '2013-01-21'
+__updated__ = '2013-01-30'
 
 TESTRUN = 0
 PROFILE = 0
@@ -67,7 +67,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
         parser.add_argument('--skipreimage', action='store_true', dest="skip_reimage", default=False, help="set to skip the re-image operation")
         parser.add_argument('--skipdbgen', action='store_true', dest="skip_dbgen", default=False, help="set to skip the db creation operation")
-        parser.add_argument("--postpatch", dest="postpatch", default=None, help="path to post db create patch script")
+        parser.add_argument("--nopostpatch", dest="nopostpatch", action='store_true', default=False, help="set to DISABLE scanning patch directory")
         parser.add_argument('-D', '--debug', dest="debug", action='count', default=0, help="turn on DEBUG additional Ds increase verbosity")
         
         # Process arguments
@@ -171,13 +171,20 @@ def main(argv=None): # IGNORE:C0111
             log.info("eom.nodbgen: Skipping the db creation of %s" % envid)
         else:        
             log.info("eom.dbcreate.start: Building Database start @ %s UTC," % time.asctime(time.gmtime(time.time())))
-            # If -DD turn on debugging for dbgen
+
             if args.debug > 1:
-                dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s -D |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
-                    (args.user, envid, args.release, auth.user, proproj_result_dict["dbtask"])
+                dbgendb = "-D"
             else:
-                dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s  |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
-                    (auth.user, envid, args.release, auth.user, proproj_result_dict["dbtask"])
+                dbgendb = ""
+
+            if args.nopostpatch:
+                pp_path = ""
+            else:
+                pp_path = '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"'
+
+            dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s %s %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
+                (args.user, envid, args.release, pp_path, dbgendb, auth.user, proproj_result_dict["dbtask"])
+
             rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
