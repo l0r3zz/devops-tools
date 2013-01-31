@@ -17,9 +17,9 @@ import pxssh
 
 
 __all__ = []
-__version__ = 0.5
+__version__ = 0.6
 __date__ = '2012-11-04'
-__updated__ = '2013-01-2'
+__updated__ = '2013-01-30'
 
 AES_BLOCKSIZE = 128
 
