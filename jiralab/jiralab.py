@@ -46,9 +46,8 @@ class Auth():
         # If no username provided use the user that is running the process
         if (not self.user):
             user = raw_input("Username [%s]: " % getpass.getuser())
-            if not user:
+            if user == '':
                 self.user = getpass.getuser()
-                self.user = self.user
             self.user = user
 
         # set up some paths to search for the vault file

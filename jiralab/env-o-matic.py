@@ -90,12 +90,17 @@ def main(argv=None): # IGNORE:C0111
             exit(exit_status)
 
         # Start Logging
-        if args.logfile: 
-            log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
-                              lfile=args.logfile, cnsl=True)
-        else:
-            log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
-                              cnsl=True, sh=sys.stdout)            
+        try: 
+            if args.logfile: 
+                log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
+                                  lfile=args.logfile, cnsl=True)
+            else:
+                log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
+                                  cnsl=True, sh=sys.stdout)
+        except UnboundLocalError: 
+            print("Can't open Log file, check path\n")
+            sys.exit(1)
+                            
         log.info('eom.start: %s' % args)
 
              
@@ -207,14 +212,14 @@ def main(argv=None): # IGNORE:C0111
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-    except Exception, e:
-        if DEBUG or TESTRUN:
-            raise(e)
-        indent = len(program_name) * " "
-        sys.stderr.write(program_name + ": " + str(e) + "\n")
-        log.error(program_name + ": " + str(e) + "\n")
-        sys.stderr.write(indent + "  for help use --help\n")
-        return 2
+#    except Exception, e:
+#        if DEBUG or TESTRUN:
+#            raise(e)
+#        indent = len(program_name) * " "
+#        sys.stderr.write(program_name + ": " + str(e) + "\n")
+#        log.error(program_name + ": " + str(e) + "\n")
+#        sys.stderr.write(indent + "  for help use --help\n")
+#        return 2
 
 if __name__ == "__main__":
 

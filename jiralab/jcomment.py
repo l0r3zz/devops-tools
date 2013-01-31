@@ -27,9 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.7
+__version__ = 0.8
 __date__ = '2012-11-04'
-__updated__ = '2013-01-02'
+__updated__ = '2013-01-30'
 
 
 TESTRUN = 0
