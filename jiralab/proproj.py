@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.7
+__version__ = 0.71
 __date__ = '2012-10-28'
-__updated__ = '2013-01-2'
+__updated__ = '2013-2-14'
 
 TESTRUN = 0
 
@@ -76,7 +76,10 @@ def main(argv=None): # IGNORE:C0111
         if not args.release:
             print("No release specified\n")
             parser.print_help()
-            exit(1)      
+            exit(1)
+        # FIXME: temporary hack to release number settles
+        if args.release == "rb1304":
+            args.release = "ecomm_13.4"      
              
         if args.debug:
             DEBUG = True

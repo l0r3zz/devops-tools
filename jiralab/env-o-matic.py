@@ -21,9 +21,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.92
+__version__ = 0.93
 __date__ = '2012-11-20'
-__updated__ = '2013-01-30'
+__updated__ = '2013-02-14'
 
 TESTRUN = 0
 PROFILE = 0
@@ -133,10 +133,13 @@ def main(argv=None): # IGNORE:C0111
         # Create a PROPROJ and DB ticket for the ENV
         log.info ("eom.cjira: Creating JIRA issues")
         # if -DDD turn on debugging for proproj
-        if args.release[-2:] == "_1":
-            jira_release = args.release[:-2] + "_bugfix"
-        else:
-            jira_release = args.release
+#        if args.release[-2:] == "_1":
+#            jira_release = args.release[:-2] + "_bugfix"
+#        else:
+#            jira_release = args.release
+        # FIX ME  just a quick hack to not break everything tonight
+        if args.release == "rb1304":
+            jira_release = "ecomm_13.4"
 
         proproj_cmd =  "proproj -u %s -e %s -r %s " % (auth.user, args.env, jira_release)
         rval = reg_session.docmd(proproj_cmd, ["\{*\}", reg_session.session.PROMPT])
