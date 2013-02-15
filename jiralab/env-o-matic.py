@@ -21,7 +21,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.94
+__version__ = 0.96
 __date__ = '2012-11-20'
 __updated__ = '2013-02-14'
 
@@ -107,6 +107,7 @@ def main(argv=None): # IGNORE:C0111
              
         if args.debug:
             DEBUG = True
+            log.setlevel("DEBUG")
         else:
             DEBUG = False
             
@@ -142,7 +143,8 @@ def main(argv=None): # IGNORE:C0111
         if args.release == "rb1304":
             jira_release = "ecomm_13.4"
 
-        proproj_cmd =  "proproj -u %s -e %s -r %s " % (auth.user, args.env, jira_release)
+        use_siebel = ("--withsiebel" if args.withsiebel else "")
+        proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, args.env, jira_release, use_siebel)
         rval = reg_session.docmd(proproj_cmd, ["\{*\}", reg_session.session.PROMPT])
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
@@ -186,13 +188,11 @@ def main(argv=None): # IGNORE:C0111
             else:
                 dbgendb = ""
 
-            if args.nopostpatch:
-                pp_path = ""
-            else:
-                pp_path = '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"'
 
-            dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s %s %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
-                (args.user, envid, args.release, pp_path, dbgendb, auth.user, proproj_result_dict["dbtask"])
+            pp_path = ("" if args.nopostpatch else '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
+
+            dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s %s %s %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
+                (args.user, envid, args.release, pp_path, use_siebel, dbgendb, auth.user, proproj_result_dict["dbtask"])
 
             rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
             if DEBUG:

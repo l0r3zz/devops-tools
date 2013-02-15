@@ -24,7 +24,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.71
+__version__ = 0.72
 __date__ = '2012-10-28'
 __updated__ = '2013-2-14'
 
@@ -65,7 +65,10 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-r", "--release", dest="release", help="release ID (example: rb1218" )
         parser.add_argument('-v', '--version', action='version', version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug", action='store_true',help="turn on DEBUG switch")
-        
+        parser.add_argument('-S', '--smoke', dest="smoke", action='store_true',
+                            help="create a smoke test ticket (not implemented)")
+        parser.add_argument("--withsiebel", dest="withsiebel", action='store_true',
+                            default=False, help="set to build a Siebel database along with Delphix")        
         # Process arguments
         if len(sys.argv) == 1:
             parser.print_help()
@@ -94,7 +97,8 @@ def main(argv=None): # IGNORE:C0111
         envid = args.env.upper()
         envnum = envid[-2:] #just the number
         pp_summary = "%s: Configure readiness for code deploy" % envid
-        db_summary = "%s: Create Delphix Database for %s environment" % (envid,args.release)
+        use_siebel = ("/Siebel" if args.withsiebel else "")
+        db_summary = "%s: Create Delphix%s Database for %s environment" % (envid,use_siebel,args.release)
         
         # Create the PROPROJ ticket
         proproj_dict = {
