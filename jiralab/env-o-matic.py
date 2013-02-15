@@ -107,7 +107,7 @@ def main(argv=None): # IGNORE:C0111
              
         if args.debug:
             DEBUG = True
-            log.setlevel("DEBUG")
+            log.setLevel("DEBUG")
         else:
             DEBUG = False
             

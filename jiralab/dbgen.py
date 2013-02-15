@@ -157,7 +157,7 @@ def main(argv=None):  # IGNORE:C0111
         print("Running the auto-provision script")
         
 
-        use_siebel = ("y" if args.withsiebel else "")  
+        use_siebel = ("Y" if args.withsiebel else "")  
   
         auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"\
             % (envnum, args.release,use_siebel)
