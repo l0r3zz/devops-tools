@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.91
+__version__ = 0.94
 __date__ = '2012-11-15'
-__updated__ = '2013-01-30'
+__updated__ = '2013-02-14'
 
 TESTRUN = 0
 
@@ -68,6 +68,9 @@ def main(argv=None):  # IGNORE:C0111
                         help="release ID (example: rb1218")
         parser.add_argument("--postpatch", dest="postpatch", default=None,
                         help="path to post db create patch script")
+        parser.add_argument("--withsiebel", dest="withsiebel", action='store_true',
+                         default=False, 
+                         help="set to build a Siebel database along with Delphix")
         parser.add_argument('-v', '--version', action='version',
                         version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug",
@@ -152,10 +155,16 @@ def main(argv=None):  # IGNORE:C0111
                         reg_session.before, reg_session.after))
 
         print("Running the auto-provision script")
-        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm"\
-            % (envnum, args.release)
+        
+        if args.withsiebel :
+            use_siebel ="Y"
+        else:
+            use_siebel =""
+            
+        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"\
+            % (envnum, args.release,use_siebel)
         rval = reg_session.docmd(auto_provision_cmd,
-                        ["Tokenized", "Error"], timeout=3600)
+                        ["Tokenized", "Error"], timeout=4000)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))

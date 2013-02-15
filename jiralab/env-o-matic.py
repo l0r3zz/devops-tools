@@ -21,7 +21,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.93
+__version__ = 0.94
 __date__ = '2012-11-20'
 __updated__ = '2013-02-14'
 
@@ -68,6 +68,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument('--skipreimage', action='store_true', dest="skip_reimage", default=False, help="set to skip the re-image operation")
         parser.add_argument('--skipdbgen', action='store_true', dest="skip_dbgen", default=False, help="set to skip the db creation operation")
         parser.add_argument("--nopostpatch", dest="nopostpatch", action='store_true', default=False, help="set to DISABLE scanning patch directory")
+        parser.add_argument("--withsiebel", dest="withsiebel", action='store_true', default=False, help="set to build a Siebel database along with Delphix")        
         parser.add_argument('-D', '--debug', dest="debug", action='count', default=0, help="turn on DEBUG additional Ds increase verbosity")
         
         # Process arguments
