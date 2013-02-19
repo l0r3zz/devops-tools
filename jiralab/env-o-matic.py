@@ -4,7 +4,7 @@
 env-o-matic - Basic automation to buildout a virtual environment given an ENVIRONMENT ID
               and ENV request ticket
 @author:     geowhite 
-@copyright:  2012 StubHub. All rights reserved.
+@copyright:  2013 StubHub. All rights reserved.
 @license:    Apache License 2.0
 @contact:    geowhite@stubhub.com    
 '''
@@ -21,12 +21,14 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.96
+__version__ = 0.973
 __date__ = '2012-11-20'
-__updated__ = '2013-02-14'
+__updated__ = '2013-02-18'
 
 TESTRUN = 0
 PROFILE = 0
+DEBUG = 0
+REGSERVER = "srwd00reg010.stubcorp.dev"
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -40,9 +42,6 @@ class CLIError(Exception):
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
-    DEBUG = 0
-    REGSERVER = "srwd00reg010.stubcorp.dev"
-
 
     if argv is None:
         argv = sys.argv
@@ -135,10 +134,7 @@ def main(argv=None): # IGNORE:C0111
         # Create a PROPROJ and DB ticket for the ENV
         log.info ("eom.cjira: Creating JIRA issues")
         # if -DDD turn on debugging for proproj
-#        if args.release[-2:] == "_1":
-#            jira_release = args.release[:-2] + "_bugfix"
-#        else:
-#            jira_release = args.release
+
         # FIX ME  just a quick hack to not break everything tonight
         if args.release == "rb1304":
             jira_release = "ecomm_13.4"
@@ -203,6 +199,13 @@ def main(argv=None): # IGNORE:C0111
             log.info("eom.sleep5: Sleeping 5 minutes")
             time.sleep(300)
 
+        log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
+        reimage_validate_string = 'verify-reimage %s | jcmnt -f -u %s -i %s -t "check this list for re-imaging status"' % \
+            (envid_lower, auth.user, proproj_result_dict["proproj"])
+        rval = reg_session.docmd(reimage_validate_string,[reg_session.session.PROMPT],timeout=300)
+        if DEBUG:
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+         
         log.info("eom.envval: Performing Automatic Validation of %s" % envid)
         env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
             (envnum, auth.user, proproj_result_dict["proproj"])
@@ -216,14 +219,14 @@ def main(argv=None): # IGNORE:C0111
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-#    except Exception, e:
-#        if DEBUG or TESTRUN:
-#            raise(e)
-#        indent = len(program_name) * " "
-#        sys.stderr.write(program_name + ": " + str(e) + "\n")
-#        log.error(program_name + ": " + str(e) + "\n")
-#        sys.stderr.write(indent + "  for help use --help\n")
-#        return 2
+    except Exception, e:
+        if DEBUG or TESTRUN:
+            raise(e)
+        indent = len(program_name) * " "
+        sys.stderr.write(program_name + ": " + str(e) + "\n")
+        log.error(program_name + ": " + str(e) + "\n")
+        sys.stderr.write(indent + "  for help use --help\n")
+        return 2
 
 if __name__ == "__main__":
 
