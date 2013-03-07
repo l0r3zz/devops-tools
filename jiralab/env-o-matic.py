@@ -22,12 +22,11 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.984
+__version__ = 0.985
 __date__ = '2012-11-20'
-__updated__ = '2013-03-06'
+__updated__ = '2013-03-07'
 
 TESTRUN = 0
-PROFILE = 0
 DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
 
@@ -58,7 +57,7 @@ class Job(threading.Thread):
         '''
         #  Call the initializer of the superclass
         threading.Thread.__init__(self)
-        
+
         self.args = args
         self.auth = auth
         self.log = log        
@@ -66,20 +65,23 @@ class Job(threading.Thread):
         self.debug = kwargs.get('debug', False)
         self.ses = kwargs.get('session', None)
         self.pprd = kwargs.get('proproj_result_dict', None)
+        self.name = kwargs.get('name', None)
 
 
         if not self.ses :
             # Login to the reg server
             log.info ("eom.login:(%s) Logging into %s  @ %s UTC" % 
                       (self.name, REGSERVER, time.asctime(time.gmtime(time.time()))))
+            # Create a remote shell object
             self.ses = jiralab.CliHelper(REGSERVER)
             self.ses.login(self.auth.user, self.auth.password,prompt="\$[ ]")
             if self.debug:
                 log.debug ("eom.deb:(%s) before: %s\nafter: %s" %
-                           (self.name, self.session.before, self.session.after)) 
+                           (self.name, self.session.before, self.session.after))
+            # sudo to the relmgt user
             log.info ("eom.relmgt:(%s) Becoming relmgt @ %s UTC" %
                       (self.name, time.asctime(time.gmtime(time.time()))))
-            self.ses.docmd("sudo -i -u relmgt",[self.ses.session.PROMPT])
+            rval = self.ses.docmd("sudo -i -u relmgt",[self.ses.session.PROMPT])
             if self.debug:
                 log.debug ("eom.deb:(%s) Rval= %d; before: %s\nafter: %s" %
                            (self.name, rval, self.ses.before, self.ses.after))
@@ -88,7 +90,7 @@ class EOMreimage(Job):
     def run(self):
             envid = self.args.env.upper()       # insure UPPERCASE environment name
             envid_lower = self.args.env.lower() # insure lowercase environment name
-            envnum = envid[-2:]            #just the number
+            envnum = envid[-2:]                 #just the number
             # Start re-imaging     
             self.log.info("eom.reimg.start:(%s) Reimaging %s start @ %s UTC, ..." % 
                      (self.name, envid, time.asctime(time.gmtime(time.time()))))
@@ -96,7 +98,7 @@ class EOMreimage(Job):
                 ( envid_lower, self.auth.user, self.pprd["proproj"])
             if self.debug:
                 self.log.debug("eom.deb:(%s) Issuing Re-image command: %s" % (self.name, reimage_cmd))
-            self.ses.docmd(reimage_cmd,[self.ses.session.PROMPT],timeout=4800)
+            rval = self.ses.docmd(reimage_cmd,[self.ses.session.PROMPT],timeout=4800)
             if self.debug:
                 self.log.debug ("eom.deb:(%s) Rval= %d; \nbefore: %s\nafter: %s" % (self.name, rval, self.ses.before, self.ses.after))
             self.log.info("eom.sleep5: (%s) Re-image complete, sleeping 5 minutes" % self.name)
@@ -120,7 +122,7 @@ def main(argv=None): # IGNORE:C0111
     program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
     program_log_id = "%s %s (%s)" % (program_name,program_version, program_build_date)
 
-    try:
+    try:  # Catch keyboard interrupts (^C) 
         # Setup argument parser
         parser = ArgumentParser(description=program_shortdesc, formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-u", "--user", dest="user", default=None,help="user to access JIRA")
@@ -230,7 +232,7 @@ def main(argv=None): # IGNORE:C0111
         if args.skip_reimage:
             log.info("eom.noreimg: Skipping the re-image of %s" % envid)
         else:        
-#            # Start re-imaging     
+            # Start re-imaging in a thread   
             reimage_task = EOMreimage(args, auth, log,
                             name="re-image-thread", proproj_result_dict=proproj_result_dict)
             reimage_task.daemon = True
