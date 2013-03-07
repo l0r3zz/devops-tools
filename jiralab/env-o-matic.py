@@ -16,14 +16,15 @@ import jiralab
 import json
 import time
 import mylog
+import threading
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.973
+__version__ = 0.984
 __date__ = '2012-11-20'
-__updated__ = '2013-02-18'
+__updated__ = '2013-03-06'
 
 TESTRUN = 0
 PROFILE = 0
@@ -40,6 +41,70 @@ class CLIError(Exception):
     def __unicode__(self):
         return self.msg
 
+class Job(threading.Thread):
+    '''
+    Inherit this class to create parallelizable tasks, just add run() ;)
+    '''
+    def __init__(self, args, auth, log, **kwargs):
+        '''
+        Initialize the job, set up required values and log into a REG server
+        Required Args:
+            args    - args that eom was invoked with.
+            auth    - the authentication/authorization context to perform the job in.
+            log     - logging object
+        Optional Args:
+            debug   - set to True to print out debugging
+            session - if set, don't perform a login, but use this session context to run the job.
+        '''
+        #  Call the initializer of the superclass
+        threading.Thread.__init__(self)
+        
+        self.args = args
+        self.auth = auth
+        self.log = log        
+        # set some defaults for kwargs not supplied
+        self.debug = kwargs.get('debug', False)
+        self.ses = kwargs.get('session', None)
+        self.pprd = kwargs.get('proproj_result_dict', None)
+
+
+        if not self.ses :
+            # Login to the reg server
+            log.info ("eom.login:(%s) Logging into %s  @ %s UTC" % 
+                      (self.name, REGSERVER, time.asctime(time.gmtime(time.time()))))
+            self.ses = jiralab.CliHelper(REGSERVER)
+            self.ses.login(self.auth.user, self.auth.password,prompt="\$[ ]")
+            if self.debug:
+                log.debug ("eom.deb:(%s) before: %s\nafter: %s" %
+                           (self.name, self.session.before, self.session.after)) 
+            log.info ("eom.relmgt:(%s) Becoming relmgt @ %s UTC" %
+                      (self.name, time.asctime(time.gmtime(time.time()))))
+            self.ses.docmd("sudo -i -u relmgt",[self.ses.session.PROMPT])
+            if self.debug:
+                log.debug ("eom.deb:(%s) Rval= %d; before: %s\nafter: %s" %
+                           (self.name, rval, self.ses.before, self.ses.after))
+                
+class EOMreimage(Job):
+    def run(self):
+            envid = self.args.env.upper()       # insure UPPERCASE environment name
+            envid_lower = self.args.env.lower() # insure lowercase environment name
+            envnum = envid[-2:]            #just the number
+            # Start re-imaging     
+            self.log.info("eom.reimg.start:(%s) Reimaging %s start @ %s UTC, ..." % 
+                     (self.name, envid, time.asctime(time.gmtime(time.time()))))
+            reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
+                ( envid_lower, self.auth.user, self.pprd["proproj"])
+            if self.debug:
+                self.log.debug("eom.deb:(%s) Issuing Re-image command: %s" % (self.name, reimage_cmd))
+            self.ses.docmd(reimage_cmd,[self.ses.session.PROMPT],timeout=4800)
+            if self.debug:
+                self.log.debug ("eom.deb:(%s) Rval= %d; \nbefore: %s\nafter: %s" % (self.name, rval, self.ses.before, self.ses.after))
+            self.log.info("eom.sleep5: (%s) Re-image complete, sleeping 5 minutes" % self.name)
+            time.sleep(300)     
+            self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" % (self.name, time.asctime(time.gmtime(time.time()))))
+   
+
+
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
 
@@ -53,6 +118,7 @@ def main(argv=None): # IGNORE:C0111
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
     program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_log_id = "%s %s (%s)" % (program_name,program_version, program_build_date)
 
     try:
         # Setup argument parser
@@ -101,7 +167,7 @@ def main(argv=None): # IGNORE:C0111
             print("Can't open Log file, check path\n")
             sys.exit(1)
                             
-        log.info('eom.start: %s' % args)
+        log.info('eom.start: %s :: %s' % (program_log_id, args))
 
              
         if args.debug:
@@ -164,15 +230,11 @@ def main(argv=None): # IGNORE:C0111
         if args.skip_reimage:
             log.info("eom.noreimg: Skipping the re-image of %s" % envid)
         else:        
-            # Start re-imaging     
-            log.info("eom.reimg.start: Reimaging %s start @ %s UTC, ..." % (envid,
-                            time.asctime(time.gmtime(time.time()))))
-            reimage_cmd = 'time provision -e %s reimage -v 2>&1 |jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"' % \
-                ( envid_lower, auth.user, proproj_result_dict["proproj"])
-            rval = reg_session.docmd(reimage_cmd,[reg_session.session.PROMPT],timeout=4800)
-            if DEBUG:
-                log.debug ("eom.deb: Rval= %d; \nbefore: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-            log.info("eom.reimg.done: Reimaging done @ %s UTC" % time.asctime(time.gmtime(time.time())))
+#            # Start re-imaging     
+            reimage_task = EOMreimage(args, auth, log,
+                            name="re-image-thread", proproj_result_dict=proproj_result_dict)
+            reimage_task.daemon = True
+            reimage_task.start()
             
         if args.skip_dbgen:
             log.info("eom.nodbgen: Skipping the db creation of %s" % envid)
@@ -196,9 +258,10 @@ def main(argv=None): # IGNORE:C0111
             log.info("eom.dbcreate.done: Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
 
         if not (args.skip_reimage and args.skip_dbgen):
-            log.info("eom.sleep5: Sleeping 5 minutes")
-            time.sleep(300)
+            log.info("eom.rimwait: Waiting for re-image to complete")
+            reimage_task.join() # wait for the re-image to complete if it hasn't
 
+            
         log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
         reimage_validate_string = 'verify-reimage %s | jcmnt -f -u %s -i %s -t "check this list for re-imaging status"' % \
             (envid_lower, auth.user, proproj_result_dict["proproj"])
@@ -212,7 +275,10 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1800)
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-         
+            
+            
+
+        
         log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %  time.asctime(time.gmtime(time.time())))
         exit(0)
         

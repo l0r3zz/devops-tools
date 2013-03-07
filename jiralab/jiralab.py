@@ -3,25 +3,31 @@
 '''
 jiralab -- useful classes and methods to work with JIRA tickets
 @author:     geowhite 
-@copyright:  2012 StubHub. All rights reserved.   
+@copyright:  2013 StubHub. All rights reserved.   
 @license:    Apache License 2.0
 @contact:    geowhite@stubhub.com
 
 '''
 import getpass
-import aes
+import aes 
 import sys
 import os
 import pexpect
 import pxssh
+import logging
+import mylog
+import threading
 
 
 __all__ = []
-__version__ = 0.6
+__version__ = 0.7
 __date__ = '2012-11-04'
-__updated__ = '2013-01-30'
+__updated__ = '2013-03-04'
 
 AES_BLOCKSIZE = 128
+REGSERVER = "srwd00reg010.stubcorp.dev"
+
+log = logging.getLogger('env-o-matic' % __name__)
 
 # Specialized Exceptions
 class JIRALAB_CLI_TypeError(TypeError): pass
@@ -142,3 +148,4 @@ class CliHelper:
             if consumeprompt:
                 self._consume_prompt()
             return rval
+
