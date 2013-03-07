@@ -22,7 +22,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.985
+__version__ = 0.986
 __date__ = '2012-11-20'
 __updated__ = '2013-03-07'
 
@@ -262,14 +262,12 @@ def main(argv=None): # IGNORE:C0111
         if not (args.skip_reimage and args.skip_dbgen):
             log.info("eom.rimwait: Waiting for re-image to complete")
             reimage_task.join() # wait for the re-image to complete if it hasn't
-
-            
-        log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
-        reimage_validate_string = 'verify-reimage %s | jcmnt -f -u %s -i %s -t "check this list for re-imaging status"' % \
-            (envid_lower, auth.user, proproj_result_dict["proproj"])
-        rval = reg_session.docmd(reimage_validate_string,[reg_session.session.PROMPT],timeout=300)
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
+            log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
+            reimage_validate_string = 'verify-reimage %s | jcmnt -f -u %s -i %s -t "check this list for re-imaging status"' % \
+                (envid_lower, auth.user, proproj_result_dict["proproj"])
+            rval = reg_session.docmd(reimage_validate_string,[reg_session.session.PROMPT],timeout=300)
+            if DEBUG:
+                log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
          
         log.info("eom.envval: Performing Automatic Validation of %s" % envid)
         env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
@@ -277,10 +275,7 @@ def main(argv=None): # IGNORE:C0111
         rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1800)
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
-            
-            
-
-        
+               
         log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %  time.asctime(time.gmtime(time.time())))
         exit(0)
         
