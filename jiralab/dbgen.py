@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.95
+__version__ = 0.96
 __date__ = '2012-11-15'
-__updated__ = '2013-02-14'
+__updated__ = '2013-03-08'
 
 TESTRUN = 0
 
@@ -41,6 +41,19 @@ def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
     DEBUG = 0
     REGSERVER = "srwd00reg010.stubcorp.dev"
+    GLOBAL_TNSNAMES = "/nas/home/oracle/DevOps/global_tnsnames/tnsnames.ora"
+    QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.tst"
+    
+    delphix_prefix_dict = {
+                           "srwd00dbs008" : "$<delphix_db_prefix>",
+                           "srwd00dbs016" : "$<delphix_db_prefix_16",
+                           "srwd00dbs019" : "$<delphix_db_prefix_19",
+                           }
+    delphix_host_dict = {
+                            "srwd00dbs008" : "$<delphix_host01>",
+                            "srwd00dbs016" : "$<delphix_host02>",
+                            "srwd00dbs019" : "$<delphix_host03>",
+                         }
     if argv is None:
         argv = sys.argv
     else:
@@ -166,7 +179,11 @@ def main(argv=None):  # IGNORE:C0111
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
-        if rval == 1:
+        if rval != 1:
+            print ("Error occurred: %s%s\n" % (reg_session.before,
+                        reg_session.after))
+            exit(2)
+        else:
             print("%s%s\nSuccess.\n" % (reg_session.before,
                         reg_session.after))
             sn_search_space = re.search(
@@ -200,12 +217,55 @@ def main(argv=None):  # IGNORE:C0111
                         print ("Rval= %d; before: %s\nafter: %s" % (rval,
                                     reg_session.before, reg_session.after))
                     print("Patching complete")
+                    
+                    '''
+                    1) Search the global_tnsnames.ora file for service_name, if not found then ERROR
+                    2) Save the single line Service Name definition.
+                    3) Open /nas/home/oracle/OraHome/network/admin/tnsnames.ora
+                    4) Search for service name, if found then exit, if not, append to file.
+                    5) No need to delete the old service name, it might come in handy if the db is moved at a future date
+                    6) Extract the HOST name from the definition, will need it to map to delphix_prefix and delphix_host variables for tokentable rewrite. 
+                    '''
+                    for line in open(GLOBAL_TNSNAMES,'r'):
+                        dbtnsdef = None
+                        tns_ss = re.search('^%s.+HOST=(?P<hn>.+)\.stubcorp\.dev' % service_name, line)
+                        if tns_ss:
+                            dbtnsdef = line
+                            dbhost = tns_ss.group("hn")
+                            break 
+                    if not dbtnsdef :
+                        print( "error: could not find service name in the global tnsnames file!")
+                        print("Exiting with errors")
+                        exit(2)
+                    else:
+                        tnsorafile = open(QA_TNSNAMES,"r+")
+                        for line in tnsorafile:
+                            if service_name.upper() in line.upper():
+                                print("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
+                                break;
+                        else:
+                            tnsorafile.write(dbtnsdef)
+                            print( "Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
+                        tnsorafile.close()
+                        
+                        tt_update_cmds = [
+                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                          ]
+                        print("Updating the token tables with new values")
+                        for cmd in tt_update_cmds:
+                            rval = reg_session.docmd(cmd,
+                                            [reg_session.session.PROMPT], timeout=300)
+                            print("%s%s\n" % (reg_session.before, reg_session.after))
+                            if DEBUG:
+                                print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                            reg_session.before, reg_session.after))                                                        
+                    
             print("Exiting.")
             exit(0)
-        else:
-            print ("Error occurred: %s%s\n" % (reg_session.before,
-                        reg_session.after))
-            exit(2)
+
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
