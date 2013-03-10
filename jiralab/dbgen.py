@@ -218,51 +218,51 @@ def main(argv=None):  # IGNORE:C0111
                                     reg_session.before, reg_session.after))
                     print("Patching complete")
                     
-                    '''
-                    1) Search the global_tnsnames.ora file for service_name, if not found then ERROR
-                    2) Save the single line Service Name definition.
-                    3) Open /nas/home/oracle/OraHome/network/admin/tnsnames.ora
-                    4) Search for service name, if found then exit, if not, append to file.
-                    5) No need to delete the old service name, it might come in handy if the db is moved at a future date
-                    6) Extract the HOST name from the definition, will need it to map to delphix_prefix and delphix_host variables for tokentable rewrite. 
-                    '''
-                    for line in open(GLOBAL_TNSNAMES,'r'):
-                        dbtnsdef = None
-                        tns_ss = re.search('^%s.+HOST=(?P<hn>.+)\.stubcorp\.dev' % service_name, line)
-                        if tns_ss:
-                            dbtnsdef = line
-                            dbhost = tns_ss.group("hn")
-                            break 
-                    if not dbtnsdef :
-                        print( "error: could not find service name in the global tnsnames file!")
-                        print("Exiting with errors")
-                        exit(2)
+                '''
+                1) Search the global_tnsnames.ora file for service_name, if not found then ERROR
+                2) Save the single line Service Name definition.
+                3) Open /nas/home/oracle/OraHome/network/admin/tnsnames.ora
+                4) Search for service name, if found then exit, if not, append to file.
+                5) No need to delete the old service name, it might come in handy if the db is moved at a future date
+                6) Extract the HOST name from the definition, will need it to map to delphix_prefix and delphix_host variables for tokentable rewrite. 
+                '''
+                for line in open(GLOBAL_TNSNAMES,'r'):
+                    dbtnsdef = None
+                    tns_ss = re.search('^%s.+HOST=(?P<hn>.+)\.stubcorp\.dev' % service_name, line)
+                    if tns_ss:
+                        dbtnsdef = line
+                        dbhost = tns_ss.group("hn")
+                        break 
+                if not dbtnsdef :
+                    print( "error: could not find service name in the global tnsnames file!")
+                    print("Exiting with errors")
+                    exit(2)
+                else:
+                    tnsorafile = open(QA_TNSNAMES,"r+")
+                    for line in tnsorafile:
+                        if service_name.upper() in line.upper():
+                            print("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
+                            break;
                     else:
-                        tnsorafile = open(QA_TNSNAMES,"r+")
-                        for line in tnsorafile:
-                            if service_name.upper() in line.upper():
-                                print("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
-                                break;
-                        else:
-                            tnsorafile.write(dbtnsdef)
-                            print( "Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
-                        tnsorafile.close()
-                        
-                        tt_update_cmds = [
-                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
-                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
-                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
-                                          "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
-                                          ]
-                        print("Updating the token tables with new values")
-                        for cmd in tt_update_cmds:
-                            rval = reg_session.docmd(cmd,
-                                            [reg_session.session.PROMPT], timeout=300)
-                            print("%s%s\n" % (reg_session.before, reg_session.after))
-                            if DEBUG:
-                                print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                            reg_session.before, reg_session.after))                                                        
+                        tnsorafile.write(dbtnsdef)
+                        print( "Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
+                    tnsorafile.close()
                     
+                    tt_update_cmds = [
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                      ]
+                    print("Updating the token tables with new values")
+                    for cmd in tt_update_cmds:
+                        rval = reg_session.docmd(cmd,
+                                        [reg_session.session.PROMPT], timeout=300)
+                        print("%s%s\n" % (reg_session.before, reg_session.after))
+                        if DEBUG:
+                            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                        reg_session.before, reg_session.after))                                                        
+                
             print("Exiting.")
             exit(0)
 
