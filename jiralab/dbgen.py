@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.96
+__version__ = 0.97
 __date__ = '2012-11-15'
-__updated__ = '2013-03-11'
+__updated__ = '2013-03-12'
 
 TESTRUN = 0
 
@@ -168,20 +168,18 @@ def main(argv=None):  # IGNORE:C0111
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
 
-#        print("Running the auto-provision script")
-#
-#
-#        use_siebel = ("Y" if args.withsiebel else "")  
-#
-#        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"\
-#            % (envnum, args.release,use_siebel)
-#        rval = reg_session.docmd(auto_provision_cmd,
-#                        ["ALL DONE!!!", "Error"], timeout=4000)
-#        if DEBUG:
-#            print ("Rval= %d; before: %s\nafter: %s" % (rval,
-#                        reg_session.before, reg_session.after))
-        reg_session.before = "DBNAME: D08DE50\n\nFound Database D08DE50 on srwd00dbs015.stubcorp.dev"  ### FOR TESTING REMOVE !!!!
-        rval = 1      #### FOR TESTING REMOVE !!!
+        print("Running the auto-provision script")
+        use_siebel = ("Y" if args.withsiebel else "")
+
+        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"
+            % (envnum, args.release, use_siebel))
+        rval = reg_session.docmd(auto_provision_cmd,
+                        ["ALL DONE!!!", "Error"], timeout=4000)
+        if DEBUG:
+            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                        reg_session.before, reg_session.after))
+#        reg_session.before = "DBNAME: D08DE50\n\nFound Database D08DE50 on srwd00dbs015.stubcorp.dev"  ### FOR TESTING REMOVE !!!!
+#        rval = 1      #### FOR TESTING REMOVE !!!
         if rval != 1:
             print ("Error occurred: %s%s\n" % (reg_session.before,
                         reg_session.after))
@@ -193,10 +191,10 @@ def main(argv=None):  # IGNORE:C0111
 
             old_db_search_space = re.search(
                                 'Found Database[ ]+(?P<odb>D(08|19|16)DE[0-9]{2})'
-                                        ,reg_session.before)
-            sn_search_space = re.search(
-                                'DBNAME\:[ ]+(?P<sn>D(08|19|16)DE[0-9]{2})'
                                         , reg_session.before)
+            sn_search_space = re.search(
+                                'DBNAME\:[ ]+(?P<sn>D(08|19|16)DE[0-9]{2})',
+                                        reg_session.before)
 
             if sn_search_space:  # make sure we found something
                 service_name = sn_search_space.group("sn")
