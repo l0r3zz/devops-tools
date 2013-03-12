@@ -42,7 +42,7 @@ def main(argv=None):  # IGNORE:C0111
     DEBUG = 0
     REGSERVER = "srwd00reg010.stubcorp.dev"
     GLOBAL_TNSNAMES = "/nas/home/oracle/DevOps/global_tnsnames/tnsnames.ora"
-    QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.tst"
+    QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
     TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
     
     delphix_prefix_dict = {
@@ -169,10 +169,10 @@ def main(argv=None):  # IGNORE:C0111
                         reg_session.before, reg_session.after))
 
 #        print("Running the auto-provision script")
-#        
+#
 #
 #        use_siebel = ("Y" if args.withsiebel else "")  
-#  
+#
 #        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"\
 #            % (envnum, args.release,use_siebel)
 #        rval = reg_session.docmd(auto_provision_cmd,
@@ -193,7 +193,7 @@ def main(argv=None):  # IGNORE:C0111
 
             old_db_search_space = re.search(
                                 'Found Database[ ]+(?P<odb>D(08|19|16)DE[0-9]{2})'
-                                        , reg_session.before)
+                                        ,reg_session.before)
             sn_search_space = re.search(
                                 'DBNAME\:[ ]+(?P<sn>D(08|19|16)DE[0-9]{2})'
                                         , reg_session.before)
@@ -201,7 +201,7 @@ def main(argv=None):  # IGNORE:C0111
             if sn_search_space:  # make sure we found something
                 service_name = sn_search_space.group("sn")
                 print("\nDBNAME: %s" % service_name)
-                
+
                 old_service_name = old_db_search_space.group("odb")
                 print("\nDBNAME: %s" % service_name)
                 print("OLD DBNAME: %s" % old_service_name)
@@ -230,7 +230,7 @@ def main(argv=None):  # IGNORE:C0111
                         print ("Rval= %d; before: %s\nafter: %s" % (rval,
                                     reg_session.before, reg_session.after))
                     print("Patching complete")
-                    
+
                 '''
                 1) Search the global_tnsnames.ora file for service_name, if not found then ERROR
                 2) Save the single line Service Name definition.
@@ -239,28 +239,34 @@ def main(argv=None):  # IGNORE:C0111
                 5) No need to delete the old service name, it might come in handy if the db is moved at a future date
                 6) Extract the HOST name from the definition, will need it to map to delphix_prefix and delphix_host variables for tokentable rewrite. 
                 '''
-                for line in open(GLOBAL_TNSNAMES,'r'):
+                for line in open(GLOBAL_TNSNAMES, 'r'):
                     dbtnsdef = None
                     tns_ss = re.search('^%s.+HOST=(?P<hn>.+)\.stubcorp\.dev' % service_name, line)
                     if tns_ss:
                         dbtnsdef = line
                         dbhost = tns_ss.group("hn")
-                        break 
-                if not dbtnsdef :
+                        break
+                if not dbtnsdef:
                     print( "error: could not find service name in the global tnsnames file!")
                     print("Exiting with errors")
                     exit(2)
 
-                tnsorafile = open(QA_TNSNAMES,"r+")
+                tnsorafile = open(QA_TNSNAMES, "r")
                 for line in tnsorafile:
                     if service_name.upper() in line.upper():
                         print("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
-                        break;
+                        tnsorafile.close()
+                        break
                 else:
-                    tnsorafile.write(dbtnsdef)
-                    print( "Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
-                tnsorafile.close()
-                
+                    print("Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
+                    tnsupdate_cmd = ("echo '%s' | sudo tee -a %s" %
+                        (dbtnsdef, QA_TNSNAMES))
+                    rval = reg_session.docmd(tnsupdate_cmd,
+                                    [reg_session.session.PROMPT], timeout=30)
+                    if DEBUG:
+                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+
                 # extract the environment stanza from the env_based token table file.
                 tt_env_based = open(TT_ENV_BASED_RO, "r").read()
                 stanza_start = "<%s>" % envid.lower()
@@ -271,10 +277,10 @@ def main(argv=None):  # IGNORE:C0111
                 # get the existing db values set for this stanza
                 old_tt_prefix = re.search('db_service_name[ ]+=[ ]+(?P<s1>\$<.+>)',tt_stanza).group('s1')
                 old_tt_host = re.search('db_server_01[ ]+=[ ]+(?P<s2>\$<.+>)', tt_stanza).group('s2')
-                
+
                 # create a bunch of update commands to update the token table
                 # but first guard them from null values
-                if old_tt_prefix and old_tt_host and dbhost :
+                if old_tt_prefix and old_tt_host and dbhost:
                     tt_update_cmds = [
                                       "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_prefix, delphix_prefix_dict[dbhost]),
                                       "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_host, delphix_host_dict[dbhost]),
@@ -294,7 +300,6 @@ def main(argv=None):  # IGNORE:C0111
                            (old_tt_prefix, old_tt_host, dbhost))
             print("Exiting.")
             exit(0)
-
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
