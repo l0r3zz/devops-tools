@@ -19,7 +19,7 @@ from argparse import RawDescriptionHelpFormatter
 __all__ = []
 __version__ = 0.96
 __date__ = '2012-11-15'
-__updated__ = '2013-03-08'
+__updated__ = '2013-03-11'
 
 TESTRUN = 0
 
@@ -43,6 +43,7 @@ def main(argv=None):  # IGNORE:C0111
     REGSERVER = "srwd00reg010.stubcorp.dev"
     GLOBAL_TNSNAMES = "/nas/home/oracle/DevOps/global_tnsnames/tnsnames.ora"
     QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.tst"
+    TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
     
     delphix_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
@@ -167,48 +168,60 @@ def main(argv=None):  # IGNORE:C0111
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
 
-        print("Running the auto-provision script")
-        
-
-        use_siebel = ("Y" if args.withsiebel else "")  
-  
-        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"\
-            % (envnum, args.release,use_siebel)
-        rval = reg_session.docmd(auto_provision_cmd,
-                        ["ALL DONE!!!", "Error"], timeout=4000)
-        if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                        reg_session.before, reg_session.after))
+#        print("Running the auto-provision script")
+#        
+#
+#        use_siebel = ("Y" if args.withsiebel else "")  
+#  
+#        auto_provision_cmd = "/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"\
+#            % (envnum, args.release,use_siebel)
+#        rval = reg_session.docmd(auto_provision_cmd,
+#                        ["ALL DONE!!!", "Error"], timeout=4000)
+#        if DEBUG:
+#            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+#                        reg_session.before, reg_session.after))
+        reg_session.before = "DBNAME: D08DE50\n\nFound Database D08DE50 on srwd00dbs015.stubcorp.dev"  ### FOR TESTING REMOVE !!!!
+        rval = 1      #### FOR TESTING REMOVE !!!
         if rval != 1:
             print ("Error occurred: %s%s\n" % (reg_session.before,
                         reg_session.after))
             exit(2)
+
         else:
             print("%s%s\nSuccess.\n" % (reg_session.before,
                         reg_session.after))
+
+            old_db_search_space = re.search(
+                                'Found Database[ ]+(?P<odb>D(08|19|16)DE[0-9]{2})'
+                                        , reg_session.before)
             sn_search_space = re.search(
                                 'DBNAME\:[ ]+(?P<sn>D(08|19|16)DE[0-9]{2})'
                                         , reg_session.before)
+
             if sn_search_space:  # make sure we found something
                 service_name = sn_search_space.group("sn")
                 print("\nDBNAME: %s" % service_name)
+                
+                old_service_name = old_db_search_space.group("odb")
+                print("\nDBNAME: %s" % service_name)
+                print("OLD DBNAME: %s" % old_service_name)
+
+                print("Dropping back to relmgt")
+                rval = reg_session.docmd("exit",
+                        [reg_session.session.PROMPT])
+                if DEBUG:
+                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                reg_session.before, reg_session.after))
+                print("Dropping back to %s" % REGSERVER)
+                rval = reg_session.docmd("exit",
+                                [reg_session.session.PROMPT])
+                if DEBUG:
+                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                reg_session.before, reg_session.after))
+
                 if args.postpatch:
+                    # apply autopatchs if present
                     dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
-
-                    # apply autopatchs if present.
-                    print("Dropping back to relmgt")
-                    rval = reg_session.docmd("exit",
-                            [reg_session.session.PROMPT])
-                    if DEBUG:
-                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                    reg_session.before, reg_session.after))
-                    print("Dropping back to %s" % REGSERVER)
-                    rval = reg_session.docmd("exit",
-                                    [reg_session.session.PROMPT])
-                    if DEBUG:
-                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                    reg_session.before, reg_session.after))
-
                     print("Running DB post patching scripts")
                     rval = reg_session.docmd(dbpatch_cmd,
                                     [reg_session.session.PROMPT], timeout=600)
@@ -237,32 +250,48 @@ def main(argv=None):  # IGNORE:C0111
                     print( "error: could not find service name in the global tnsnames file!")
                     print("Exiting with errors")
                     exit(2)
+
+                tnsorafile = open(QA_TNSNAMES,"r+")
+                for line in tnsorafile:
+                    if service_name.upper() in line.upper():
+                        print("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
+                        break;
                 else:
-                    tnsorafile = open(QA_TNSNAMES,"r+")
-                    for line in tnsorafile:
-                        if service_name.upper() in line.upper():
-                            print("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
-                            break;
-                    else:
-                        tnsorafile.write(dbtnsdef)
-                        print( "Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
-                    tnsorafile.close()
-                    
+                    tnsorafile.write(dbtnsdef)
+                    print( "Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
+                tnsorafile.close()
+                
+                # extract the environment stanza from the env_based token table file.
+                tt_env_based = open(TT_ENV_BASED_RO, "r").read()
+                stanza_start = "<%s>" % envid.lower()
+                stanza_end = "</%s>" % envid.lower()
+                sstart_index = tt_env_based.index(stanza_start) + len(stanza_start)
+                send_index = tt_env_based.index(stanza_end, sstart_index)
+                tt_stanza = tt_env_based[sstart_index:send_index]
+                # get the existing db values set for this stanza
+                old_tt_prefix = re.search('db_service_name[ ]+=[ ]+(?P<s1>\$<.+>)',tt_stanza).group('s1')
+                old_tt_host = re.search('db_server_01[ ]+=[ ]+(?P<s2>\$<.+>)', tt_stanza).group('s2')
+                
+                # create a bunch of update commands to update the token table
+                # but first guard them from null values
+                if old_tt_prefix and old_tt_host and dbhost :
                     tt_update_cmds = [
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), delphix_prefix_dict[dbhost], delphix_host_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_prefix, delphix_prefix_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_host, delphix_host_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_prefix, delphix_prefix_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_host, delphix_host_dict[dbhost]),
                                       ]
                     print("Updating the token tables with new values")
                     for cmd in tt_update_cmds:
+                        print("Applying Command: %s" % cmd)
                         rval = reg_session.docmd(cmd,
                                         [reg_session.session.PROMPT], timeout=300)
-                        print("%s%s\n" % (reg_session.before, reg_session.after))
                         if DEBUG:
                             print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                        reg_session.before, reg_session.after))                                                        
-                
+                                        reg_session.before, reg_session.after))
+                else:
+                    print( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
+                           (old_tt_prefix, old_tt_host, dbhost))
             print("Exiting.")
             exit(0)
 
