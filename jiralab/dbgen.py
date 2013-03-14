@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.97
+__version__ = 0.98
 __date__ = '2012-11-15'
-__updated__ = '2013-03-12'
+__updated__ = '2013-03-13'
 
 TESTRUN = 0
 
@@ -47,8 +47,8 @@ def main(argv=None):  # IGNORE:C0111
     
     delphix_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
-                           "srwd00dbs016" : "$<delphix_db_prefix_16",
-                           "srwd00dbs019" : "$<delphix_db_prefix_19",
+                           "srwd00dbs016" : "$<delphix_db_prefix_16>",
+                           "srwd00dbs019" : "$<delphix_db_prefix_19>",
                            }
     delphix_host_dict = {
                             "srwd00dbs008" : "$<delphix_host01>",
