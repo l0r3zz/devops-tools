@@ -17,7 +17,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.98
+__version__ = 0.981
 __date__ = '2012-11-15'
 __updated__ = '2013-03-13'
 
@@ -217,18 +217,6 @@ def main(argv=None):  # IGNORE:C0111
                     print ("Rval= %d; before: %s\nafter: %s" % (rval,
                                 reg_session.before, reg_session.after))
 
-                if args.postpatch:
-                    # apply autopatchs if present
-                    dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
-                    print("Running DB post patching scripts")
-                    rval = reg_session.docmd(dbpatch_cmd,
-                                    [reg_session.session.PROMPT], timeout=600)
-                    print("%s%s\n" % (reg_session.before, reg_session.after))
-                    if DEBUG:
-                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                    reg_session.before, reg_session.after))
-                    print("Patching complete")
-
                 '''
                 1) Search the global_tnsnames.ora file for service_name, if not found then ERROR
                 2) Save the single line Service Name definition.
@@ -296,6 +284,19 @@ def main(argv=None):  # IGNORE:C0111
                 else:
                     print( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
                            (old_tt_prefix, old_tt_host, dbhost))
+                    
+                if args.postpatch:
+                    # apply autopatchs if present
+                    dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
+                    print("Running DB post patching scripts")
+                    rval = reg_session.docmd(dbpatch_cmd,
+                                    [reg_session.session.PROMPT], timeout=600)
+                    print("%s%s\n" % (reg_session.before, reg_session.after))
+                    if DEBUG:
+                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+                    print("Patching complete")
+
             print("Exiting.")
             exit(0)
 
