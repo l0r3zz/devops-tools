@@ -22,9 +22,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.986
+__version__ = 0.988
 __date__ = '2012-11-20'
-__updated__ = '2013-03-07'
+__updated__ = '2013-03-15'
 
 TESTRUN = 0
 DEBUG = 0
@@ -204,8 +204,17 @@ def main(argv=None): # IGNORE:C0111
         # if -DDD turn on debugging for proproj
 
         # FIX ME  just a quick hack to not break everything tonight
-        if args.release == "rb1304":
-            jira_release = "ecomm_13.4"
+        jira_dict = {"rb1304" : "ecomm_13.4",
+                     "rb1304.1" : "ecomm_13.4.1",
+                     "rb_ecomm_13_4" : "ecomm_13.4",
+                     "rb_ecomm_13_4_1" : "ecomm_13.4.1",
+                      }
+        if args.release in jira_dict:
+            jira_release = jira_dict[args.release]
+        else:
+            log.error( "eom.relerr: No release named %s" % args.release)
+            exit(2)
+            
 
         use_siebel = ("--withsiebel" if args.withsiebel else "")
         proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, args.env, jira_release, use_siebel)
@@ -259,7 +268,7 @@ def main(argv=None): # IGNORE:C0111
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             log.info("eom.dbcreate.done: Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
 
-        if not (args.skip_reimage and args.skip_dbgen):
+        if not args.skip_reimage:
             log.info("eom.rimwait: Waiting for re-image to complete")
             reimage_task.join() # wait for the re-image to complete if it hasn't
             log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
