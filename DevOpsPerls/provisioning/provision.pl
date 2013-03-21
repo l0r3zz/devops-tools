@@ -136,7 +136,7 @@ sub verifyCobblerEnabled($){
   my $env = shift;
 
   $verbose and logecho "verifyCobblerEnabled: env: $env";
-  my ($status, @output) = sshCmd(1, $puppetServer, "sudo cobbler system list");
+  my ($status, @output) = sshCmd(1, $puppetServer, "sudo cobbler system find --name=$env");
   my $count = 0;
 
   if ( defined $serverList ) {
