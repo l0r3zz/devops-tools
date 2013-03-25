@@ -388,7 +388,7 @@ sub restartPHYS($) {
         resetPHYS($server);
       }
     } else {
-      my ($status, @physicals) = sshCmd(1, $puppetServer, "/nas/reg/bin/jiralab/physicals $env");
+      my ($status, @physicals) = sshCmd(1, $puppetServer, "/nas/reg/bin/physicals $env");
       foreach my $physical = (@physicals) {
       	resetPHYS(chomp($physical));
       }
