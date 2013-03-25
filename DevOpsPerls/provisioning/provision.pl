@@ -290,8 +290,8 @@ sub resetPHYS($) {
 
     logecho "----------------------------------------------------------";
     $server =~ s/\./m1\./
-    my ($status, @resetcmd) = sshCmd(1, $ipmiServer, "ipmitool -H $server -U ADMIN -P ADMIN -I lan chassis bootdev pxe"); 
-    my ($status, @resetcmd) = sshCmd(1, $ipmiServer, "ipmitool -H $server -U ADMIN -P ADMIN -I lan power reset");
+    my ($status, @resetcmd) = sshCmd(1, $ipmiServer, "sudo ipmitool -H $server -U ADMIN -P ADMIN -I lan chassis bootdev pxe"); 
+    my ($status, @resetcmd) = sshCmd(1, $ipmiServer, "sudo ipmitool -H $server -U ADMIN -P ADMIN -I lan power reset");
 
     logecho "----------------------------------------------------------";
 }   # End of resetPHYS
@@ -385,12 +385,14 @@ sub restartPHYS($) {
 
     if ( defined $serverList ) {
       foreach my $server (keys %servers) {
+      	chomp($server);
         resetPHYS($server);
       }
     } else {
       my ($status, @physicals) = sshCmd(1, $puppetServer, "/nas/reg/bin/physicals.sh $env");
       foreach my $physical = (@physicals) {
-      	resetPHYS(chomp($physical));
+      	chomp($physical);
+      	resetPHYS($physical);
       }
       logecho "stop: sleeping 120 seconds";
       sleep 120;
