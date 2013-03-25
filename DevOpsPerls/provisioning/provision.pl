@@ -388,7 +388,7 @@ sub restartPHYS($) {
         resetPHYS($server);
       }
     } else {
-      my ($status, @physicals) = sshCmd(1, $puppetServer, "/nas/reg/bin/physicals $env");
+      my ($status, @physicals) = sshCmd(1, $puppetServer, "/nas/reg/bin/physicals.sh $env");
       foreach my $physical = (@physicals) {
       	resetPHYS(chomp($physical));
       }
@@ -408,10 +408,9 @@ sub reimage_task($){
   systemLog("Reimaging $environment");
   verifyCobblerEnabled($environment);
   setNetBoot("Y");
+
+  restartPHYS($env);
   restartVM($env);
-  if ( $env =~/srwe/){
-  	restartPHYS($env)
-  }
   logecho "reimage: sleeping 2 minutes";
   sleep 120;
   setNetBoot("N");
