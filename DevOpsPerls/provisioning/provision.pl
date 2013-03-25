@@ -53,6 +53,7 @@ my %servers;
 my $help           =  0;
 my $verbose        =  0;
 my $puppetServer   =  "srwd00pup001.stubcorp.dev";
+my $ipmiServer     =  "srwd00mgt001.stubcorp.dev";
 my $sshTimeOut     =  10;
 my %allTasks       = ( dns             => "provision dns",
                        reimage         => "restart the servers",
@@ -275,6 +276,27 @@ sub setNetBoot($){
     }
 }   # End of setNetBoot
 
+########################################################################
+# -----------------------------------------------------------------------
+#
+# resetPHYS
+#
+# -----------------------------------------------------------------------
+sub resetPHYS($) {
+    my $server = shift;
+ 
+
+    $verbose and logecho "resetPHYS: env: $server";
+
+    logecho "----------------------------------------------------------";
+    $server =~ s/\./m1\./
+    my ($status, @resetcmd1) = sshCmd(1, $ipmiServer, "ipmitool -H $server -U ADMIN -P ADMIN -I lan chassis bootdev pxe"); 
+    my ($status, @resetcmd2) = sshCmd(1, $ipmiServer, "ipmitool -H $server -U ADMIN -P ADMIN -I lan power cycle");
+
+    logecho "----------------------------------------------------------";
+}   # End of resetPHYS
+
+########################################################################
 # -----------------------------------------------------------------------
 #
 # stopVM(s)
@@ -325,6 +347,7 @@ sub restartVM($) {
       logecho "stop: sleeping 120 seconds";
       sleep 120;
     } else {
+    	
       stopVM("${env}*");
       logecho "stop: sleeping 120 seconds";
       sleep 120;
@@ -348,6 +371,36 @@ sub restartVM($) {
 }   # End of restartVM
 
 ########################################################################
+# -----------------------------------------------------------------------
+#
+# restartPHYS
+#
+# -----------------------------------------------------------------------
+sub restartPHYS($) {
+    my $env = shift;
+
+    $verbose and logecho "restartPHYS: env: $env";
+
+    logecho "----------------------------------------------------------";
+
+    if ( defined $serverList ) {
+      foreach my $server (keys %servers) {
+        resetPHYS($server);
+      }
+    } else {
+      my ($status, @physicals) = sshCmd(1, $puppetServer, "/nas/reg/bin/jiralab/physicals $env");
+      foreach my $physical = (@physicals) {
+      	resetPHYS(chomp($physical));
+      }
+      logecho "stop: sleeping 120 seconds";
+      sleep 120;
+    }
+
+
+    logecho "----------------------------------------------------------";
+}   # End of restartPHYS
+
+########################################################################
 sub reimage_task($){
 ########################################################################
   my $env = shift;
@@ -356,6 +409,9 @@ sub reimage_task($){
   verifyCobblerEnabled($environment);
   setNetBoot("Y");
   restartVM($env);
+  if ( $env =~/srwe/){
+  	restartPHYS($env)
+  }
   logecho "reimage: sleeping 2 minutes";
   sleep 120;
   setNetBoot("N");
