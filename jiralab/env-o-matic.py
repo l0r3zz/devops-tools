@@ -22,7 +22,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.988
+__version__ = 0.989
 __date__ = '2012-11-20'
 __updated__ = '2013-03-15'
 
@@ -206,8 +206,10 @@ def main(argv=None): # IGNORE:C0111
         # FIX ME  just a quick hack to not break everything tonight
         jira_dict = {"rb1304" : "ecomm_13.4",
                      "rb1304.1" : "ecomm_13.4.1",
+                     "rb1305" : "ecomm_13.5",
                      "rb_ecomm_13_4" : "ecomm_13.4",
                      "rb_ecomm_13_4_1" : "ecomm_13.4.1",
+                     "rb_ecomm_13_5" : "ecomm_13.5",
                       }
         if args.release in jira_dict:
             jira_release = jira_dict[args.release]
