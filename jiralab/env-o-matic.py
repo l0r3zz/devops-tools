@@ -22,13 +22,15 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.989
+__version__ = 0.990
 __date__ = '2012-11-20'
-__updated__ = '2013-03-15'
+__updated__ = '2013-03-26'
 
 TESTRUN = 0
 DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
+REIMAGE_TO = 3600
+DBGEN_TO = 3600
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -98,7 +100,7 @@ class EOMreimage(Job):
                 ( envid_lower, self.auth.user, self.pprd["proproj"])
             if self.debug:
                 self.log.debug("eom.deb:(%s) Issuing Re-image command: %s" % (self.name, reimage_cmd))
-            rval = self.ses.docmd(reimage_cmd,[self.ses.session.PROMPT],timeout=4800)
+            rval = self.ses.docmd(reimage_cmd,[self.ses.session.PROMPT],timeout=REIMAGE_TO)
             if self.debug:
                 self.log.debug ("eom.deb:(%s) Rval= %d; \nbefore: %s\nafter: %s" % (self.name, rval, self.ses.before, self.ses.after))
             self.log.info("eom.sleep5: (%s) Re-image complete, sleeping 5 minutes" % self.name)
@@ -265,7 +267,7 @@ def main(argv=None): # IGNORE:C0111
             dbgen_build_cmd = 'time dbgen -u %s -e %s -r %s %s %s %s |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' % \
                 (args.user, envid, args.release, pp_path, use_siebel, dbgendb, auth.user, proproj_result_dict["dbtask"])
 
-            rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=3600)
+            rval = reg_session.docmd(dbgen_build_cmd,[reg_session.session.PROMPT],timeout=DBGEN_TO)
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
             log.info("eom.dbcreate.done: Database DONE @ %s UTC," % time.asctime(time.gmtime(time.time())))
@@ -281,8 +283,13 @@ def main(argv=None): # IGNORE:C0111
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
          
         log.info("eom.envval: Performing Automatic Validation of %s" % envid)
-        env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
+        if 'srwe' in envid_lower :
+            env_validate_string = 'env-validate -d srwe -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
             (envnum, auth.user, proproj_result_dict["proproj"])
+        else :
+            env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
+            (envnum, auth.user, proproj_result_dict["proproj"])
+                    
         rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1800)
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
