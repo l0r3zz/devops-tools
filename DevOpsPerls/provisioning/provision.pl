@@ -290,8 +290,10 @@ sub resetPHYS($) {
 
     logecho "----------------------------------------------------------";
     $server =~ s/\./m1\./
-    my ($status, @resetcmd) = sshCmd(1, $ipmiServer, "ipmitool -H $server -U ADMIN -P ADMIN -I lan chassis bootdev pxe"); 
+    my ($status, @resetcmd) = sshCmd(1, $ipmiServer, "ipmitool -H $server -U ADMIN -P ADMIN -I lan chassis bootdev pxe");
+    sleep 2; 
     my ($status, @resetcmd) = sshCmd(1, $ipmiServer, "ipmitool -H $server -U ADMIN -P ADMIN -I lan power reset");
+    sleep 10;
 
     logecho "----------------------------------------------------------";
 }   # End of resetPHYS

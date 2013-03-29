@@ -31,6 +31,7 @@ DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
 REIMAGE_TO = 3600
 DBGEN_TO = 3600
+VERIFY_TO = 600
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -278,7 +279,7 @@ def main(argv=None): # IGNORE:C0111
             log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
             reimage_validate_string = 'verify-reimage %s | jcmnt -f -u %s -i %s -t "check this list for re-imaging status"' % \
                 (envid_lower, auth.user, proproj_result_dict["proproj"])
-            rval = reg_session.docmd(reimage_validate_string,[reg_session.session.PROMPT],timeout=300)
+            rval = reg_session.docmd(reimage_validate_string,[reg_session.session.PROMPT],timeout=VERIFY_TO)
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
          
@@ -290,7 +291,7 @@ def main(argv=None): # IGNORE:C0111
             env_validate_string = 'env-validate -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
             (envnum, auth.user, proproj_result_dict["proproj"])
                     
-        rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=1800)
+        rval = reg_session.docmd(env_validate_string,[reg_session.session.PROMPT],timeout=VERIFY_TO)
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
                
