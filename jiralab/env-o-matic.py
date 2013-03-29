@@ -22,9 +22,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.990
+__version__ = 0.992
 __date__ = '2012-11-20'
-__updated__ = '2013-03-26'
+__updated__ = '2013-03-28'
 
 TESTRUN = 0
 DEBUG = 0
@@ -283,7 +283,7 @@ def main(argv=None): # IGNORE:C0111
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval, reg_session.before, reg_session.after))
          
-        log.info("eom.envval: Performing Automatic Validation of %s" % envid)
+        log.info("eom.envval: Performing Automatic Validation of %s" % envid_lower)
         if 'srwe' in envid_lower :
             env_validate_string = 'env-validate -d srwe -e %s 2>&1 | jcmnt -f -u %s -i %s -t "Automatic env-validation"' % \
             (envnum, auth.user, proproj_result_dict["proproj"])
