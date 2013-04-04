@@ -27,9 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.2
+__version__ = 0.3
 __date__ = '2012-12-04'
-__updated__ = '2013-02-2'
+__updated__ = '2013-03-28'
 
 
 TESTRUN = 0
@@ -101,7 +101,7 @@ def main(argv=None):  # IGNORE:C0111
         # Get username and password from the token file or if one doesn't
         # exist. Create one.
         auth = jiralab.Auth(args)
-        auth.cred()
+        auth.getcred()
 
         if not args.issueid:
             sys.stderr.write(program_name + ": please provide issue id\n")
@@ -132,10 +132,22 @@ def main(argv=None):  # IGNORE:C0111
         else:
             comment_text = "%s\n%s" % (" ".join(args.rem), body_text)
 
-        jira_options = {'server': 'https://jira.stubcorp.dev/'}
-        jira = JIRA(jira_options, basic_auth=(args.user, args.password))
-        jira.add_comment(issueid, comment_text)
+        jira_options = {'server': 'https://jira.stubcorp.dev/',
+                        'verify' : False,
+                        }
+        jira = JIRA(jira_options, basic_auth=(auth.user, auth.password))
 
+        issue = jira.issue(issueid)
+        transitions = jira.transitions(issue)
+        print [(t['id'], t['name']) for t in transitions]
+        for t in transitions:
+            if 'Close' in t['name']:
+                break;
+        else:
+            print "No Close Method Found"
+            sys.exit(2)
+        jira.transition_issue(issue, int( t['id']), {'Resolution': 'Resolved'})
+        
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
