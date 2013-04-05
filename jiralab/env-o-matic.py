@@ -15,6 +15,7 @@ from jira.client import JIRA
 import jiralab
 import json
 import time
+from datetime import date
 import mylog
 import threading
 
@@ -22,7 +23,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.993
+__version__ = 0.994
 __date__ = '2012-11-20'
 __updated__ = '2013-04-04'
 
@@ -249,6 +250,7 @@ def main(argv=None): # IGNORE:C0111
             for t in env_transitions:
                 if 'Provisioning' in t['name']:
                     jira.transition_issue(env_issue, int( t['id']), fields={})
+                    env_issue.update(customfield_10761=(date.today().isoformat()))
                     log.info("eom.prvsts: ENVREQ:%s set to Provisioning state" % args.envreq)
                     break;
             else:
