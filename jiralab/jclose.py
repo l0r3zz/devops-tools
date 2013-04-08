@@ -12,7 +12,7 @@ jclose is a CLI based tool that allows you to close a JIRA issue from any
          between two {code} tags.
 
 @author:     geowhite
-@copyright:  2012 StubHub. All rights reserved.
+@copyright:  2013 StubHub. All rights reserved.
 @license:    Apache License 2.0
 @contact:    geowhite@stubhub.com
 '''
@@ -27,9 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.3
-__date__ = '2012-12-04'
-__updated__ = '2013-03-28'
+__version__ = 0.1
+__date__ = '2013-04-05'
+__updated__ = '2013-04-06'
 
 
 TESTRUN = 0
@@ -74,9 +74,9 @@ def main(argv=None):  # IGNORE:C0111
         parser.add_argument("-i", "--issue", dest="issueid",
             default=None, help="JIRA issue ID")
         parser.add_argument("-r", "--resolution", dest="resolution",
-            default=None, help="resolution")
+            default=None, help="resolution (not yet implemented)")
         parser.add_argument("-c", "--rootcause", dest="rootcause",
-            default=None, help="Root Cause code")
+            default=None, help="Root Cause code(not yet implemented)")
         parser.add_argument("-t", "--text", dest="text",
             help='"text" (in quotes) to add to the comment field IN BOLD')
         parser.add_argument("-f", "--file", dest="ifile",
@@ -131,7 +131,6 @@ def main(argv=None):  # IGNORE:C0111
                                               body_text)
         else:
             comment_text = "%s\n%s" % (" ".join(args.rem), body_text)
-
         jira_options = {'server': 'https://jira.stubcorp.dev/',
                         'verify' : False,
                         }
@@ -146,18 +145,32 @@ def main(argv=None):  # IGNORE:C0111
         else:
             print "No Close Method Found"
             sys.exit(2)
-        jira.transition_issue(issue, int( t['id']), {'Resolution': 'Resolved'})
-        
+
+
+        jira.transition_issue(issue, int( t['id']),
+                                                comment=comment_text,
+                                                fields={
+                                                u'resolution':{u'id':u'10'},
+                                                u'customfield_10013':{u'id':u'10621'},
+                                                #u'customfield_10761':{u'id':u'10621'},
+                                                #u'customfield_10013:1':{u'id':u'-1'},
+                                                }
+                                        )
+#$rIssue['resolution']  = 10;
+#$rIssue['customfield_10013']  = 10864;
+#$rIssue['customfield_10013:1']  = 10866;
+#$rIssue['comment']  = $ARGV[1];
+
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-    except Exception, e:
-        if DEBUG or TESTRUN:
-            raise(e)
-        indent = len(program_name) * " "
-        sys.stderr.write(program_name + ": " + str(e) + "\n")
-        sys.stderr.write(indent + "  for help use --help\n")
-        return 2
+#    except Exception, e:
+#        if DEBUG or TESTRUN:
+#            raise(e)
+#        indent = len(program_name) * " "
+#        sys.stderr.write(program_name + ": " + str(e) + "\n")
+#        sys.stderr.write(indent + "  for help use --help\n")
+#        return 2
 
 
 if __name__ == "__main__":
@@ -167,3 +180,4 @@ if __name__ == "__main__":
         doctest.testmod()
 
     sys.exit(main())
+
