@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.72
+__version__ = 0.73
 __date__ = '2012-10-28'
-__updated__ = '2013-2-14'
+__updated__ = '2013-4-07'
 
 TESTRUN = 0
 
@@ -80,25 +80,43 @@ def main(argv=None): # IGNORE:C0111
             print("No release specified\n")
             parser.print_help()
             exit(1)
-        # FIXME: temporary hack to release number settles
-        if args.release == "rb1304":
-            args.release = "ecomm_13.4"      
+        # FIX ME  just a quick hack, this should be done by a mapping function
+        # so that we don't have to continuously track it
+        jira_dict = {
+                     "ecomm_13.5" : "ecomm_13.5",
+                     "ecomm_13.5.1" : "ecomm_13.5.1",
+                     "ecomm_13.6" : "ecomm_13.6",
+                     "rb1304" : "ecomm_13.4",
+                     "rb1304.1" : "ecomm_13.4.1",
+                     "rb1305" : "ecomm_13.5",
+                     "rb1305.1" : "ecomm_13.5.1",
+                     "rb_ecomm_13_4_1" : "ecomm_13.4.1",
+                     "rb_ecomm_13_5" : "ecomm_13.5",
+                     "rb_ecomm_13_5_1" : "ecomm_13.5.1",
+                      }
+        if args.release in jira_dict:
+            jira_release = jira_dict[args.release]
+        else:
+            print( "eom.relerr: No release named %s" % args.release)
+            exit(2)
              
         if args.debug:
             DEBUG = True
                    
         auth = jiralab.Auth(args)
         auth.getcred()
-        jira_options = { 'server': 'https://jira.stubcorp.dev/' }
+        jira_options = {'server': 'https://jira.stubcorp.dev/',
+                        'verify' : False,
+                        }
         jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
         if DEBUG: 
             print( "Creating ticket for Environment: %s with release %s " %\
-               (args.env,args.release))
+               (args.env,jira_release))
         envid = args.env.upper()
         envnum = envid[-2:] #just the number
         pp_summary = "%s: Configure readiness for code deploy" % envid
         use_siebel = ("/Siebel" if args.withsiebel else "")
-        db_summary = "%s: Create Delphix%s Database for %s environment" % (envid,use_siebel,args.release)
+        db_summary = "%s: Create Delphix%s Database for %s environment" % (envid,use_siebel,jira_release)
         
         # Create the PROPROJ ticket
         proproj_dict = {
@@ -109,7 +127,7 @@ def main(argv=None): # IGNORE:C0111
                         'components': [{'name':'decommission'},{'name':'tokenization'}],
                         'summary': pp_summary,
                         'description': pp_summary,
-                        'customfield_10130': {'value': args.release},
+                        'customfield_10130': {'value': jira_release},
                         }       
         new_proproj = jira.create_issue(fields=proproj_dict)
         
@@ -123,7 +141,7 @@ def main(argv=None): # IGNORE:C0111
                         'components': [{'name':'General'}],
                         'summary': db_summary,
                         'description': db_summary,
-                        'customfield_10130': {'value': args.release},
+                        'customfield_10130': {'value': jira_release},
                         }
         new_db = jira.create_issue(fields=db_dict)
         

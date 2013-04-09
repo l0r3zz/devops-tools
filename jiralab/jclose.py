@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/nas/reg/local/bin/python
 # encoding: utf-8
 '''
 jclose -- close JIRA tickets from any command line
@@ -131,6 +131,9 @@ def main(argv=None):  # IGNORE:C0111
                                               body_text)
         else:
             comment_text = "%s\n%s" % (" ".join(args.rem), body_text)
+            if (not args.text) or (not args.rem) or (not body_text):
+                comment_text = "resolved"
+
         jira_options = {'server': 'https://jira.stubcorp.dev/',
                         'verify' : False,
                         }
@@ -138,7 +141,10 @@ def main(argv=None):  # IGNORE:C0111
 
         issue = jira.issue(issueid)
         transitions = jira.transitions(issue)
-        print [(t['id'], t['name']) for t in transitions]
+
+        if DEBUG :
+            print [(t['id'], t['name']) for t in transitions]
+
         for t in transitions:
             if 'Close' in t['name']:
                 break;
@@ -180,4 +186,3 @@ if __name__ == "__main__":
         doctest.testmod()
 
     sys.exit(main())
-

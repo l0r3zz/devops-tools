@@ -27,9 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.8
+__version__ = 0.9
 __date__ = '2012-11-04'
-__updated__ = '2013-01-30'
+__updated__ = '2013-04-07'
 
 
 TESTRUN = 0
@@ -128,7 +128,9 @@ def main(argv=None):  # IGNORE:C0111
         else:
             comment_text = "%s\n%s" % (" ".join(args.rem), body_text)
 
-        jira_options = {'server': 'https://jira.stubcorp.dev/'}
+        jira_options = {'server': 'https://jira.stubcorp.dev/',
+                        'verify' : False,
+                        }
         jira = JIRA(jira_options, basic_auth=(auth.user, auth.password))
         jira.add_comment(issueid, comment_text)
 

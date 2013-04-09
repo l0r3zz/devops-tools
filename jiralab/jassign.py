@@ -23,9 +23,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2013-01-13'
-__updated__ = '2013-01-13'
+__updated__ = '2013-04-07'
 
 TESTRUN = 0
 
@@ -89,7 +89,9 @@ def main(argv=None): # IGNORE:C0111
                    
         auth = jiralab.Auth(args)
         auth.getcred()
-        jira_options = { 'server': 'https://jira.stubcorp.dev/' }
+        jira_options = {'server': 'https://jira.stubcorp.dev/',
+                        'verify' : False,
+                        }
         jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
         if DEBUG: 
             print( "Creating ticket for  %s " % args.text)

@@ -22,9 +22,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.994
+__version__ = 0.995
 __date__ = '2012-11-20'
-__updated__ = '2013-04-04'
+__updated__ = '2013-04-07'
 
 TESTRUN = 0
 DEBUG = 0
@@ -285,7 +285,9 @@ def main(argv=None): # IGNORE:C0111
         if args.envreq:
             log.info("eom.tlink: Linking propoj:%s to ENV request:%s" %\
                      (proproj_result_dict["proproj"], args.envreq))
-            jira_options = { 'server': 'https://jira.stubcorp.dev/' }
+            jira_options = {'server': 'https://jira.stubcorp.dev/',
+                        'verify' : False,
+                        }
             jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
             link = jira.create_issue_link(type="Dependency",
                                     inwardIssue=args.envreq,
