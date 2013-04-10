@@ -16,10 +16,12 @@ import pexpect
 import pxssh
 import logging
 import mylog
+import time
+import threading
 
 
 __all__ = []
-__version__ = 0.81
+__version__ = 0.82
 __date__ = '2012-11-04'
 __updated__ = '2013-04-08'
 
@@ -57,7 +59,57 @@ class Reg():
             self.jira_release = jira_dict[reghandle]
         else:
             raise JIRALAB_CLI_ValueError("No release named %s" % reghandle)
-    
+
+class Job(threading.Thread):
+    '''
+    Inherit this class to create parallelizable tasks, just add run() ;)
+    '''
+    def __init__(self, args, auth, log, **kwargs):
+        '''
+        Initialize the job, set up required values and log into a REG server
+        Required Args:
+            args    - args that eom was invoked with.
+            auth    - the authentication/authorization context to
+                      perform the job in.
+            log     - logging object
+        Optional Args:
+            debug   - set to True to print out debugging
+            session - if set, don't perform a login, but use this session
+                      context to run the job.
+        '''
+        #  Call the initializer of the superclass
+        threading.Thread.__init__(self)
+
+        self.args = args
+        self.auth = auth
+        self.log = log
+        # set some defaults for kwargs not supplied
+        self.debug = kwargs.get('debug', False)
+        self.ses = kwargs.get('session', None)
+        self.pprd = kwargs.get('proproj_result_dict', None)
+        self.name = kwargs.get('name', None)
+
+
+        if not self.ses :
+            # Login to the reg server
+            log.info ("eom.login:(%s) Logging into %s  @ %s UTC" %
+                      (self.name, REGSERVER,
+                       time.asctime(time.gmtime(time.time()))))
+            # Create a remote shell object
+            self.ses = CliHelper(REGSERVER)
+            self.ses.login(self.auth.user, self.auth.password,prompt="\$[ ]")
+            if self.debug:
+                log.debug ("eom.deb:(%s) before: %s\nafter: %s" %
+                           (self.name, self.session.before, self.session.after))
+            # sudo to the relmgt user
+            log.info ("eom.relmgt:(%s) Becoming relmgt @ %s UTC" %
+                      (self.name, time.asctime(time.gmtime(time.time()))))
+            rval = self.ses.docmd("sudo -i -u relmgt",[self.ses.session.PROMPT])
+            if self.debug:
+                log.debug ("eom.deb:(%s) Rval= %d; before: %s\nafter: %s" %
+                           (self.name, rval, self.ses.before, self.ses.after))
+
+
 class Auth():
     """
     Gather user name and password information from either a dict

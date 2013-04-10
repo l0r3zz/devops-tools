@@ -27,9 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2013-04-05'
-__updated__ = '2013-04-06'
+__updated__ = '2013-04-08'
 
 
 TESTRUN = 0
@@ -71,8 +71,6 @@ def main(argv=None):  # IGNORE:C0111
             default=None, help="user to access JIRA")
         parser.add_argument("-p", "--password", dest="password",
             default=None, help="password to access JIRA")
-        parser.add_argument("-i", "--issue", dest="issueid",
-            default=None, help="JIRA issue ID")
         parser.add_argument("-r", "--resolution", dest="resolution",
             default=None, help="resolution (not yet implemented)")
         parser.add_argument("-c", "--rootcause", dest="rootcause",
@@ -87,7 +85,7 @@ def main(argv=None):  # IGNORE:C0111
         parser.add_argument('-D', '--debug', dest="debug",
             action='store_true', help="turn on DEBUG switch")
         parser.add_argument('rem',
-            nargs=REMAINDER, help="rest of the command is the comment")
+            nargs=REMAINDER, help="list of JIRA issues to close")
 
         # Process arguments
         if len(sys.argv) == 1:
@@ -103,12 +101,12 @@ def main(argv=None):  # IGNORE:C0111
         auth = jiralab.Auth(args)
         auth.getcred()
 
-        if not args.issueid:
-            sys.stderr.write(program_name + ": please provide issue id\n")
+        if not args.rem:
+            sys.stderr.write(program_name + ": please provide issue id(s)\n")
             parser.print_usage()
             exit(1)
 
-        issueid = args.issueid.upper()
+        issuelist = args.rem
 
         if DEBUG:
             print("Closing issue: %s" % args.issueid)
@@ -127,11 +125,10 @@ def main(argv=None):  # IGNORE:C0111
             body_text = ""
 
         if args.text:
-            comment_text = "*%s*\n %s\n%s" % (args.text, " ".join(args.rem),
-                                              body_text)
+            comment_text = "*%s*\n%s" % (args.text, body_text)
         else:
-            comment_text = "%s\n%s" % (" ".join(args.rem), body_text)
-            if (not args.text) or (not args.rem) or (not body_text):
+            comment_text = "%s" %  body_text
+            if (not args.text) or (not body_text):
                 comment_text = "resolved"
 
         jira_options = {'server': 'https://jira.stubcorp.dev/',
@@ -139,33 +136,30 @@ def main(argv=None):  # IGNORE:C0111
                         }
         jira = JIRA(jira_options, basic_auth=(auth.user, auth.password))
 
-        issue = jira.issue(issueid)
-        transitions = jira.transitions(issue)
+        exitstatus = 0
+        for issueid in issuelist:
+            issue = jira.issue(issueid)
+            transitions = jira.transitions(issue)
 
-        if DEBUG :
-            print [(t['id'], t['name']) for t in transitions]
-
-        for t in transitions:
-            if 'Close' in t['name']:
-                break;
-        else:
-            print "No Close Method Found"
-            sys.exit(2)
-
-
-        jira.transition_issue(issue, int( t['id']),
-                                                comment=comment_text,
-                                                fields={
-                                                u'resolution':{u'id':u'10'},
-                                                u'customfield_10013':{u'id':u'10621'},
-                                                #u'customfield_10761':{u'id':u'10621'},
-                                                #u'customfield_10013:1':{u'id':u'-1'},
-                                                }
-                                        )
-#$rIssue['resolution']  = 10;
-#$rIssue['customfield_10013']  = 10864;
-#$rIssue['customfield_10013:1']  = 10866;
-#$rIssue['comment']  = $ARGV[1];
+            if DEBUG :
+                print [(t['id'], t['name']) for t in transitions]
+    
+            for t in transitions:
+                if 'Close' in t['name']:
+                    jira.transition_issue(issue, int( t['id']),
+                                        comment=comment_text,
+                                        fields={
+                                        u'resolution':{u'id':u'10'},
+                                        u'customfield_10013':{u'id':u'10621'},
+                                        #u'customfield_10761':{u'id':u'10621'},
+                                        #u'customfield_10013:1':{u'id':u'-1'},
+                                        }
+                                    )
+                    break
+            else:
+                print "No Close Method Found"
+                exitstatus = 1 
+        sys.exit(exitstatus)
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###

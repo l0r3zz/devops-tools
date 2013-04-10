@@ -22,77 +22,17 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.995
+__version__ = 0.996
 __date__ = '2012-11-20'
-__updated__ = '2013-04-07'
+__updated__ = '2013-04-08'
 
-TESTRUN = 0
 DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
 REIMAGE_TO = 3600
 DBGEN_TO = 3600
 VERIFY_TO = 600
 
-class CLIError(Exception):
-    '''Generic exception to raise and log different fatal errors.'''
-    def __init__(self, msg):
-        super(CLIError).__init__(type(self))
-        self.msg = "E: %s" % msg
-    def __str__(self):
-        return self.msg
-    def __unicode__(self):
-        return self.msg
-
-class Job(threading.Thread):
-    '''
-    Inherit this class to create parallelizable tasks, just add run() ;)
-    '''
-    def __init__(self, args, auth, log, **kwargs):
-        '''
-        Initialize the job, set up required values and log into a REG server
-        Required Args:
-            args    - args that eom was invoked with.
-            auth    - the authentication/authorization context to
-                      perform the job in.
-            log     - logging object
-        Optional Args:
-            debug   - set to True to print out debugging
-            session - if set, don't perform a login, but use this session
-                      context to run the job.
-        '''
-        #  Call the initializer of the superclass
-        threading.Thread.__init__(self)
-
-        self.args = args
-        self.auth = auth
-        self.log = log
-        # set some defaults for kwargs not supplied
-        self.debug = kwargs.get('debug', False)
-        self.ses = kwargs.get('session', None)
-        self.pprd = kwargs.get('proproj_result_dict', None)
-        self.name = kwargs.get('name', None)
-
-
-        if not self.ses :
-            # Login to the reg server
-            log.info ("eom.login:(%s) Logging into %s  @ %s UTC" %
-                      (self.name, REGSERVER,
-                       time.asctime(time.gmtime(time.time()))))
-            # Create a remote shell object
-            self.ses = jiralab.CliHelper(REGSERVER)
-            self.ses.login(self.auth.user, self.auth.password,prompt="\$[ ]")
-            if self.debug:
-                log.debug ("eom.deb:(%s) before: %s\nafter: %s" %
-                           (self.name, self.session.before, self.session.after))
-            # sudo to the relmgt user
-            log.info ("eom.relmgt:(%s) Becoming relmgt @ %s UTC" %
-                      (self.name, time.asctime(time.gmtime(time.time()))))
-            rval = self.ses.docmd("sudo -i -u relmgt",[self.ses.session.PROMPT])
-            if self.debug:
-                log.debug ("eom.deb:(%s) Rval= %d; before: %s\nafter: %s" %
-                           (self.name, rval, self.ses.before, self.ses.after))
-
-class EOMreimage(Job):
+class EOMreimage(jiralab.Job):
     def run(self):
             envid = self.args.env.upper()       # insure UPPERCASE env name
             envid_lower = self.args.env.lower() # insure lowercase env name
@@ -205,7 +145,6 @@ def main(argv=None): # IGNORE:C0111
 
         log.info('eom.start: %s :: %s' % (program_log_id, args))
 
-
         if args.debug:
             DEBUG = True
             log.setLevel("DEBUG")
@@ -215,10 +154,8 @@ def main(argv=None): # IGNORE:C0111
         envid = args.env.upper()       # insure UPPERCASE environment name
         envid_lower = args.env.lower() # insure lowercase environment name
         envnum = envid[-2:]            #just the number
-
         auth = jiralab.Auth(args)
         auth.getcred()
-
 
         # Login to the reg server
         log.info ("eom.login: Logging into %s  @ %s UTC" %\
@@ -228,8 +165,6 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             log.debug ("eom.deb: before: %s\nafter: %s" % (reg_session.before,
                                                            reg_session.after))
-
-
         log.info ("eom.relmgt: Becoming relmgt @ %s UTC" %\
                   time.asctime(time.gmtime(time.time())))
         rval = reg_session.docmd("sudo -i -u relmgt",
@@ -240,24 +175,12 @@ def main(argv=None): # IGNORE:C0111
 
         # Create a PROPROJ and DB ticket for the ENV
         log.info ("eom.cjira: Creating JIRA issues")
-        # if -DDD turn on debugging for proproj
-
-        # FIX ME  just a quick hack, this should be done by a mapping function
-        # so that we don't have to continuously track it
-        jira_dict = {"rb1304" : "ecomm_13.4",
-                     "rb1304.1" : "ecomm_13.4.1",
-                     "rb1305" : "ecomm_13.5",
-                     "rb1305.1" : "ecomm_13.5.1",
-                     "rb_ecomm_13_4_1" : "ecomm_13.4.1",
-                     "rb_ecomm_13_5" : "ecomm_13.5",
-                     "rb_ecomm_13_5_1" : "ecomm_13.5.1",
-                      }
-        if args.release in jira_dict:
-            jira_release = jira_dict[args.release]
-        else:
-            log.error( "eom.relerr: No release named %s" % args.release)
+        try:
+            jreg = jiralab.Reg(args.release) # get reg build mapping for JIRA
+            jira_release = jreg.jira_release
+        except jiralab.JIRALAB_CLI_ValueError :
+            print( "eom.relerr: No release named %s" % args.release)
             exit(2)
-
 
         use_siebel = ("--withsiebel" if args.withsiebel else "")
         proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, args.env,
@@ -375,7 +298,6 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))
-
         log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
                  time.asctime(time.gmtime(time.time())))
         exit(0)
@@ -393,9 +315,4 @@ def main(argv=None): # IGNORE:C0111
 #        return 2
 
 if __name__ == "__main__":
-
-    if TESTRUN:
-        import doctest
-        doctest.testmod()
-
     sys.exit(main())
