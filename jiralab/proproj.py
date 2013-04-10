@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.73
+__version__ = 0.74
 __date__ = '2012-10-28'
-__updated__ = '2013-4-07'
+__updated__ = '2013-4-08'
 
 TESTRUN = 0
 
@@ -80,23 +80,11 @@ def main(argv=None): # IGNORE:C0111
             print("No release specified\n")
             parser.print_help()
             exit(1)
-        # FIX ME  just a quick hack, this should be done by a mapping function
-        # so that we don't have to continuously track it
-        jira_dict = {
-                     "ecomm_13.5" : "ecomm_13.5",
-                     "ecomm_13.5.1" : "ecomm_13.5.1",
-                     "ecomm_13.6" : "ecomm_13.6",
-                     "rb1304" : "ecomm_13.4",
-                     "rb1304.1" : "ecomm_13.4.1",
-                     "rb1305" : "ecomm_13.5",
-                     "rb1305.1" : "ecomm_13.5.1",
-                     "rb_ecomm_13_4_1" : "ecomm_13.4.1",
-                     "rb_ecomm_13_5" : "ecomm_13.5",
-                     "rb_ecomm_13_5_1" : "ecomm_13.5.1",
-                      }
-        if args.release in jira_dict:
-            jira_release = jira_dict[args.release]
-        else:
+
+        try:
+            jreg = jiralab.Reg(args.release)
+            jira_release = jreg.jira_release
+        except jiralab.JIRALAB_CLI_ValueError :
             print( "eom.relerr: No release named %s" % args.release)
             exit(2)
              

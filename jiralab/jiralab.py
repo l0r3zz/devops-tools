@@ -16,28 +16,52 @@ import pexpect
 import pxssh
 import logging
 import mylog
-import threading
 
 
 __all__ = []
-__version__ = 0.7
+__version__ = 0.81
 __date__ = '2012-11-04'
-__updated__ = '2013-03-04'
+__updated__ = '2013-04-08'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
 
-log = logging.getLogger('env-o-matic' % __name__)
+log = logging.getLogger('env-o-matic (%s)' % __name__)
 
 # Specialized Exceptions
 class JIRALAB_CLI_TypeError(TypeError): pass
 class JIRALAB_CLI_ValueError(ValueError): pass
 class JIRALAB_AUTH_ValueError(ValueError): pass
 
+class Reg():
+    """
+    Class to handle release and build label translations
+    """
 
+    def __init__(self, reghandle):
+        # FIX ME  just a quick hack, this should be done by a mapping function
+        # so that we don't have to continuously track it
+        jira_dict = {
+                     "ecomm_13.5" : "ecomm_13.5",
+                     "ecomm_13.5.1" : "ecomm_13.5.1",
+                     "ecomm_13.6" : "ecomm_13.6",
+                     "rb1305" : "ecomm_13.5",
+                     "rb1305.1" : "ecomm_13.5.1",
+                     "rb_ecomm_13_5" : "ecomm_13.5",
+                     "rb_ecomm_13_5_1" : "ecomm_13.5.1",
+                     "rb_ecomm_13_6" : "ecomm_13_6",
+                      }
+
+        self.reghandle = reghandle
+        if reghandle in jira_dict:
+            self.jira_release = jira_dict[reghandle]
+        else:
+            raise JIRALAB_CLI_ValueError("No release named %s" % reghandle)
+    
 class Auth():
     """
-    Gather user name and password information from either a dict (the dict from argparse works fine)
+    Gather user name and password information from either a dict
+    (the dict from argparse works fine)
     """
     def __init__(self, args):
 
@@ -65,16 +89,19 @@ class Auth():
         # Execute this block if a password was not provided as an argument
         if (not self.password):
             # Iterate through a list of the paths, precedence set by position
-            for path in pass_vault_path:
+            for p in pass_vault_path:
+                path = os.path.expanduser(p)
                 if os.path.isfile(path)and os.access(path, os.R_OK):
                     for line in open(path, 'r'):
                         self.password = aes.decrypt(line.rstrip('\n'),
                             self._salt,AES_BLOCKSIZE)
                     return  # username and password set
-            # We looked everywhere for the password vault and could not find it, so ask for password
+            # We looked everywhere for the password vault and could not find it,
+            # so ask for password
             self.password = getpass.getpass()
 
-        for path in pass_vault_path:
+        for p in pass_vault_path:
+            path = os.path.expanduser(p)
             try:
                 pwf = open(path, 'w')
             except IOError:
@@ -130,7 +157,8 @@ class CliHelper:
         self.PROMPT = self.session.PROMPT = prompt
         return rval
 
-    def docmd(self, cmd, match, notimeout=False, consumeprompt=True, timeout=30):
+    def docmd(self, 
+              cmd, match, notimeout=False, consumeprompt=True, timeout=30):
             search_list = match
 
             if not len(match):
