@@ -17,25 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.981
+__version__ = 0.982
 __date__ = '2012-11-15'
-__updated__ = '2013-03-13'
-
-TESTRUN = 0
-
-
-class CLIError(Exception):
-    '''Generic exception to raise and log different fatal errors.'''
-    def __init__(self, msg):
-        super(CLIError).__init__(type(self))
-        self.msg = "E: %s" % msg
-
-    def __str__(self):
-        return self.msg
-
-    def __unicode__(self):
-        return self.msg
-
+__updated__ = '2013-04-11'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -178,8 +162,7 @@ def main(argv=None):  # IGNORE:C0111
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
-#        reg_session.before = "DBNAME: D08DE50\n\nFound Database D08DE50 on srwd00dbs015.stubcorp.dev"  ### FOR TESTING REMOVE !!!!
-#        rval = 1      #### FOR TESTING REMOVE !!!
+
         if rval != 1:
             print ("Error occurred: %s%s\n" % (reg_session.before,
                         reg_session.after))
@@ -305,7 +288,7 @@ def main(argv=None):  # IGNORE:C0111
         return 0
 
     except Exception, e:
-        if DEBUG or TESTRUN:
+        if DEBUG:
             raise(e)
         indent = len(program_name) * " "
         sys.stderr.write(program_name + ": " + str(e) + "\n")
@@ -314,9 +297,5 @@ def main(argv=None):  # IGNORE:C0111
 
 
 if __name__ == "__main__":
-
-    if TESTRUN:
-        import doctest
-        doctest.testmod()
 
     sys.exit(main())

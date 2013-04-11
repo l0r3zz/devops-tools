@@ -27,25 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.9
+__version__ = 0.91
 __date__ = '2012-11-04'
-__updated__ = '2013-04-07'
-
-
-TESTRUN = 0
-
-
-class CLIError(Exception):
-    '''Generic exception to raise and log different fatal errors.'''
-    def __init__(self, msg):
-        super(CLIError).__init__(type(self))
-        self.msg = "E: %s" % msg
-
-    def __str__(self):
-        return self.msg
-
-    def __unicode__(self):
-        return self.msg
+__updated__ = '2013-04-11'
 
 
 def main(argv=None):  # IGNORE:C0111
@@ -138,7 +122,7 @@ def main(argv=None):  # IGNORE:C0111
         ### handle keyboard interrupt ###
         return 0
     except Exception, e:
-        if DEBUG or TESTRUN:
+        if DEBUG:
             raise(e)
         indent = len(program_name) * " "
         sys.stderr.write(program_name + ": " + str(e) + "\n")
@@ -147,9 +131,4 @@ def main(argv=None):  # IGNORE:C0111
 
 
 if __name__ == "__main__":
-
-    if TESTRUN:
-        import doctest
-        doctest.testmod()
-
     sys.exit(main())

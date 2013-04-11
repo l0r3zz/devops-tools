@@ -22,7 +22,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.996
+__version__ = 0.9971
 __date__ = '2012-11-20'
 __updated__ = '2013-04-08'
 
@@ -91,11 +91,28 @@ def main(argv=None): # IGNORE:C0111
                         help="environment request issue ID (example: ENV_707" )
         parser.add_argument("-r", "--release", dest="release",
                             help="release ID (example: rb1218" )
+        parser.add_argument("-b", "--build_label", dest="build_label",
+                            help="build label to deploy, ex. --build_label=rb_ecomm_13_5-186593.209")
+        parser.add_argument("-R", "--restart", dest="restart_issue",
+                            help="ENV or PROPROJ issue to restart from, ")
         parser.add_argument("-l", "--logfile", dest="logfile",
                             default="/nas/reg/log/jiralab/env-o-matic.log",
-                            help="file to log to (if none, log to console" )
-        parser.add_argument('-v', '--version', action='version',
-                            version=program_version_message)
+                            help="file to log to (if none, log to console)" )
+        parser.add_argument("-c", "--config", dest="eom_ini_file",
+                            default=None, help="load a specific .eom.ini file")
+        parser.add_argument("-P", "--profile", dest="eom_profile",
+                            help="specify a label present in the .eom.ini file to load options from")
+        parser.add_argument("-d", "--deploy", dest="deploy_type",
+                            help="Deploy full | properties | java   can be used more than once ex. -d java -d properties")
+        parser.add_argument('--content_refresh', action='store_true',
+                            dest="content_refresh", default=False,
+                            help="assert to perform content refresh during deploy")
+        parser.add_argument('--ignorewarning', action='store_true',
+                            dest="ignore_warning", default=False,
+                            help="continue with deploy, even with env-validate warnings. note: sudo/ssh warnings will not be ignored")
+        parser.add_argument('--ignoreini', action='store_true',
+                            dest="ignore_ini", default=False,
+                            help="ignore any .eom.ini file present")
         parser.add_argument('--skipreimage', action='store_true',
                             dest="skip_reimage", default=False,
                             help="set to skip the re-image operation")
@@ -111,7 +128,8 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument('-D', '--debug', dest="debug", action='count',
                             default=0,
                         help="turn on DEBUG additional Ds increase verbosity")
-
+        parser.add_argument('-v', '--version', action='version',
+                            version=program_version_message)
         # Process arguments
         if len(sys.argv) == 1:
             parser.print_help()
