@@ -25,6 +25,7 @@ REGSERVER = "srwd00reg010.stubcorp.dev"
 REIMAGE_TO = 3600
 DBGEN_TO = 3600
 VERIFY_TO = 600
+CMD_TO = 120
 
 class EOMreimage(jiralab.Job):
     '''
@@ -265,12 +266,17 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         log.info("eom.envval: Performing Automatic Validation of %s" %\
                  envid_lower)
+        # Set up the env_validate commands so that they write to the
+        # tty as well as pipe to the jcomment utility.  We'll use the tty
+        # output to determine whether to continue with app deploy.
         if 'srwe' in envid_lower :
             env_validate_string = ('env-validate -d srwe -e %s 2>&1'
+            '| tee /dev/tty'
             ' | jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
             (envnum, auth.user, proproj_result_dict["proproj"])
         else :
             env_validate_string = ('env-validate -e %s 2>&1 '
+            '| tee /dev/tty'
             '| jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
             (envnum, auth.user, proproj_result_dict["proproj"])
 
@@ -279,7 +285,57 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))
-            
+        #######################################################################
+        # Check the results of env-validate to see if we can proceed
+        #######################################################################
+        # regex's to look for PASS or if not PASS make sure that the failures
+        # are not because of ssh or sudo failures
+        rgx_envPASS = "env-validate\[[0-9]*\] results: PASS"
+        rgx_envsudoFAIL = "env-validate\[[0-9]*\] PRIORITY=WARNING .+sudo test"
+        rgx_envsshFAIL = "env-validate\[[0-9]*\] PRIORITY=WARNING .+ssh test"
+        
+        if not re.search(rgx_envPASS,reg_session.before):
+            # validation didn't pass, see if we want ti ignore it
+            if args.ignorewarnings and (
+                not re.search(rgx_envsudoFAIL, reg_session.before)) and (
+                not re.search(rgx_envsshFAIL, reg_session.before)):
+                log.warn("eom.prvwarn: Warnings present, proceeding anyway")
+                continue
+            else:
+                log.info("eom.prvext Provision step had unrecoverable warnings"
+                         " @ %s UTC. Exiting.\n" %\
+                         time.asctime(time.gmtime(time.time())))
+                exit(1)
+        #######################################################################
+        # Run the pre deploy script
+        #######################################################################
+        if not args.noprepatch:
+            envpatch_cmd = "/nas/reg/bin/env_setup_patch/scripts/envpatch %s" %\
+                envid_lower
+            log.info ("eom.predeploy: Running predeploy script: %s" % 
+                      envpatch_cmd)
+            rval = reg_session.docmd(envpatch_cmd,
+                                [reg_session.session.PROMPT], timeout=CMD_TO)
+            if DEBUG:
+                log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                           (rval, reg_session.before, reg_session.after))
+        #######################################################################
+        # get deploy options and run eom-rabbit-deploy 
+        #######################################################################
+        cr = "--content_refresh" if args.content_refresh else "" 
+        r = args.release
+        bl = args.build_label
+        deploy_opts = " ".join(["--" + x  for x in args.deploy])
+        eom_rabbit_deploy_cmd = (
+        "eom-rabbit-deploy --env %s --branch %s --build-label %s %s" %
+        (envid_lower,r,bl,deploy_opts))
+        rval = reg_session.docmd(eom_rabbit_deploy_cmd,
+                            [reg_session.session.PROMPT], timeout=CMD_TO)
+        if DEBUG:
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                       (rval, reg_session.before, reg_session.after))
+        log.info("eom.appstrt: Starting App deploy of %s:%s" % 
+                 (bl,reg_session.before))
         #######################################################################
         #                         EXECUTION COMPLETE
         #######################################################################
