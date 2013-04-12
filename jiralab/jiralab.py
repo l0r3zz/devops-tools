@@ -21,9 +21,9 @@ import threading
 
 
 __all__ = []
-__version__ = 0.82
+__version__ = 0.83
 __date__ = '2012-11-04'
-__updated__ = '2013-04-08'
+__updated__ = '2013-04-11'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -88,6 +88,7 @@ class Job(threading.Thread):
         self.ses = kwargs.get('session', None)
         self.pprd = kwargs.get('proproj_result_dict', None)
         self.name = kwargs.get('name', None)
+        self.use_siebel = kwargs.get('use_siebel', None)
 
 
         if not self.ses :

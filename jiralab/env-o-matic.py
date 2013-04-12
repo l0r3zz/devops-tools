@@ -1,3 +1,4 @@
+#!/nas/reg/local/bin/python
 # encoding: utf-8
 '''
 env-o-matic - Basic automation to buildout a virtual environment
@@ -17,14 +18,7 @@ import time
 from datetime import date
 import mylog
 import threading
-
-from argparse import ArgumentParser
-from argparse import RawDescriptionHelpFormatter
-
-__all__ = []
-__version__ = 0.9971
-__date__ = '2012-11-20'
-__updated__ = '2013-04-08'
+from eom_init import eom_startup
 
 DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -33,6 +27,12 @@ DBGEN_TO = 3600
 VERIFY_TO = 600
 
 class EOMreimage(jiralab.Job):
+    '''
+    This class is a container for the re-imaging task, it inherits from 
+    jiralab.Job so it can be scheduled as a thread, the overlayed run() 
+    method does the actual work as the super class has created a ssh session
+    on a reg server to be used
+    '''
     def run(self):
             envid = self.args.env.upper()       # insure UPPERCASE env name
             envid_lower = self.args.env.lower() # insure lowercase env name
@@ -57,87 +57,51 @@ class EOMreimage(jiralab.Job):
             self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
                           (self.name, time.asctime(time.gmtime(time.time()))))
 
+class EOMdbgen(jiralab.Job):
+    '''
+    This class is a container for the database generation task, it inherits from 
+    jiralab.Job so it can be scheduled as a thread, the overlayed run() 
+    method does the actual work as the super class has created a ssh session
+    on a reg server to be used
+    '''
+    def run(self):
+            reg_session = self.ses
+            envid = self.args.env.upper()       # insure UPPERCASE env name
+            envid_lower = self.args.env.lower() # insure lowercase env name
+            envnum = envid[-2:]                 #just the number
+            self.log.info(
+                    "eom.dbcreate.start: Building Database start @ %s UTC," %\
+                     time.asctime(time.gmtime(time.time())))
 
+            if self.args.debug > 1:
+                dbgendb = "-D"
+            else:
+                dbgendb = ""
+
+
+            pp_path = ("" if self.args.nopostpatch else\
+               '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
+
+            dbgen_build_cmd = ('time dbgen -u %s -e %s -r %s %s %s %s'
+            ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"') % \
+                (self.auth.user, envid, self.args.release, pp_path, self.use_siebel, dbgendb,
+                 self.auth.user, self.pprd["dbtask"])
+
+            rval = reg_session.docmd(dbgen_build_cmd,
+                                [reg_session.session.PROMPT],timeout=DBGEN_TO)
+            if DEBUG:
+                self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                           (rval, reg_session.before, reg_session.after))
+            self.log.info("eom.dbcreate.done: Database DONE @ %s UTC," %\
+                     time.asctime(time.gmtime(time.time())))
 
 def main(argv=None): # IGNORE:C0111
-    '''Command line options.'''
-
-    if argv is None:
-        argv = sys.argv
-    else:
-        sys.argv.extend(argv)
-
-    program_name = os.path.basename(sys.argv[0])
-    program_version = "v%s" % __version__
-    program_build_date = str(__updated__)
-    program_version_message = '%%(prog)s %s (%s)' % (program_version,
-                                                     program_build_date)
-    program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
-    program_log_id = "%s %s (%s)" % (program_name,program_version,
-                                     program_build_date)
 
     try:  # Catch keyboard interrupts (^C)
-        # Setup argument parser
-        parser = ArgumentParser(description=program_shortdesc,
-                                formatter_class=RawDescriptionHelpFormatter)
-        parser.add_argument("-u", "--user", dest="user",
-                            default=None,help="user to access JIRA")
-        parser.add_argument("-p", "--password", dest="password",
-                            default=None,help="password to access JIRA")
-        parser.add_argument("-e", "--env", dest="env",
-                        help="environment name to provision (example: srwd03" )
-        parser.add_argument("-q", "--envreq",
-                            dest="envreq", default=None,
-                        help="environment request issue ID (example: ENV_707" )
-        parser.add_argument("-r", "--release", dest="release",
-                            help="release ID (example: rb1218" )
-        parser.add_argument("-b", "--build_label", dest="build_label",
-                            help="build label to deploy, ex. --build_label=rb_ecomm_13_5-186593.209")
-        parser.add_argument("-R", "--restart", dest="restart_issue",
-                            help="ENV or PROPROJ issue to restart from, ")
-        parser.add_argument("-l", "--logfile", dest="logfile",
-                            default="/nas/reg/log/jiralab/env-o-matic.log",
-                            help="file to log to (if none, log to console)" )
-        parser.add_argument("-c", "--config", dest="eom_ini_file",
-                            default=None, help="load a specific .eom.ini file")
-        parser.add_argument("-P", "--profile", dest="eom_profile",
-                            help="specify a label present in the .eom.ini file to load options from")
-        parser.add_argument("-d", "--deploy", dest="deploy_type",
-                            help="Deploy full | properties | java   can be used more than once ex. -d java -d properties")
-        parser.add_argument('--content_refresh', action='store_true',
-                            dest="content_refresh", default=False,
-                            help="assert to perform content refresh during deploy")
-        parser.add_argument('--ignorewarning', action='store_true',
-                            dest="ignore_warning", default=False,
-                            help="continue with deploy, even with env-validate warnings. note: sudo/ssh warnings will not be ignored")
-        parser.add_argument('--ignoreini', action='store_true',
-                            dest="ignore_ini", default=False,
-                            help="ignore any .eom.ini file present")
-        parser.add_argument('--skipreimage', action='store_true',
-                            dest="skip_reimage", default=False,
-                            help="set to skip the re-image operation")
-        parser.add_argument('--skipdbgen', action='store_true',
-                            dest="skip_dbgen", default=False,
-                            help="set to skip the db creation operation")
-        parser.add_argument("--nopostpatch", dest="nopostpatch",
-                            action='store_true', default=False,
-                            help="set to DISABLE scanning patch directory")
-        parser.add_argument("--withsiebel", dest="withsiebel",
-                            action='store_true', default=False,
-                    help="set to build a Siebel database along with Delphix")
-        parser.add_argument('-D', '--debug', dest="debug", action='count',
-                            default=0,
-                        help="turn on DEBUG additional Ds increase verbosity")
-        parser.add_argument('-v', '--version', action='version',
-                            version=program_version_message)
-        # Process arguments
-        if len(sys.argv) == 1:
-            parser.print_help()
-            exit(1)
-
-        args = parser.parse_args()
+        start_ctx = eom_startup(argv)
+        args = start_ctx.args
         exit_status =0
-
+        # Check for various valid options configurations here
         if not args.release:
             print("ERROR: No release specified")
             exit_status = 1
@@ -161,7 +125,8 @@ def main(argv=None): # IGNORE:C0111
             print("Can't open Log file, check path\n")
             sys.exit(1)
 
-        log.info('eom.start: %s :: %s' % (program_log_id, args))
+        # Log the start of the show
+        log.info('eom.start: %s :: %s' % (start_ctx.program_log_id, args))
 
         if args.debug:
             DEBUG = True
@@ -172,10 +137,13 @@ def main(argv=None): # IGNORE:C0111
         envid = args.env.upper()       # insure UPPERCASE environment name
         envid_lower = args.env.lower() # insure lowercase environment name
         envnum = envid[-2:]            #just the number
+        
+        # Get the login credentials from the user or from the vault
         auth = jiralab.Auth(args)
         auth.getcred()
 
         # Login to the reg server
+        # We do all orchestration from a single reg erver
         log.info ("eom.login: Logging into %s  @ %s UTC" %\
                 (REGSERVER, time.asctime(time.gmtime(time.time()))))
         reg_session = jiralab.CliHelper(REGSERVER)
@@ -183,6 +151,7 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             log.debug ("eom.deb: before: %s\nafter: %s" % (reg_session.before,
                                                            reg_session.after))
+        # Become the relmgt user, all tools are run as this user
         log.info ("eom.relmgt: Becoming relmgt @ %s UTC" %\
                   time.asctime(time.gmtime(time.time())))
         rval = reg_session.docmd("sudo -i -u relmgt",
@@ -249,6 +218,7 @@ def main(argv=None): # IGNORE:C0111
                     "eom.notpro: ENV REQ:%s cannot be set to provision state" %\
                      args.envreq)
 
+        # Handle re-imaging here
         if args.skip_reimage:
             log.info("eom.noreimg: Skipping the re-image of %s" % envid)
         else:
@@ -258,35 +228,25 @@ def main(argv=None): # IGNORE:C0111
                             proproj_result_dict=proproj_result_dict)
             reimage_task.daemon = True
             reimage_task.start()
-
+        #######################################################################
+        #                   Handle database creation here
+        #######################################################################
         if args.skip_dbgen:
             log.info("eom.nodbgen: Skipping the db creation of %s" % envid)
         else:
-            log.info("eom.dbcreate.start: Building Database start @ %s UTC," %\
-                     time.asctime(time.gmtime(time.time())))
+            dbgen_task = EOMdbgen(args, auth, log,
+                            name="re-image-thread",
+                            proproj_result_dict=proproj_result_dict,
+                            session=reg_session,
+                            use_siebel=use_siebel)
+            dbgen_task.daemon = True
+            dbgen_task.start()
+            log.info("eom.dbgwait: Waiting for dbgen to complete")
+            dbgen_task.join() #wait for the dbgen task to complete
 
-            if args.debug > 1:
-                dbgendb = "-D"
-            else:
-                dbgendb = ""
-
-
-            pp_path = ("" if args.nopostpatch else\
-               '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
-
-            dbgen_build_cmd = ('time dbgen -u %s -e %s -r %s %s %s %s'
-            ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"') % \
-                (args.user, envid, args.release, pp_path, use_siebel, dbgendb,
-                 auth.user, proproj_result_dict["dbtask"])
-
-            rval = reg_session.docmd(dbgen_build_cmd,
-                                [reg_session.session.PROMPT],timeout=DBGEN_TO)
-            if DEBUG:
-                log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                           (rval, reg_session.before, reg_session.after))
-            log.info("eom.dbcreate.done: Database DONE @ %s UTC," %\
-                     time.asctime(time.gmtime(time.time())))
-
+        #######################################################################
+        #   If we are re-imaging, run the validation script on the results
+        #######################################################################
         if not args.skip_reimage:
             log.info("eom.rimwait: Waiting for re-image to complete")
             reimage_task.join() # wait for the re-image to complete if it hasn't
@@ -300,6 +260,9 @@ def main(argv=None): # IGNORE:C0111
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                            (rval, reg_session.before, reg_session.after))
 
+        #######################################################################
+        # We should be done with Provisioning, run the env-validate suit
+        #######################################################################
         log.info("eom.envval: Performing Automatic Validation of %s" %\
                  envid_lower)
         if 'srwe' in envid_lower :
@@ -316,6 +279,10 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))
+            
+        #######################################################################
+        #                         EXECUTION COMPLETE
+        #######################################################################
         log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
                  time.asctime(time.gmtime(time.time())))
         exit(0)
@@ -324,8 +291,8 @@ def main(argv=None): # IGNORE:C0111
         ### handle keyboard interrupt ###
         return 0
 #    except Exception, e:
-#        if DEBUG or TESTRUN:
-#            raise(e)
+#        if DEBUG:
+#            raise
 #        indent = len(program_name) * " "
 #        sys.stderr.write(program_name + ": " + str(e) + "\n")
 #        log.error(program_name + ": " + str(e) + "\n")

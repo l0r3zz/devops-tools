@@ -27,7 +27,7 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.4
 __date__ = '2013-04-05'
 __updated__ = '2013-04-11'
 
@@ -141,7 +141,7 @@ def main(argv=None):  # IGNORE:C0111
                                     )
                     break
             else:
-                print "No Close Method Found"
+                print "%s : No Close Method Found" % issue.key
                 exitstatus = 1 
         sys.exit(exitstatus)
 
