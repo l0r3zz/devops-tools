@@ -20,7 +20,7 @@ from argparse import RawDescriptionHelpFormatter
 __all__ = []
 __version__ = 0.9972
 __date__ = '2012-11-20'
-__updated__ = '2013-04-10'
+__updated__ = '2013-04-11'
 
 class eom_startup(object):
     '''
@@ -79,9 +79,9 @@ class eom_startup(object):
         parser.add_argument("-P", "--profile", dest="eom_profile",
                             help="specify a label present in the "
                             ".eom.ini file to load options from")
-        parser.add_argument("-d", "--deploy", dest="deploy_type",
-                            default=["full"],action='append',
-                            help="Deploy full | properties | java | restart  "
+        parser.add_argument("-d", "--deploy", dest="deploy",
+                            action='append',
+                            help="Deploy full|properties|java|restart|no"
                             "can be used more than once "
                             "ex. -d java -d properties")
         parser.add_argument('--confirm', action='store_true',
@@ -90,8 +90,8 @@ class eom_startup(object):
         parser.add_argument('--ignoreini', action='store_true',
                             dest="ignore_ini", default=False,
                             help="ignore any .eom.ini file present")
-        parser.add_argument('--ignorewarning', action='store_true',
-                            dest="ignore_warning", default=False,
+        parser.add_argument('--ignorewarnings', action='store_true',
+                            dest="ignorewarnings", default=False,
                             help="continue with deploy, even with env-validate"
                             " warnings. note: sudo/ssh warnings will not"
                             " be ignored")
@@ -137,3 +137,21 @@ class eom_startup(object):
             parser.print_help()
             exit(1)
         self.args = parser.parse_args()
+        # Check for various valid options configurations here
+        exit_status = 0
+        if not self.args.release:
+            print("ERROR: No release specified")
+            exit_status = 1
+        if not self.args.env:
+            print("ERROR: No environment specified")
+            exit_status = 1
+        if not self.args.deploy :
+            self.args.deploy = ["full-deploy"] #default to full-deploy           
+        if not (self.args.deploy[0] == 'no') and (not self.args.build_label):
+            print("ERROR: Deploy specified without build label")
+            exit_status = 1
+            
+        if exit_status:
+            print("\n")
+            parser.print_usage()
+            exit(exit_status)

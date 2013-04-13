@@ -11,6 +11,7 @@ env-o-matic - Basic automation to buildout a virtual environment
 
 import sys
 import os
+import re
 from jira.client import JIRA
 import jiralab
 import json
@@ -99,20 +100,10 @@ class EOMdbgen(jiralab.Job):
 def main(argv=None): # IGNORE:C0111
 
     try:  # Catch keyboard interrupts (^C)
+        # Get command line options, read ini file, validate options
         start_ctx = eom_startup(argv)
         args = start_ctx.args
         exit_status =0
-        # Check for various valid options configurations here
-        if not args.release:
-            print("ERROR: No release specified")
-            exit_status = 1
-        if not args.env:
-            print("ERROR: No environment specified")
-            exit_status = 1
-        if exit_status:
-            print("\n")
-            parser.print_help()
-            exit(exit_status)
 
         # Start Logging
         try:
@@ -300,7 +291,6 @@ def main(argv=None): # IGNORE:C0111
                 not re.search(rgx_envsudoFAIL, reg_session.before)) and (
                 not re.search(rgx_envsshFAIL, reg_session.before)):
                 log.warn("eom.prvwarn: Warnings present, proceeding anyway")
-                continue
             else:
                 log.info("eom.prvext Provision step had unrecoverable warnings"
                          " @ %s UTC. Exiting.\n" %\
@@ -309,7 +299,7 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         # Run the pre deploy script
         #######################################################################
-        if not args.noprepatch:
+        if not args.noprepatch and args.deploy[0] != 'no':
             envpatch_cmd = "/nas/reg/bin/env_setup_patch/scripts/envpatch %s" %\
                 envid_lower
             log.info ("eom.predeploy: Running predeploy script: %s" % 
@@ -322,20 +312,21 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         # get deploy options and run eom-rabbit-deploy 
         #######################################################################
-        cr = "--content_refresh" if args.content_refresh else "" 
-        r = args.release
-        bl = args.build_label
-        deploy_opts = " ".join(["--" + x  for x in args.deploy])
-        eom_rabbit_deploy_cmd = (
-        "eom-rabbit-deploy --env %s --branch %s --build-label %s %s" %
-        (envid_lower,r,bl,deploy_opts))
-        rval = reg_session.docmd(eom_rabbit_deploy_cmd,
-                            [reg_session.session.PROMPT], timeout=CMD_TO)
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                       (rval, reg_session.before, reg_session.after))
-        log.info("eom.appstrt: Starting App deploy of %s:%s" % 
-                 (bl,reg_session.before))
+        if args.deploy[0] != 'no':
+            cr = "--content_refresh" if args.content_refresh else "" 
+            r = args.release
+            bl = args.build_label
+            deploy_opts = " ".join(["--" + x  for x in args.deploy])
+            eom_rabbit_deploy_cmd = (
+            "eom-rabbit-deploy --env %s --branch %s --build-label %s %s %s" %
+            (envid_lower,r,bl,deploy_opts,cr))
+            rval = reg_session.docmd(eom_rabbit_deploy_cmd,
+                                [reg_session.session.PROMPT], timeout=CMD_TO)
+            if DEBUG:
+                log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                           (rval, reg_session.before, reg_session.after))
+            log.info("eom.appstrt: Starting App deploy of: %s" % reg_session.before)
+
         #######################################################################
         #                         EXECUTION COMPLETE
         #######################################################################
