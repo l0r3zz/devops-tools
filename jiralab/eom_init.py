@@ -18,9 +18,9 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 0.9972
+__version__ = 0.9974
 __date__ = '2012-11-20'
-__updated__ = '2013-04-11'
+__updated__ = '2013-04-14'
 
 class eom_startup(object):
     '''

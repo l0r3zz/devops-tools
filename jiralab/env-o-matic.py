@@ -152,8 +152,7 @@ def main(argv=None): # IGNORE:C0111
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))
 
-        # Create a PROPROJ and DB ticket for the ENV
-        log.info ("eom.cjira: Creating JIRA issues")
+
         try:
             jreg = jiralab.Reg(args.release) # get reg build mapping for JIRA
             jira_release = jreg.jira_release
@@ -161,39 +160,73 @@ def main(argv=None): # IGNORE:C0111
             print( "eom.relerr: No release named %s" % args.release)
             exit(2)
 
-        use_siebel = ("--withsiebel" if args.withsiebel else "")
-        proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, args.env,
-                                                    jira_release, use_siebel)
-        rval = reg_session.docmd(proproj_cmd, ["\{*\}",
-                                               reg_session.session.PROMPT])
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval,
-                                        reg_session.before, reg_session.after))
-        if rval == 1 :
-            PPRESULT = 1
-            proproj_result_string = (
-                            reg_session.before + reg_session.after).split("\n")
-            proproj_result_dict = json.loads(proproj_result_string[PPRESULT])
-            log.info("eom.tcreat: Ticket Creation Structure:: %s" %\
-                     proproj_result_string[PPRESULT])
-        else:
-            log.error(
-                "eom.tcreat.err: Error in ticket creation: %s%s \nExiting.\n" %\
-                (reg_session.before, reg_session.after))
-            exit(2)
-
-        # If there is an ENV ticket, link the proproj to it.
-        # And set the ENVREQ Status to Provisioning
-        if args.envreq:
-            log.info("eom.tlink: Linking propoj:%s to ENV request:%s" %\
-                     (proproj_result_dict["proproj"], args.envreq))
-            jira_options = {'server': 'https://jira.stubcorp.dev/',
-                        'verify' : False,
+        #######################################################################
+        #                   restart option
+        #######################################################################
+        if  args.restart_issue:
+            restart_issue = args.restart_issue
+            # FIXME: we need code here to find the linked issue keys to fill
+            # in the correct dbtask and potentially the correct proproj
+            if 'PROPROJ' in restart_issue:
+                proproj_result_dict = {
+                        "dbtask" : "unknown",
+                        "envid" : envid_lower,
+                        "proproj" : restart_issue,
+                        "envreq"  : "unknown"
                         }
-            jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
+            else:
+                proproj_result_dict = {
+                        "dbtask" : "unknown",
+                        "envid" : envid_lower,
+                        "proproj" : "unknown",
+                        "envreq"  : restart_issue,
+                        }
+            pprj =proproj_result_dict["proproj"]
+            log.info("eom.rststruct: Restarting with structure: %s" %
+                     json.dumps(proproj_result_dict))
+        #######################################################################
+        #                   First time ticket creation here
+        #######################################################################
+        else:
+            # Create a PROPROJ and DB ticket for the ENV
+            log.info ("eom.cjira: Creating JIRA issues")
+            use_siebel = ("--withsiebel" if args.withsiebel else "")
+            proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, args.env,
+                                                        jira_release, use_siebel)
+            rval = reg_session.docmd(proproj_cmd, ["\{*\}",
+                                                   reg_session.session.PROMPT])
+            if DEBUG:
+                log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval,
+                                            reg_session.before, reg_session.after))
+            if rval == 1 :
+                PPRESULT = 1
+                proproj_result_string = (
+                                reg_session.before + reg_session.after).split("\n")
+                proproj_result_dict = json.loads(proproj_result_string[PPRESULT])
+                log.info("eom.tcreat: Ticket Creation Structure:: %s" %\
+                         proproj_result_string[PPRESULT])
+                pprj =proproj_result_dict["proproj"]
+            else:
+                log.error(
+                    "eom.tcreat.err: Error in ticket creation: %s%s \nExiting.\n" %\
+                    (reg_session.before, reg_session.after))
+                exit(2)
+
+        # Login to JIRA so we can manipulate tickets...
+        jira_options = {'server': 'https://jira.stubcorp.dev/',
+                    'verify' : False,
+                    }
+        jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
+        
+        # If there is an ENV ticket, and this is not a restart,
+        # link the proproj to it. And set the ENVREQ Status to Provisioning
+        if args.envreq and not args.restart_issue:
+            log.info("eom.tlink: Linking propoj:%s to ENV request:%s" %\
+                     (pprj, args.envreq))
+
             link = jira.create_issue_link(type="Dependency",
                                     inwardIssue=args.envreq,
-                                    outwardIssue=proproj_result_dict["proproj"])
+                                    outwardIssue=pprj)
             env_issue = jira.issue(args.envreq)
             env_transitions = jira.transitions(env_issue)
             for t in env_transitions:
@@ -210,9 +243,15 @@ def main(argv=None): # IGNORE:C0111
                     "eom.notpro: ENV REQ:%s cannot be set to provision state" %\
                      args.envreq)
 
-        # Handle re-imaging here
+        #######################################################################
+        #                   Handle re-image here
+        #######################################################################
         if args.skip_reimage:
             log.info("eom.noreimg: Skipping the re-image of %s" % envid)
+        elif 'unknown' in pprj:
+            log.info("eom.reimgenv: Reimaging with an ENV issue"
+                     " not yet supported. Skipping...")
+            args.skip_reimage = True 
         else:
             # Start re-imaging in a thread
             reimage_task = EOMreimage(args, auth, log,
@@ -225,6 +264,9 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         if args.skip_dbgen:
             log.info("eom.nodbgen: Skipping the db creation of %s" % envid)
+        elif 'unknown' in pprj:
+            log.warn("eom.nodbgenrst: dbgen restart not yet supported")
+            args.skip_dbgen = True
         else:
             dbgen_task = EOMdbgen(args, auth, log,
                             name="re-image-thread",
@@ -245,7 +287,7 @@ def main(argv=None): # IGNORE:C0111
             log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
             reimage_validate_string = ('verify-reimage %s '
             '|jcmnt -f -u %s -i %s -t "check this list for re-imaging status"')%\
-                (envid_lower, auth.user, proproj_result_dict["proproj"])
+                (envid_lower, auth.user, pprj)
             rval = reg_session.docmd(reimage_validate_string,
                             [reg_session.session.PROMPT],timeout=VERIFY_TO)
             if DEBUG:
@@ -264,12 +306,12 @@ def main(argv=None): # IGNORE:C0111
             env_validate_string = ('env-validate -d srwe -e %s 2>&1'
             '| tee /dev/tty'
             ' | jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
-            (envnum, auth.user, proproj_result_dict["proproj"])
+            (envnum, auth.user, pprj)
         else :
             env_validate_string = ('env-validate -e %s 2>&1 '
             '| tee /dev/tty'
             '| jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
-            (envnum, auth.user, proproj_result_dict["proproj"])
+            (envnum, auth.user, pprj)
 
         rval = reg_session.docmd(env_validate_string,
                                  [reg_session.session.PROMPT],timeout=VERIFY_TO)
@@ -300,8 +342,9 @@ def main(argv=None): # IGNORE:C0111
         # Run the pre deploy script
         #######################################################################
         if not args.noprepatch and args.deploy[0] != 'no':
-            envpatch_cmd = "/nas/reg/bin/env_setup_patch/scripts/envpatch %s" %\
-                envid_lower
+            envpatch_cmd = ("/nas/reg/bin/env_setup_patch/scripts/envpatch %s"
+                    '| jcmnt -f -u %s -i %s -t "Automatic predeploy script"') %\
+                (envid_lower, auth.user, pprj)
             log.info ("eom.predeploy: Running predeploy script: %s" % 
                       envpatch_cmd)
             rval = reg_session.docmd(envpatch_cmd,
@@ -313,19 +356,23 @@ def main(argv=None): # IGNORE:C0111
         # get deploy options and run eom-rabbit-deploy 
         #######################################################################
         if args.deploy[0] != 'no':
-            cr = "--content_refresh" if args.content_refresh else "" 
+            cr = "--content-refresh" if args.content_refresh else "" 
             r = args.release
             bl = args.build_label
             deploy_opts = " ".join(["--" + x  for x in args.deploy])
+            deply_issue = args.envreg if args.envreq else pprj
             eom_rabbit_deploy_cmd = (
-            "eom-rabbit-deploy --env %s --branch %s --build-label %s %s %s" %
-            (envid_lower,r,bl,deploy_opts,cr))
+            "eom-rabbit-deploy --env %s --branch %s --build-label %s %s %s"
+            '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
+            (envid_lower,r,bl,deploy_opts,cr,auth.user, 
+             deply_issue,bl)
             rval = reg_session.docmd(eom_rabbit_deploy_cmd,
                                 [reg_session.session.PROMPT], timeout=CMD_TO)
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                            (rval, reg_session.before, reg_session.after))
-            log.info("eom.appstrt: Starting App deploy of: %s" % reg_session.before)
+            dply_result = reg_session.before.split('\n')
+            log.info("eom.appstrt: Starting App deploy of: %s" % dply_result[1])
 
         #######################################################################
         #                         EXECUTION COMPLETE
