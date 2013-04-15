@@ -360,7 +360,7 @@ def main(argv=None): # IGNORE:C0111
             r = args.release
             bl = args.build_label
             deploy_opts = " ".join(["--" + x  for x in args.deploy])
-            deply_issue = args.envreg if args.envreq else pprj
+            deply_issue = args.envreq if args.envreq else pprj
             eom_rabbit_deploy_cmd = (
             "eom-rabbit-deploy --env %s --branch %s --build-label %s %s %s"
             '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
