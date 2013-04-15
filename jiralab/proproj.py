@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.74
+__version__ = 0.75
 __date__ = '2012-10-28'
-__updated__ = '2013-4-08'
+__updated__ = '2013-4-14'
 
 TESTRUN = 0
 
@@ -137,7 +137,10 @@ def main(argv=None): # IGNORE:C0111
         link = jira.create_issue_link(type="Dependency",inwardIssue=new_proproj.key, outwardIssue=new_db.key)
 
         # output a JSON dict so we can use it as piped input into a latter stage.
-        result_dict = { "envid": envid, "proproj": new_proproj.key, "dbtask": new_db.key, }
+        result_dict = { "envid": envid, 
+                       "proproj": new_proproj.key, 
+                       "dbtask": new_db.key,
+                       "envreq" : "unknown", }
         print( json.dumps(result_dict,sort_keys=True))
 
     except KeyboardInterrupt:
