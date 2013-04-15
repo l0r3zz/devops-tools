@@ -27,6 +27,8 @@ REIMAGE_TO = 3600
 DBGEN_TO = 3600
 VERIFY_TO = 600
 CMD_TO = 120
+DEPLOY_TO = 4800
+DEPLOY_WAIT = 300
 
 class EOMreimage(jiralab.Job):
     '''
@@ -366,13 +368,45 @@ def main(argv=None): # IGNORE:C0111
             '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
             (envid_lower,r,bl,deploy_opts,cr,auth.user, 
              deply_issue,bl)
+
+            log.info("eom.appstrt: Starting App deploy : %s" % eom_rabbit_deploy_cmd)
             rval = reg_session.docmd(eom_rabbit_deploy_cmd,
-                                [reg_session.session.PROMPT], timeout=CMD_TO)
+                                [reg_session.session.PROMPT], timeout=DEPLOY_TO)
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                            (rval, reg_session.before, reg_session.after))
             dply_result = reg_session.before.split('\n')
-            log.info("eom.appstrt: Starting App deploy of: %s" % dply_result[1])
+            args.deploy_success = False
+            for line in dply_result:
+                if 'RABBIT Deployment' in line:
+                    if 'SUCCESSFUL' in line:
+                        args.deploy_success = True
+                        log.info("eom.appdeplyok: %s deployment SUCCESS" % bl)
+                    elif 'FAILED' in line:
+                        args.deploy_success = False
+                        log.info("eom.appdeplyfail: %s deployment FAIL" % bl)
+                if 'Deployment logs:' in line:
+                    deploy_logs = line.rstrip()
+                    log.info("eom.appdeplylog: %s" % deploy_logs)
+            if args.deploy_success :
+                log.info("eom.appdeplywait: Sleeping %d seconds after deploy")
+                time.sleep(DEPLOY_WAIT)
+            
+        #######################################################################
+        #        Perform big_IP verification: 
+        #######################################################################
+        if not args.validate_bigip and args.deploy_success:
+            valbigip_cmd = ("/nas/reg/bin/validate_bigip –e %s"
+                    '| jcmnt -f -u %s -i %s -t "Big IP validation"') %\
+                (envid_lower, auth.user, pprj)
+            log.info ("eom.valbigip: Running BigIP validation: %s" % 
+                      valbigip_cmd)
+            rval = reg_session.docmd(valbigip_cmd,
+                                [reg_session.session.PROMPT], timeout=CMD_TO)
+            if DEBUG:
+                log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                           (rval, reg_session.before, reg_session.after))                         
+
 
         #######################################################################
         #                         EXECUTION COMPLETE
