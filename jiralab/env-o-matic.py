@@ -358,6 +358,26 @@ def main(argv=None): # IGNORE:C0111
         # get deploy options and run eom-rabbit-deploy 
         #######################################################################
         if args.deploy[0] != 'no':
+            
+            jira = JIRA(jira_options ,basic_auth=(auth.user,auth.password))
+            
+            # If there is an ENV ticket, and this is not a restart,
+            # link the proproj to it. And set the ENVREQ Status to Provisioning
+            if args.envreq and not args.restart_issue:
+                log.info("eom.appstate: Setting %s App Deploy state" % args.envreq)
+                env_issue = jira.issue(args.envreq)
+                env_transitions = jira.transitions(env_issue)
+                for t in env_transitions:
+                    if 'App Deployment' in t['name']:
+                        jira.transition_issue(env_issue, int( t['id']), fields={})
+                        log.info(
+                            "eom.prvsts: ENVREQ:%s set to App Deployment state" %\
+                            args.envreq)
+                        break;
+                else:
+                    log.warn(
+                        "eom.notpro: ENV REQ:%s cannot be set to App Deployment state" %\
+                         args.envreq)
             cr = "--content-refresh" if args.content_refresh else "" 
             r = args.release
             bl = args.build_label
@@ -369,6 +389,8 @@ def main(argv=None): # IGNORE:C0111
             (envid_lower,r,bl,deploy_opts,cr,auth.user, 
              deply_issue,bl)
 
+            if args.envreq:
+                pass
             log.info("eom.appstrt: Starting App deploy : %s" % eom_rabbit_deploy_cmd)
             rval = reg_session.docmd(eom_rabbit_deploy_cmd,
                                 [reg_session.session.PROMPT], timeout=DEPLOY_TO)
