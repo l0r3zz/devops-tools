@@ -73,7 +73,7 @@ class eom_startup(object):
         parser.add_argument("-R", "--restart", dest="restart_issue",
                             help="ENV or PROPROJ issue to restart from, ")
         parser.add_argument("-l", "--logfile", dest="logfile",
-                            default="/nas/reg/ulog/jiralab/env-o-matic.log",
+                            default="/nas/reg/log/jiralab/env-o-matic.log",
                             help="file to log to (if none, log to console)" )
         parser.add_argument("-c", "--config", dest="eom_ini_file",
                             default=None, help="load a specific .eom.ini file")

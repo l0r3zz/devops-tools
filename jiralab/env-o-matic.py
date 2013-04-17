@@ -140,13 +140,15 @@ def main(argv=None): # IGNORE:C0111
 
         for eomp in eom_dir_path:
             try:
-                eom_path = os.path.expanduser(p)
+                eom_path = os.path.expanduser(eomp)
                 os.makedirs(eom_path)
             except OSError as exc: # Python >2.5
-                if exc.errno == errno.EEXIST and os.path.isdir(eom_path):
+                if (exc.errno == errno.EEXIST) and os.path.isdir(eom_path):
                     break
                 else:
-                    break
+                    continue
+            break  # We were successful creating a directory so break from the 
+                   # for loop and don't execute the else attached
         else:
             log.warn("eom.noinidir: Can't find or open an .eom directory writing to /dev/null")
             eom_path = "/dev/null"
@@ -347,7 +349,7 @@ def main(argv=None): # IGNORE:C0111
         else :
             env_validate_string = ('env-validate -e %s 2>&1 '
             '| tee /dev/tty'
-            '| jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
+            ' | jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
             (envnum, auth.user, pprj)
 
         rval = reg_session.docmd(env_validate_string,
@@ -358,6 +360,10 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         # Check the results of env-validate to see if we can proceed
         #######################################################################
+        if rval == 1:    # env-validate timed out
+            log.error("eom.envalto: env-validation"
+                      " timed out after %d seconds, exiting." % VERIFY_TO)
+            sys.exit(1)
         # regex's to look for PASS or if not PASS make sure that the failures
         # are not because of ssh or sudo failures
         rgx_envPASS = "env-validate\[[0-9]*\] results: PASS"
@@ -374,7 +380,7 @@ def main(argv=None): # IGNORE:C0111
                 log.info("eom.prvext Provision step had unrecoverable warnings"
                          " @ %s UTC. Exiting.\n" %\
                          time.asctime(time.gmtime(time.time())))
-                exit(1)
+                sys.exit(1)
         #######################################################################
         # Run the pre deploy script
         #######################################################################
