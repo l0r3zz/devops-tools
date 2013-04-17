@@ -29,7 +29,7 @@ DBGEN_TO = 3600
 VERIFY_TO = 600
 CMD_TO = 120
 DEPLOY_TO = 4800
-DEPLOY_WAIT = 300
+DEPLOY_WAIT = 600
 
 class EOMreimage(jiralab.Job):
     '''
@@ -459,6 +459,9 @@ def main(argv=None): # IGNORE:C0111
         #        Perform big_IP verification: 
         #######################################################################
         if not args.validate_bigip and args.deploy_success:
+            log.info("eom.appdeplywait: Sleeping %d seconds after deploy" %
+                      DEPLOY_WAIT)
+            time.sleep(DEPLOY_WAIT)
             valbigip_cmd = ("/nas/reg/bin/validate_bigip –e %s"
                     '| jcmnt -f -u %s -i %s -t "Big IP validation"') %\
                 (envid_lower, auth.user, pprj)
