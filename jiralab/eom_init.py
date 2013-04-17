@@ -13,14 +13,15 @@ import json
 import time
 from datetime import date
 import mylog
+import yaml
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 0.9975
+__version__ = 0.9976
 __date__ = '2012-11-20'
-__updated__ = '2013-04-15'
+__updated__ = '2013-04-16'
 
 class eom_startup(object):
     '''
@@ -36,7 +37,7 @@ class eom_startup(object):
             argv = sys.argv
         else:
             sys.argv.extend(argv)
-    
+
         self.program_name = os.path.basename(sys.argv[0])
         self.program_version = "v%s" % __version__
         self.program_build_date = str(__updated__)
@@ -72,7 +73,7 @@ class eom_startup(object):
         parser.add_argument("-R", "--restart", dest="restart_issue",
                             help="ENV or PROPROJ issue to restart from, ")
         parser.add_argument("-l", "--logfile", dest="logfile",
-                            default="/nas/reg/log/jiralab/env-o-matic.log",
+                            default="/nas/reg/ulog/jiralab/env-o-matic.log",
                             help="file to log to (if none, log to console)" )
         parser.add_argument("-c", "--config", dest="eom_ini_file",
                             default=None, help="load a specific .eom.ini file")
@@ -145,13 +146,21 @@ class eom_startup(object):
         if not self.args.env:
             print("ERROR: No environment specified")
             exit_status = 1
-        if not self.args.deploy :
-            self.args.deploy = ["full-deploy"] #default to full-deploy           
+        if not self.args.deploy:
+            self.args.deploy = ["full-deploy"]  # default to full-deploy
         if not (self.args.deploy[0] == 'no') and (not self.args.build_label):
             print("ERROR: Deploy specified without build label")
             exit_status = 1
-            
+
         if exit_status:
             print("\n")
             parser.print_usage()
             exit(exit_status)
+
+    def parse_ini_file(self, inifile):
+        if os.path.isfile(inifile)and os.access(inifile, os.R_OK):
+            with open(inifile) as yi:
+                ini_args = yaml.load(yi)
+        else:
+            print("eom.noini: No .eom_ini found or cannot access %s" % inifile)
+            return

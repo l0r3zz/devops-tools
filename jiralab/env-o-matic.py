@@ -11,6 +11,7 @@ env-o-matic - Basic automation to buildout a virtual environment
 
 import sys
 import os
+import errno
 import re
 from jira.client import JIRA
 import jiralab
@@ -102,7 +103,10 @@ class EOMdbgen(jiralab.Job):
 def main(argv=None): # IGNORE:C0111
 
     try:  # Catch keyboard interrupts (^C)
-        # Get command line options, read ini file, validate options
+        #######################################################################
+        # Get command line options, start logging, read ini file, validate options
+        #######################################################################
+
         start_ctx = eom_startup(argv)
         args = start_ctx.args
         exit_status =0
@@ -127,6 +131,37 @@ def main(argv=None): # IGNORE:C0111
             log.setLevel("DEBUG")
         else:
             DEBUG = False
+
+        # Scan to see if the .eom directory is present, if not create it.
+        eom_dir_path = [
+                        "~%s/.eom" % args.user,
+                        "./.eom",
+                        ]
+
+        for eomp in eom_dir_path:
+            try:
+                eom_path = os.path.expanduser(p)
+                os.makedirs(eom_path)
+            except OSError as exc: # Python >2.5
+                if exc.errno == errno.EEXIST and os.path.isdir(eom_path):
+                    break
+                else:
+                    break
+        else:
+            log.warn("eom.noinidir: Can't find or open an .eom directory writing to /dev/null")
+            eom_path = "/dev/null"
+
+        # Check for the presence of the .eom.ini             
+        if not args.ignore_ini:
+            if args.eom_ini_file:
+                pass
+            else:
+                if eom_path == "/dev/null":
+                    eom_ini_file = None
+                else:
+                    eom_ini_file = eom_path + "/.eom_ini"
+            args = start_ctx.parse_ini_file(eom_ini_file)
+            
 
         envid = args.env.upper()       # insure UPPERCASE environment name
         envid_lower = args.env.lower() # insure lowercase environment name
@@ -358,26 +393,26 @@ def main(argv=None): # IGNORE:C0111
         # get deploy options and run eom-rabbit-deploy 
         #######################################################################
         if args.deploy[0] != 'no':
-            
-            jira = JIRA(jira_options ,basic_auth=(auth.user,auth.password))
-            
             # If there is an ENV ticket, and this is not a restart,
-            # link the proproj to it. And set the ENVREQ Status to Provisioning
+            # Set the ENV ticket to App Deployment
             if args.envreq and not args.restart_issue:
                 log.info("eom.appstate: Setting %s App Deploy state" % args.envreq)
+                # Make sure were logged into JIRA
+                jira = JIRA(jira_options ,basic_auth=(auth.user,auth.password))
                 env_issue = jira.issue(args.envreq)
                 env_transitions = jira.transitions(env_issue)
                 for t in env_transitions:
                     if 'App Deployment' in t['name']:
                         jira.transition_issue(env_issue, int( t['id']), fields={})
                         log.info(
-                            "eom.prvsts: ENVREQ:%s set to App Deployment state" %\
+                            "eom.appsts: ENVREQ:%s set to App Deployment state" %\
                             args.envreq)
                         break;
                 else:
                     log.warn(
                         "eom.notpro: ENV REQ:%s cannot be set to App Deployment state" %\
                          args.envreq)
+
             cr = "--content-refresh" if args.content_refresh else "" 
             r = args.release
             bl = args.build_label
