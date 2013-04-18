@@ -29,6 +29,7 @@ DBGEN_TO = 3600
 VERIFY_TO = 720
 CMD_TO = 120
 DEPLOY_TO = 4800
+CONTENT_TO = 3600
 DEPLOY_WAIT = 600
 
 class EOMreimage(jiralab.Job):
@@ -94,6 +95,10 @@ class EOMdbgen(jiralab.Job):
 
             rval = reg_session.docmd(dbgen_build_cmd,
                                 [reg_session.session.PROMPT],timeout=DBGEN_TO)
+            if rval > 1:
+                self.log.warn(
+                    "eom.dbcreate.to: dbgen did not complete within %d sec"
+                    % DBGEN_TO)
             if DEBUG:
                 self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                            (rval, reg_session.before, reg_session.after))
@@ -428,7 +433,9 @@ def main(argv=None): # IGNORE:C0111
                         "eom.notpro: ENV REQ:%s cannot be set to App Deployment state" %\
                          args.envreq)
 
-            cr = "--content-refresh" if args.content_refresh else "" 
+            cr = "--content-refresh" if args.content_refresh else ""
+            deploy_timeout = (DEPLOY_TO + CONTENT_TO 
+                              if args.content_refresh else DEPLOY_TO) 
             r = args.release
             bl = args.build_label
             deploy_opts = " ".join(["--" + x  for x in args.deploy])
@@ -441,9 +448,22 @@ def main(argv=None): # IGNORE:C0111
 
             if args.envreq:
                 pass
-            log.info("eom.appstrt: Starting App deploy : %s" % eom_rabbit_deploy_cmd)
+            log.info("eom.appstrt: Starting App deploy : %s" % 
+                     eom_rabbit_deploy_cmd)
             rval = reg_session.docmd(eom_rabbit_deploy_cmd,
-                                [reg_session.session.PROMPT], timeout=DEPLOY_TO)
+                        [reg_session.session.PROMPT], timeout=deploy_timeout)
+            #######################################################################
+            # Check the results of app deploy to see if we can proceed
+            #######################################################################
+            if rval > 1:   # env-validate timed out write failure to log and ticket
+                log.error("eom.appto: application deployment"
+                          " timed out after %d seconds, exiting." % deploy_timeout)
+                env_appfail_string = ('jcmnt -f -u %s -i %s'
+                                ' -t "env-validate timed out after %d seconds."' % 
+                                (auth.user, pprj, VERIFY_TO))
+                rval = reg_session.docmd(env_appfail_string,
+                                     [reg_session.session.PROMPT],timeout=VERIFY_TO)
+                sys.exit(1)
             if DEBUG:
                 log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                            (rval, reg_session.before, reg_session.after))
@@ -460,18 +480,15 @@ def main(argv=None): # IGNORE:C0111
                 if 'Deployment logs:' in line:
                     deploy_logs = line.rstrip()
                     log.info("eom.appdeplylog: %s" % deploy_logs)
-            if args.deploy_success :
-                log.info("eom.appdeplywait: Sleeping %d seconds after deploy")
-                time.sleep(DEPLOY_WAIT)
             
         #######################################################################
         #        Perform big_IP verification: 
         #######################################################################
         if args.validate_bigip and args.deploy_success:
-            log.info("eom.appdeplywait: Sleeping %d seconds after deploy" %
-                      DEPLOY_WAIT)
+            log.info("eom.appdeplywait: Sleeping %d seconds after deploy" % 
+                     DEPLOY_WAIT)
             time.sleep(DEPLOY_WAIT)
-            valbigip_cmd = ("/nas/reg/bin/validate_bigip –e %s"
+            valbigip_cmd = ("/nas/reg/bin/validate_bigip -e %s"
                     '| jcmnt -f -u %s -i %s -t "Big IP validation"') %\
                 (envid_lower, auth.user, pprj)
             log.info ("eom.valbigip: Running BigIP validation: %s" % 

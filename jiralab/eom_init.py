@@ -19,9 +19,9 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 0.9977
+__version__ = 0.9979
 __date__ = '2012-11-20'
-__updated__ = '2013-04-17'
+__updated__ = '2013-04-18'
 
 class eom_startup(object):
     '''
@@ -86,13 +86,13 @@ class eom_startup(object):
                             "can be used more than once "
                             "ex. -d java -d properties")
         parser.add_argument('--confirm', action='store_true',
-                            dest="confirm", default=False,
+                            dest="confirm", default=None,
                             help="print out actions before executing the job ")
         parser.add_argument('--ignoreini', action='store_true',
-                            dest="ignore_ini", default=False,
+                            dest="ignore_ini", default=None,
                             help="ignore any .eom.ini file present")
         parser.add_argument('--ignorewarnings', action='store_true',
-                            dest="ignorewarnings", default=False,
+                            dest="ignorewarnings", default=None,
                             help="continue with deploy, even with env-validate"
                             " warnings. note: sudo/ssh warnings will not"
                             " be ignored")
@@ -101,30 +101,30 @@ class eom_startup(object):
                             "if skipreimage was set to true in the eom.ini file"
                             )
         switch_grp.add_argument('--content_refresh', nargs='?',const=True,
-                            dest="content_refresh", default=False, metavar='no',
+                            dest="content_refresh", default=None, metavar='no',
                             help="assert to run content refresh during "
                             "deploy")
         switch_grp.add_argument('--content_tool', nargs='?', const=True,
-                            dest="content_tool", default=False, metavar='no',
+                            dest="content_tool", default=None, metavar='no',
                             help="assert to run the portable content tool "
                             "after deploy")
         switch_grp.add_argument('--validate_bigip', nargs='?', const=True,
-                            dest="validate_bigip", default=False, metavar='no',
+                            dest="validate_bigip", default=None, metavar='no',
                             help="assert to validate BigIP after deploy")
         switch_grp.add_argument('--skipreimage', nargs='?',const=True,
-                            dest="skip_reimage", default=False, metavar='no',
+                            dest="skip_reimage", default=None, metavar='no',
                             help="assert to skip the re-image operation")
         switch_grp.add_argument('--skipdbgen',  nargs='?',const=True, 
-                            dest="skip_dbgen", default=False, metavar='no',
+                            dest="skip_dbgen", default=None, metavar='no',
                             help="assert to skip the db creation operation")
         switch_grp.add_argument("--noprepatch", dest="noprepatch",
-                            default=False, nargs='?',const=True, metavar='no',
+                            default=None, nargs='?',const=True, metavar='no',
                             help="assert to DISABLE pre deploy patch script")
         switch_grp.add_argument("--nopostpatch", dest="nopostpatch",
-                            default=False,  nargs='?',const=True, metavar='no',
+                            default=None,  nargs='?',const=True, metavar='no',
                             help="assert to DISABLE scanning patch directory")
         switch_grp.add_argument("--withsiebel", dest="withsiebel",
-                             default=False, nargs='?',const=True, metavar='no',
+                             default=None, nargs='?',const=True, metavar='no',
                     help="assert to build a Siebel database along with Delphix")
 
         p_info_grp = parser.add_argument_group('Informational')
@@ -163,4 +163,4 @@ class eom_startup(object):
                 ini_args = yaml.load(yi)
         else:
             print("eom.noini: No .eom_ini found or cannot access %s" % inifile)
-            return
+        return self.args

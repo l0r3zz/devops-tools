@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.982
+__version__ = 0.983
 __date__ = '2012-11-15'
-__updated__ = '2013-04-11'
+__updated__ = '2013-04-17'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -28,6 +28,7 @@ def main(argv=None):  # IGNORE:C0111
     GLOBAL_TNSNAMES = "/nas/home/oracle/DevOps/global_tnsnames/tnsnames.ora"
     QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
     TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
+    AUTOPROV_TO = 4000
     
     delphix_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
@@ -158,7 +159,7 @@ def main(argv=None):  # IGNORE:C0111
         auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"
             % (envnum, args.release, use_siebel))
         rval = reg_session.docmd(auto_provision_cmd,
-                        ["ALL DONE!!!", "Error"], timeout=4000)
+                        ["ALL DONE!!!", "Error"], timeout=AUTOPROV_TO)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
