@@ -161,6 +161,22 @@ class eom_startup(object):
         if os.path.isfile(inifile)and os.access(inifile, os.R_OK):
             with open(inifile) as yi:
                 ini_args = yaml.load(yi)
+                if self.args.eom_profile:
+                    profile = self.args.eom_profile
+                else:
+                    profile = "default"
+                if not (profile in ini_args):
+                    print(
+                     'eom.noiniprofile: No profile named'
+                     ' "%s" found in .eom_ini, ignoring...' % profile)
+                else:
+                    for key, value  in ini_args[profile].iteritems():
+                        if self.args.key is None:
+                            if (value == "False") or (value =="false"):
+                                value = False
+                            elif (value =="True") or (value == "true"):
+                                value = True
+                            setattr(self.args, key, value)
         else:
             print("eom.noini: No .eom_ini found or cannot access %s" % inifile)
         return self.args
