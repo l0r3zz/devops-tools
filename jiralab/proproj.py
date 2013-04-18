@@ -147,13 +147,13 @@ def main(argv=None): # IGNORE:C0111
         ### handle keyboard interrupt ###
         return 0
     
-    except Exception, e:
-        if DEBUG or TESTRUN:
-            raise(e)
-        indent = len(program_name) * " "
-        sys.stderr.write(program_name + ": " + str(e) + "\n")
-        sys.stderr.write(indent + "  for help use --help\n")
-        return 2
+#   except Exception, e:
+#        if DEBUG or TESTRUN:
+#            raise(e)
+#        indent = len(program_name) * " "
+#        sys.stderr.write(program_name + ": " + str(e) + "\n")
+#        sys.stderr.write(indent + "  for help use --help\n")
+#        return 2
     
 
 if __name__ == "__main__":

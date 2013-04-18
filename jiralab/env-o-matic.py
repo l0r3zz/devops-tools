@@ -26,7 +26,7 @@ DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
 REIMAGE_TO = 3600
 DBGEN_TO = 3600
-VERIFY_TO = 600
+VERIFY_TO = 720
 CMD_TO = 120
 DEPLOY_TO = 4800
 DEPLOY_WAIT = 600
@@ -220,6 +220,10 @@ def main(argv=None): # IGNORE:C0111
                         "proproj" : "unknown",
                         "envreq"  : restart_issue,
                         }
+                
+            if args.envreq:
+                proproj_result_dict["envreg"] = args.envreq
+                
             pprj =proproj_result_dict["proproj"]
             log.info("eom.rststruct: Restarting with structure: %s" %
                      json.dumps(proproj_result_dict))
@@ -360,9 +364,14 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         # Check the results of env-validate to see if we can proceed
         #######################################################################
-        if rval == 1:    # env-validate timed out
+        if rval > 1:   # env-validate timed out write failure to log and ticket
             log.error("eom.envalto: env-validation"
                       " timed out after %d seconds, exiting." % VERIFY_TO)
+            env_valfail_string = ('jcmnt -f -u %s -i %s'
+                            ' -t "env-validate timed out after %d seconds."' % 
+                            (auth.user, pprj, VERIFY_TO))
+            rval = reg_session.docmd(env_valfail_string,
+                                 [reg_session.session.PROMPT],timeout=VERIFY_TO)
             sys.exit(1)
         # regex's to look for PASS or if not PASS make sure that the failures
         # are not because of ssh or sudo failures
@@ -458,7 +467,7 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         #        Perform big_IP verification: 
         #######################################################################
-        if not args.validate_bigip and args.deploy_success:
+        if args.validate_bigip and args.deploy_success:
             log.info("eom.appdeplywait: Sleeping %d seconds after deploy" %
                       DEPLOY_WAIT)
             time.sleep(DEPLOY_WAIT)
