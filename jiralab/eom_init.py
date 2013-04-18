@@ -11,6 +11,7 @@ import sys
 import os
 import json
 import time
+import errno
 from datetime import date
 import mylog
 import yaml
@@ -138,7 +139,43 @@ class eom_startup(object):
             parser.print_help()
             exit(1)
         self.args = parser.parse_args()
+
+        #######################################################################
         # Check for various valid options configurations here
+        #######################################################################
+        # Scan to see if the .eom directory is present, if not create it.
+
+        eom_dir_path = [
+                        "~%s/.eom" % self.args.user,
+                        "./.eom",
+                        ]
+
+        for eomp in eom_dir_path:
+            try:
+                eom_path = os.path.expanduser(eomp)
+                os.makedirs(eom_path)
+            except OSError as exc: # Python >2.5
+                if (exc.errno == errno.EEXIST) and os.path.isdir(eom_path):
+                    break
+                else:
+                    continue
+            break   # We were successful creating a directory so break from the 
+                    # for loop and don't execute the else attached
+        else:
+            print("eom.noinidir: Can't find or open an .eom directory writing to /dev/null")
+            eom_path = "/dev/null"
+
+        # Check for the presence of the .eom.ini
+        if not self.args.ignore_ini:
+            if self.args.eom_ini_file:
+                pass
+            else:
+                if eom_path == "/dev/null":
+                    eom_ini_file = None
+                else:
+                    eom_ini_file = eom_path + "/.eom_ini"
+            self._parse_ini_file(eom_ini_file)
+
         exit_status = 0
         if not self.args.release:
             print("ERROR: No release specified")
@@ -157,7 +194,7 @@ class eom_startup(object):
             parser.print_usage()
             exit(exit_status)
 
-    def parse_ini_file(self, inifile):
+    def _parse_ini_file(self, inifile):
         if os.path.isfile(inifile)and os.access(inifile, os.R_OK):
             with open(inifile) as yi:
                 ini_args = yaml.load(yi)
@@ -179,4 +216,4 @@ class eom_startup(object):
                             setattr(self.args, key, value)
         else:
             print("eom.noini: No .eom_ini found or cannot access %s" % inifile)
-        return self.args
+        return 

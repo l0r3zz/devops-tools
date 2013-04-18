@@ -60,6 +60,18 @@ class EOMreimage(jiralab.Job):
             self.log.info("eom.sleep:(%s) Re-image complete, sleeping 5 minutes"
                           % self.name)
             time.sleep(300)
+    
+            log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
+
+            reimage_validate_string = ('verify-reimage %s '
+            '|jcmnt -f -u %s -i %s -t "check this list for re-imaging status"')%\
+                (envid_lower, self.auth.user, self.pprd["proproj"])
+            rval = self.ses.docmd(reimage_validate_string,
+                            [reg_session.session.PROMPT],timeout=VERIFY_TO)
+            if DEBUG:
+                self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                           (rval, reg_session.before, reg_session.after))
+
             self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
                           (self.name, time.asctime(time.gmtime(time.time()))))
 
@@ -137,37 +149,37 @@ def main(argv=None): # IGNORE:C0111
         else:
             DEBUG = False
 
-        # Scan to see if the .eom directory is present, if not create it.
-        eom_dir_path = [
-                        "~%s/.eom" % args.user,
-                        "./.eom",
-                        ]
-
-        for eomp in eom_dir_path:
-            try:
-                eom_path = os.path.expanduser(eomp)
-                os.makedirs(eom_path)
-            except OSError as exc: # Python >2.5
-                if (exc.errno == errno.EEXIST) and os.path.isdir(eom_path):
-                    break
-                else:
-                    continue
-            break  # We were successful creating a directory so break from the 
-                   # for loop and don't execute the else attached
-        else:
-            log.warn("eom.noinidir: Can't find or open an .eom directory writing to /dev/null")
-            eom_path = "/dev/null"
-
-        # Check for the presence of the .eom.ini             
-        if not args.ignore_ini:
-            if args.eom_ini_file:
-                pass
-            else:
-                if eom_path == "/dev/null":
-                    eom_ini_file = None
-                else:
-                    eom_ini_file = eom_path + "/.eom_ini"
-            args = start_ctx.parse_ini_file(eom_ini_file)
+#        # Scan to see if the .eom directory is present, if not create it.
+#        eom_dir_path = [
+#                        "~%s/.eom" % args.user,
+#                        "./.eom",
+#                        ]
+#
+#        for eomp in eom_dir_path:
+#            try:
+#                eom_path = os.path.expanduser(eomp)
+#                os.makedirs(eom_path)
+#            except OSError as exc: # Python >2.5
+#                if (exc.errno == errno.EEXIST) and os.path.isdir(eom_path):
+#                    break
+#                else:
+#                    continue
+#            break  # We were successful creating a directory so break from the 
+#                   # for loop and don't execute the else attached
+#        else:
+#            log.warn("eom.noinidir: Can't find or open an .eom directory writing to /dev/null")
+#            eom_path = "/dev/null"
+#
+#        # Check for the presence of the .eom.ini             
+#        if not args.ignore_ini:
+#            if args.eom_ini_file:
+#                pass
+#            else:
+#                if eom_path == "/dev/null":
+#                    eom_ini_file = None
+#                else:
+#                    eom_ini_file = eom_path + "/.eom_ini"
+#            args = start_ctx.parse_ini_file(eom_ini_file)
             
 
         envid = args.env.upper()       # insure UPPERCASE environment name
@@ -332,15 +344,6 @@ def main(argv=None): # IGNORE:C0111
         if not args.skip_reimage:
             log.info("eom.rimwait: Waiting for re-image to complete")
             reimage_task.join() # wait for the re-image to complete if it hasn't
-            log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
-            reimage_validate_string = ('verify-reimage %s '
-            '|jcmnt -f -u %s -i %s -t "check this list for re-imaging status"')%\
-                (envid_lower, auth.user, pprj)
-            rval = reg_session.docmd(reimage_validate_string,
-                            [reg_session.session.PROMPT],timeout=VERIFY_TO)
-            if DEBUG:
-                log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                           (rval, reg_session.before, reg_session.after))
 
         #######################################################################
         # We should be done with Provisioning, run the env-validate suit
