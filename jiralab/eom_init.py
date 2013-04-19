@@ -15,14 +15,15 @@ import errno
 from datetime import date
 import mylog
 import yaml
+import getpass
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 0.9979
+__version__ = 0.9981
 __date__ = '2012-11-20'
-__updated__ = '2013-04-18'
+__updated__ = '2013-04-19'
 
 class eom_startup(object):
     '''
@@ -113,10 +114,10 @@ class eom_startup(object):
                             dest="validate_bigip", default=None, metavar='no',
                             help="assert to validate BigIP after deploy")
         switch_grp.add_argument('--skipreimage', nargs='?',const=True,
-                            dest="skip_reimage", default=None, metavar='no',
+                            dest="skipreimage", default=None, metavar='no',
                             help="assert to skip the re-image operation")
         switch_grp.add_argument('--skipdbgen',  nargs='?',const=True, 
-                            dest="skip_dbgen", default=None, metavar='no',
+                            dest="skipdbgen", default=None, metavar='no',
                             help="assert to skip the db creation operation")
         switch_grp.add_argument("--noprepatch", dest="noprepatch",
                             default=None, nargs='?',const=True, metavar='no',
@@ -145,9 +146,15 @@ class eom_startup(object):
         #######################################################################
         # Scan to see if the .eom directory is present, if not create it.
 
+        # Search path for the .eom_ini file, first look in cwd, if not found
+        # there look in the home directory of the user specified in the --user
+        # option, if the user option is not specified, try the home directory 
+        # of the user running the program.
         eom_dir_path = [
-                        "~%s/.eom" % self.args.user,
                         "./.eom",
+                        "~%s/.eom" % ( self.args.user 
+                                      if self.args.user else getpass.getuser()),
+                        "~%s/.eom" % getpass.getuser(),
                         ]
 
         for eomp in eom_dir_path:
@@ -197,7 +204,14 @@ class eom_startup(object):
     def _parse_ini_file(self, inifile):
         if os.path.isfile(inifile)and os.access(inifile, os.R_OK):
             with open(inifile) as yi:
-                ini_args = yaml.load(yi)
+                try:
+                    ini_args = yaml.load(yi)
+                except yaml.YAMLError, exc:
+                    if hasattr(exc, 'problem_mark'):
+                        mark = exc.problem_mark
+                        print( "Error in .eom_ini file:"
+                               " %s, Error position: (%s:%s)" 
+                               % (exc, mark.line+1, mark.column+1))
                 if self.args.eom_profile:
                     profile = self.args.eom_profile
                 else:
@@ -208,7 +222,7 @@ class eom_startup(object):
                      ' "%s" found in .eom_ini, ignoring...' % profile)
                 else:
                     for key, value  in ini_args[profile].iteritems():
-                        if self.args.key is None:
+                        if getattr(self.args,key) is None:
                             if (value == "False") or (value =="false"):
                                 value = False
                             elif (value =="True") or (value == "true"):

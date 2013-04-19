@@ -61,7 +61,7 @@ class EOMreimage(jiralab.Job):
                           % self.name)
             time.sleep(300)
     
-            log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
+            self.log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
 
             reimage_validate_string = ('verify-reimage %s '
             '|jcmnt -f -u %s -i %s -t "check this list for re-imaging status"')%\
@@ -148,39 +148,6 @@ def main(argv=None): # IGNORE:C0111
             log.setLevel("DEBUG")
         else:
             DEBUG = False
-
-#        # Scan to see if the .eom directory is present, if not create it.
-#        eom_dir_path = [
-#                        "~%s/.eom" % args.user,
-#                        "./.eom",
-#                        ]
-#
-#        for eomp in eom_dir_path:
-#            try:
-#                eom_path = os.path.expanduser(eomp)
-#                os.makedirs(eom_path)
-#            except OSError as exc: # Python >2.5
-#                if (exc.errno == errno.EEXIST) and os.path.isdir(eom_path):
-#                    break
-#                else:
-#                    continue
-#            break  # We were successful creating a directory so break from the 
-#                   # for loop and don't execute the else attached
-#        else:
-#            log.warn("eom.noinidir: Can't find or open an .eom directory writing to /dev/null")
-#            eom_path = "/dev/null"
-#
-#        # Check for the presence of the .eom.ini             
-#        if not args.ignore_ini:
-#            if args.eom_ini_file:
-#                pass
-#            else:
-#                if eom_path == "/dev/null":
-#                    eom_ini_file = None
-#                else:
-#                    eom_ini_file = eom_path + "/.eom_ini"
-#            args = start_ctx.parse_ini_file(eom_ini_file)
-            
 
         envid = args.env.upper()       # insure UPPERCASE environment name
         envid_lower = args.env.lower() # insure lowercase environment name
@@ -306,12 +273,12 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         #                   Handle re-image here
         #######################################################################
-        if args.skip_reimage:
+        if args.skipreimage:
             log.info("eom.noreimg: Skipping the re-image of %s" % envid)
         elif 'unknown' in pprj:
             log.info("eom.reimgenv: Reimaging with an ENV issue"
                      " not yet supported. Skipping...")
-            args.skip_reimage = True 
+            args.skipreimage = True 
         else:
             # Start re-imaging in a thread
             reimage_task = EOMreimage(args, auth, log,
@@ -322,11 +289,11 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         #                   Handle database creation here
         #######################################################################
-        if args.skip_dbgen:
+        if args.skipdbgen:
             log.info("eom.nodbgen: Skipping the db creation of %s" % envid)
         elif 'unknown' in pprj:
             log.warn("eom.nodbgenrst: dbgen restart not yet supported")
-            args.skip_dbgen = True
+            args.skipdbgen = True
         else:
             dbgen_task = EOMdbgen(args, auth, log,
                             name="re-image-thread",
@@ -341,7 +308,7 @@ def main(argv=None): # IGNORE:C0111
         #######################################################################
         #   If we are re-imaging, run the validation script on the results
         #######################################################################
-        if not args.skip_reimage:
+        if not args.skipreimage:
             log.info("eom.rimwait: Waiting for re-image to complete")
             reimage_task.join() # wait for the re-image to complete if it hasn't
 
