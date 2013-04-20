@@ -9,11 +9,7 @@ eom_init - Argument parsing and init file parsing for env-o-matic
 '''
 import sys
 import os
-import json
-import time
 import errno
-from datetime import date
-import mylog
 import yaml
 import getpass
 from argparse import ArgumentParser
@@ -21,9 +17,9 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 0.9981
+__version__ = 0.9982
 __date__ = '2012-11-20'
-__updated__ = '2013-04-19'
+__updated__ = '2013-04-20'
 
 class eom_startup(object):
     '''
@@ -43,7 +39,8 @@ class eom_startup(object):
         self.program_name = os.path.basename(sys.argv[0])
         self.program_version = "v%s" % __version__
         self.program_build_date = str(__updated__)
-        self.program_version_message = '%%(prog)s %s (%s)' % (self.program_version,
+        self.program_version_message = '%%(prog)s %s (%s)' % (
+                                                        self.program_version,
                                                         self.program_build_date)
         self.program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
         self.program_log_id = "%s %s (%s)" % (self.program_name,
@@ -169,7 +166,8 @@ class eom_startup(object):
             break   # We were successful creating a directory so break from the 
                     # for loop and don't execute the else attached
         else:
-            print("eom.noinidir: Can't find or open an .eom directory writing to /dev/null")
+            print("eom.noinidir: Can't find or open an"
+                  " .eom directory writing to /dev/null")
             eom_path = "/dev/null"
 
         # Check for the presence of the .eom.ini
