@@ -69,10 +69,10 @@ class EOMreimage(jiralab.Job):
             ' "check this list for re-imaging status"'%
                 (envid_lower, self.auth.user, self.pprd["proproj"]))
             rval = self.ses.docmd(reimage_validate_string,
-                            [reg_session.session.PROMPT],timeout=VERIFY_TO)
+                            [self.ses.session.PROMPT],timeout=VERIFY_TO)
             if DEBUG:
                 self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                           (rval, reg_session.before, reg_session.after))
+                           (rval, self.ses.before, self.ses.after))
 
             self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
                           (self.name, time.asctime(time.gmtime(time.time()))))
@@ -475,7 +475,20 @@ def main(argv=None): # IGNORE:C0111
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))                         
-
+    #######################################################################
+    # Run the content tool
+    #######################################################################
+    if  args.content_tool and args.deploy[0] != 'no':
+        content_cmd = ("/nas/reg/bin/jcontent -u %s -e %s 3 3 9"
+                '| jcmnt -f -u %s -i %s -t "Apply Content Tool"') %\
+            (auth.user, envid_lower, auth.user, pprj)
+        log.info ("eom.ctntool: Running content tool: %s" % 
+                  content_cmd)
+        rval = reg_session.docmd(content_cmd,
+                            [reg_session.session.PROMPT], timeout=CMD_TO)
+        if DEBUG:
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                       (rval, reg_session.before, reg_session.after))
 
     #######################################################################
     #                         EXECUTION COMPLETE
@@ -491,7 +504,7 @@ if __name__ == "__main__":
         exit_status = main()
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
-        return 0
+        sys.exit(0)
 
 #    except Exception, e:
 #        if DEBUG:
