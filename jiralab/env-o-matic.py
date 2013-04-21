@@ -31,6 +31,7 @@ CMD_TO = 120
 DEPLOY_TO = 4800
 CONTENT_TO = 3600
 DEPLOY_WAIT = 600
+CONTENT_TO = 600
 
 class EOMreimage(jiralab.Job):
     '''
@@ -369,6 +370,8 @@ def main(argv=None): # IGNORE:C0111
                      " @ %s UTC. Exiting.\n" %\
                      time.asctime(time.gmtime(time.time())))
             sys.exit(1)
+    else:
+        log.info("eom.valpass: env-validation PASS for %s" % envid_lower)
     #######################################################################
     # Run the pre deploy script
     #######################################################################
@@ -478,14 +481,14 @@ def main(argv=None): # IGNORE:C0111
     #######################################################################
     # Run the content tool
     #######################################################################
-    if  args.content_tool and args.deploy[0] != 'no':
-        content_cmd = ("/nas/reg/bin/jcontent -u %s -e %s 3 3 9"
+    if  args.content_tool and args.deploy_success:
+        content_cmd = ("/nas/reg/bin/jiralab/jcontent -u %s -e %s 3 3 %s_content"
                 '| jcmnt -f -u %s -i %s -t "Apply Content Tool"') %\
-            (auth.user, envid_lower, auth.user, pprj)
+            (auth.user, envid_lower, args.release, auth.user, pprj)
         log.info ("eom.ctntool: Running content tool: %s" % 
                   content_cmd)
         rval = reg_session.docmd(content_cmd,
-                            [reg_session.session.PROMPT], timeout=CMD_TO)
+                            [reg_session.session.PROMPT], timeout=CONTENT_TO)
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))
