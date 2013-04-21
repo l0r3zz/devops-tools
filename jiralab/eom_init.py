@@ -17,9 +17,21 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 0.9983
+__version__ = 0.9987
 __date__ = '2012-11-20'
-__updated__ = '2013-04-20'
+__updated__ = '2013-04-21'
+
+###############################################################################
+#    Hardwired Timeout values that can be overridden by options
+###############################################################################
+REIMAGE_TO = 3600
+DBGEN_TO = 3600
+VERIFY_TO = 720
+CMD_TO = 120
+DEPLOY_TO = 4800
+CONTENT_TO = 3600
+DEPLOY_WAIT = 600
+CONTENT_TO = 600
 
 class eom_startup(object):
     '''
@@ -126,6 +138,23 @@ class eom_startup(object):
                              default=None, nargs='?',const=True, metavar='no',
                     help="assert to build a Siebel database along with Delphix")
 
+        to_grp = parser.add_argument_group("Time out adjustments")
+        to_grp.add_argument("--deploy_to", dest="DEPLOY_TO",
+                            default=DEPLOY_TO, type=int,
+                            help="set the timeout for deploy step in sec.")
+        to_grp.add_argument("--reimage_to", dest="REIMAGE_TO", 
+                            default=REIMAGE_TO, type=int,
+                            help="set the timeout for reimage operation in sec.")
+        to_grp.add_argument("--content_to", dest="CONTENT_TO", 
+                            default=CONTENT_TO, type=int,
+                            help="set the timeout for content refresh in sec.")
+        to_grp.add_argument("--dbggen_to", dest="DBGEN_TO", 
+                            default=DBGEN_TO, type=int,
+                            help="set the timeout for database creation in sec.")
+        to_grp.add_argument("--verify_to", dest="VERIFY_TO", 
+                            default=VERIFY_TO, type=int,
+                            help="set the timeout for verification ops in sec.")
+        
         p_info_grp = parser.add_argument_group('Informational')
         p_info_grp.add_argument('-D', '--debug', dest="debug", action='count',
                                 default=0,
@@ -220,12 +249,14 @@ class eom_startup(object):
                      ' "%s" found in .eom_ini, ignoring...' % profile)
                 else:
                     for key, value  in ini_args[profile].iteritems():
-                        if getattr(self.args,key) is None:
+                        if getattr(self.args, key) is None:
                             if (value == "False") or (value =="false"):
                                 value = False
                             elif (value =="True") or (value == "true"):
                                 value = True
                             setattr(self.args, key, value)
+                        elif getattr(self.args, key) == "no":
+                            setattr(self.args, key, False)
         else:
             print("eom.noini: No .eom_ini found or cannot access %s" % inifile)
         return 

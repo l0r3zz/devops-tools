@@ -24,14 +24,10 @@ from eom_init import eom_startup
 
 DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
-REIMAGE_TO = 3600
-DBGEN_TO = 3600
-VERIFY_TO = 720
 CMD_TO = 120
-DEPLOY_TO = 4800
-CONTENT_TO = 3600
 DEPLOY_WAIT = 600
-CONTENT_TO = 600
+CTOOL_TO = 600
+TJOIN_TO = 60.0
 
 class EOMreimage(jiralab.Job):
     '''
@@ -54,7 +50,8 @@ class EOMreimage(jiralab.Job):
                 self.log.debug("eom.deb:(%s) Issuing Re-image command: %s" %\
                                (self.name, reimage_cmd))
             rval = self.ses.docmd(reimage_cmd,
-                                  [self.ses.session.PROMPT],timeout=REIMAGE_TO)
+                                  [self.ses.session.PROMPT],
+                                  timeout=self.args.REIMAGE_TO)
             if self.debug:
                 self.log.debug ("eom.deb:(%s) Rval= %d; \nbefore: %s\nafter: %s"
                         % (self.name, rval, self.ses.before, self.ses.after))
@@ -70,7 +67,8 @@ class EOMreimage(jiralab.Job):
             ' "check this list for re-imaging status"'%
                 (envid_lower, self.auth.user, self.pprd["proproj"]))
             rval = self.ses.docmd(reimage_validate_string,
-                            [self.ses.session.PROMPT],timeout=VERIFY_TO)
+                            [self.ses.session.PROMPT],
+                            timeout=self.args.VERIFY_TO)
             if DEBUG:
                 self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                            (rval, self.ses.before, self.ses.after))
@@ -91,8 +89,8 @@ class EOMdbgen(jiralab.Job):
             envid_lower = self.args.env.lower() # insure lowercase env name
             envnum = envid[-2:]                 #just the number
             self.log.info(
-                    "eom.dbcreate.start: Building Database start @ %s UTC," %\
-                     time.asctime(time.gmtime(time.time())))
+                    "eom.dbcreate.start:(%s) Building Database start @ %s UTC,"
+                    % (self.name, time.asctime(time.gmtime(time.time()))))
 
             if self.args.debug > 1:
                 dbgendb = "-D"
@@ -110,16 +108,17 @@ class EOMdbgen(jiralab.Job):
                  self.auth.user, self.pprd["dbtask"])
 
             rval = reg_session.docmd(dbgen_build_cmd,
-                                [reg_session.session.PROMPT],timeout=DBGEN_TO)
+                                [reg_session.session.PROMPT],
+                                timeout=self.args.DBGEN_TO)
             if rval > 1:
                 self.log.warn(
-                    "eom.dbcreate.to: dbgen did not complete within %d sec"
-                    % DBGEN_TO)
+                    "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
+                    % (self.name, self.args.DBGEN_TO))
             if DEBUG:
-                self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %
                            (rval, reg_session.before, reg_session.after))
-            self.log.info("eom.dbcreate.done: Database DONE @ %s UTC," %\
-                     time.asctime(time.gmtime(time.time())))
+            self.log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
+                     (self.name, time.asctime(time.gmtime(time.time()))))
 
 def main(argv=None): # IGNORE:C0111
 
@@ -291,6 +290,7 @@ def main(argv=None): # IGNORE:C0111
                         proproj_result_dict=proproj_result_dict)
         reimage_task.daemon = True
         reimage_task.start()
+        log.info("eom.rimwait: Waiting for re-image to complete")
     #######################################################################
     #                   Handle database creation here
     #######################################################################
@@ -301,21 +301,38 @@ def main(argv=None): # IGNORE:C0111
         args.skipdbgen = True
     else:
         dbgen_task = EOMdbgen(args, auth, log,
-                        name="re-image-thread",
+                        name="dbgen-thread",
                         proproj_result_dict=proproj_result_dict,
                         session=reg_session,
                         use_siebel=use_siebel)
         dbgen_task.daemon = True
         dbgen_task.start()
         log.info("eom.dbgwait: Waiting for dbgen to complete")
-        dbgen_task.join() #wait for the dbgen task to complete
+
 
     #######################################################################
-    #   If we are re-imaging, run the validation script on the results
+    #   Wait for all the threads to complete
     #######################################################################
+    if not args.skipdbgen:
+        while dbgen_task.is_alive():
+            dbgen_task.join(TJOIN_TO)
+        log.info("eom.dbtdone: Dbgen thread DONE")
     if not args.skipreimage:
-        log.info("eom.rimwait: Waiting for re-image to complete")
-        reimage_task.join() # wait for the re-image to complete if it hasn't
+        while reimage_task.is_alive():
+            reimage_task.join(TJOIN_TO)
+        log.info("eom.reimtdone: reimage thread DONE")
+#    if not args.skipreimage and not args.skipdbgen:
+#        reimage_running, dbgen_running = True
+#        while dbgen_task.is_alive() or reimage_task.is_alive():
+#            reimage_task.join(TJOIN_TO)
+#            if reimage_running and not reimage_task.is_alive():
+#                reimage_running = False
+#                log.info("eom.reimtdone: Reimage task DONE")
+#            dbgen_task.join(TJOIN_TO)
+#            if dbgen_running and not dbgen_task.is_alive():
+#                dbgen_running = False
+#                log.info("eom.dbtdone: Dbgen task DONE")
+
 
     #######################################################################
     # We should be done with Provisioning, run the env-validate suit
@@ -337,7 +354,7 @@ def main(argv=None): # IGNORE:C0111
         (envnum, auth.user, pprj)
 
     rval = reg_session.docmd(env_validate_string,
-                             [reg_session.session.PROMPT],timeout=VERIFY_TO)
+                             [reg_session.session.PROMPT],timeout=args.VERIFY_TO)
     if DEBUG:
         log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                    (rval, reg_session.before, reg_session.after))
@@ -346,12 +363,12 @@ def main(argv=None): # IGNORE:C0111
     #######################################################################
     if rval > 1:   # env-validate timed out write failure to log and ticket
         log.error("eom.envalto: env-validation"
-                  " timed out after %d seconds, exiting." % VERIFY_TO)
+                  " timed out after %d seconds, exiting." % args.VERIFY_TO)
         env_valfail_string = ('jcmnt -f -u %s -i %s'
                         ' -t "env-validate timed out after %d seconds."' % 
-                        (auth.user, pprj, VERIFY_TO))
+                        (auth.user, pprj, args.VERIFY_TO))
         rval = reg_session.docmd(env_valfail_string,
-                             [reg_session.session.PROMPT],timeout=VERIFY_TO)
+                             [reg_session.session.PROMPT],timeout=args.VERIFY_TO)
         sys.exit(1)
     # regex's to look for PASS or if not PASS make sure that the failures
     # are not because of ssh or sudo failures
@@ -413,8 +430,8 @@ def main(argv=None): # IGNORE:C0111
                     " App Deployment state" % args.envreq)
 
         cr = "--content-refresh" if args.content_refresh else ""
-        deploy_timeout = (DEPLOY_TO + CONTENT_TO 
-                          if args.content_refresh else DEPLOY_TO) 
+        deploy_timeout = (args.DEPLOY_TO + args.CONTENT_TO 
+                          if args.content_refresh else args.DEPLOY_TO) 
         r = args.release
         bl = args.build_label
         deploy_opts = " ".join(["--" + x  for x in args.deploy])
@@ -439,10 +456,10 @@ def main(argv=None): # IGNORE:C0111
                       " timed out after %d seconds, exiting."
                       % deploy_timeout)
             env_appfail_string = ('jcmnt -f -u %s -i %s'
-                        ' -t "env-validate timed out after %d seconds."' % 
-                            (auth.user, pprj, VERIFY_TO))
+                        ' -t "App Deploy timed out after %d seconds."' % 
+                            (auth.user, pprj, args.VERIFY_TO))
             rval = reg_session.docmd(env_appfail_string,
-                            [reg_session.session.PROMPT],timeout=VERIFY_TO)
+                            [reg_session.session.PROMPT],timeout=CMD_TO)
             sys.exit(1)
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
@@ -488,7 +505,7 @@ def main(argv=None): # IGNORE:C0111
         log.info ("eom.ctntool: Running content tool: %s" % 
                   content_cmd)
         rval = reg_session.docmd(content_cmd,
-                            [reg_session.session.PROMPT], timeout=CONTENT_TO)
+                            [reg_session.session.PROMPT], timeout=CTOOL_TO)
         if DEBUG:
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))
