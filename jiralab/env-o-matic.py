@@ -209,8 +209,10 @@ def main(argv=None): # IGNORE:C0111
             
         if args.envreq:
             proproj_result_dict["envreg"] = args.envreq
-            
-        pprj =proproj_result_dict["proproj"]
+            pprj = proproj_result_dict["envreg"]
+        else:    
+            pprj =proproj_result_dict["proproj"]
+
         log.info("eom.rststruct: Restarting with structure: %s" %
                  json.dumps(proproj_result_dict))
     #######################################################################
@@ -406,6 +408,11 @@ def main(argv=None): # IGNORE:C0111
     #######################################################################
     # get deploy options and run eom-rabbit-deploy 
     #######################################################################
+    # We set args.deploy_success initially to True incase we are running with
+    # deploy set to no, that way the latter stagers will still execute, however
+    # If a deploy was specified and it FAILs the latter stages will not be
+    # performed without a restart and --deploy=no
+    args.deploy_success = True  
     if args.deploy[0] != 'no':
         # If there is an ENV ticket, and this is not a restart,
         # Set the ENV ticket to App Deployment
@@ -465,7 +472,7 @@ def main(argv=None): # IGNORE:C0111
             log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
                        (rval, reg_session.before, reg_session.after))
         dply_result = reg_session.before.split('\n')
-        args.deploy_success = False
+
         for line in dply_result:
             if 'RABBIT Deployment' in line:
                 if 'SUCCESSFUL' in line:
