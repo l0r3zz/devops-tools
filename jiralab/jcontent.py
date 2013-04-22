@@ -18,9 +18,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2013-04-20'
-__updated__ = '2013-04-20'
+__updated__ = '2013-04-22'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -114,7 +114,15 @@ def main(argv=None):  # IGNORE:C0111
                     reg_session.before, reg_session.after))
         
     # Hit the "go" button
-    rval = reg_session.docmd("1", [reg_session.session.PROMPT])
+    rval = reg_session.docmd("1", ["choice?"])
+    if DEBUG:
+        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                    reg_session.before, reg_session.after))
+
+    print ("%s%s" % (reg_session.before, reg_session.after))
+    
+    # Hit the "quit" button
+    rval = reg_session.docmd("q", [reg_session.session.PROMPT])
     if DEBUG:
         print ("Rval= %d; before: %s\nafter: %s" % (rval,
                     reg_session.before, reg_session.after))

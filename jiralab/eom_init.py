@@ -31,7 +31,7 @@ CMD_TO = 120
 DEPLOY_TO = 4800
 CONTENT_TO = 3600
 DEPLOY_WAIT = 600
-CONTENT_TO = 600
+CONTENT_TO = 1200
 
 class eom_startup(object):
     '''
