@@ -22,6 +22,8 @@ __version__ = 0.2
 __date__ = '2013-04-20'
 __updated__ = '2013-04-22'
 
+CONTENT_TO = 300
+
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
     DEBUG = 0
@@ -91,7 +93,8 @@ def main(argv=None):  # IGNORE:C0111
                     reg_session.after))
 
     print ("Becoming relmgt")
-    rval = reg_session.docmd("sudo -i -u relmgt", [reg_session.session.PROMPT])
+    rval = reg_session.docmd("sudo -i -u relmgt", [reg_session.session.PROMPT],
+                             timeout=CONTENT_TO)
     if DEBUG:
         print ("Rval= %d; before: %s\nafter: %s" % (rval,
                     reg_session.before, reg_session.after))
@@ -114,7 +117,7 @@ def main(argv=None):  # IGNORE:C0111
                     reg_session.before, reg_session.after))
         
     # Hit the "go" button
-    rval = reg_session.docmd("1", ["choice?"])
+    rval = reg_session.docmd("1", ["choice?"],timeout=CONTENT_TO)
     if DEBUG:
         print ("Rval= %d; before: %s\nafter: %s" % (rval,
                     reg_session.before, reg_session.after))
