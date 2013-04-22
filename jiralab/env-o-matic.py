@@ -492,6 +492,8 @@ def main(argv=None): # IGNORE:C0111
         log.info("eom.appdeplywait: Sleeping %d seconds after deploy" % 
                  DEPLOY_WAIT)
         time.sleep(DEPLOY_WAIT)
+        if args.envreq:
+            pprj = args.envreq
         valbigip_cmd = ("/nas/reg/bin/validate_bigip -e %s"
                 '| jcmnt -f -u %s -i %s -t "Big IP validation"') %\
             (envid_lower, auth.user, pprj)
@@ -506,6 +508,8 @@ def main(argv=None): # IGNORE:C0111
     # Run the content tool
     #######################################################################
     if  args.content_tool and args.deploy_success:
+        if args.envreq:
+            pprj = args.envreq
         content_cmd = ("/nas/reg/bin/jiralab/jcontent -u %s -e %s 3 3 %s_content"
                 '| jcmnt -f -u %s -i %s -t "Apply Content Tool"') %\
             (auth.user, envid_lower, args.release, auth.user, pprj)
@@ -520,6 +524,27 @@ def main(argv=None): # IGNORE:C0111
     #######################################################################
     #                         EXECUTION COMPLETE
     #######################################################################
+    
+    if args.envreq and args.deploy_success:
+        log.info("eom.appstate: Setting %s Verification state"
+                 % args.envreq)
+        # Make sure were logged into JIRA
+        jira = JIRA(jira_options ,basic_auth=(auth.user,auth.password))
+        env_issue = jira.issue(args.envreq)
+        env_transitions = jira.transitions(env_issue)
+        for t in env_transitions:
+            if 'Verify' in t['name']:
+                jira.transition_issue(env_issue, int( t['id']),
+                                      fields={})
+                log.info(
+                    "eom.appsts: ENVREQ:%s set to Verification state" %\
+                    args.envreq)
+                break;
+        else:
+            log.warn(
+                "eom.notpro: ENV REQ:%s cannot be set to"
+                " Verification state" % args.envreq)
+
     log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
              time.asctime(time.gmtime(time.time())))
     exit(0)
