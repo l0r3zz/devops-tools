@@ -73,9 +73,9 @@ def main(argv=None): # IGNORE:C0111
         if len(sys.argv) == 1:
             parser.print_help()
             exit(1)
-            
+
         args = parser.parse_args()
-        
+
         if not args.release:
             print("No release specified\n")
             parser.print_help()
@@ -87,10 +87,10 @@ def main(argv=None): # IGNORE:C0111
         except jiralab.JIRALAB_CLI_ValueError :
             print( "eom.relerr: No release named %s" % args.release)
             exit(2)
-             
+
         if args.debug:
             DEBUG = True
-                   
+
         auth = jiralab.Auth(args)
         auth.getcred()
         jira_options = {'server': 'https://jira.stubcorp.dev/',
@@ -116,7 +116,7 @@ def main(argv=None): # IGNORE:C0111
                         'summary': pp_summary,
                         'description': pp_summary,
                         'customfield_10130': {'value': jira_release},
-                        }       
+                        }
         new_proproj = jira.create_issue(fields=proproj_dict)
         
         #Create the DB ticket
@@ -148,8 +148,7 @@ def main(argv=None): # IGNORE:C0111
         return 0
     
 #   except Exception, e:
-#        if DEBUG or TESTRUN:
-#            raise(e)
+
 #        indent = len(program_name) * " "
 #        sys.stderr.write(program_name + ": " + str(e) + "\n")
 #        sys.stderr.write(indent + "  for help use --help\n")

@@ -267,6 +267,7 @@ def main(argv=None): # IGNORE:C0111
                 jira.transition_issue(env_issue, int( t['id']), fields={})
                 env_issue.update(customfield_10761=(
                                                 date.today().isoformat()))
+                env_issue.update(customfield_10170=envid_lower)  # set the environment name 
                 log.info(
                     "eom.prvsts: ENVREQ:%s set to Provisioning state" %
                     args.envreq)

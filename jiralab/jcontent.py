@@ -18,11 +18,11 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.2
+__version__ = 0.3
 __date__ = '2013-04-20'
 __updated__ = '2013-04-22'
 
-CONTENT_TO = 300
+CONTENT_TO = 900
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
