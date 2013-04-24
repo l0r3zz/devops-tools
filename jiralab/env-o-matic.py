@@ -556,6 +556,14 @@ def main(argv=None): # IGNORE:C0111
         else:
             jclose_cmd = "jclose -u %s %s" % (auth.user, pp_issue )
 
+        rval = reg_session.docmd(jclose_cmd,
+                            [reg_session.session.PROMPT], timeout=CTOOL_TO)
+        log.info("eom.close: Closing build tickets: %s" % jclose_cmd)
+
+        if DEBUG:
+            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
+                       (rval, reg_session.before, reg_session.after))
+
     log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
              time.asctime(time.gmtime(time.time())))
     exit(0)
