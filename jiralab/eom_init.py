@@ -17,9 +17,9 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 1.001
+__version__ = 1.01
 __date__ = '2012-11-20'
-__updated__ = '2013-04-22'
+__updated__ = '2013-04-23'
 
 ###############################################################################
 #    Hardwired Timeout values that can be overridden by options
@@ -122,6 +122,9 @@ class eom_startup(object):
         switch_grp.add_argument('--validate_bigip', nargs='?', const=True,
                             dest="validate_bigip", default=None, metavar='no',
                             help="assert to validate BigIP after deploy")
+        switch_grp.add_argument('--close_tickets', nargs='?',const=True,
+                            dest="close_tickets", default=None, metavar='no',
+                            help="assert to close DB & PROPROJ tickets")
         switch_grp.add_argument('--skipreimage', nargs='?',const=True,
                             dest="skipreimage", default=None, metavar='no',
                             help="assert to skip the re-image operation")
@@ -133,7 +136,7 @@ class eom_startup(object):
                             help="assert to DISABLE pre deploy patch script")
         switch_grp.add_argument("--nopostpatch", dest="nopostpatch",
                             default=None,  nargs='?',const=True, metavar='no',
-                            help="assert to DISABLE scanning patch directory")
+                            help="assert to DISABLE  DB creation patching")
         switch_grp.add_argument("--withsiebel", dest="withsiebel",
                              default=None, nargs='?',const=True, metavar='no',
                     help="assert to build a Siebel database along with Delphix")

@@ -342,6 +342,7 @@ def main(argv=None): # IGNORE:C0111
     #######################################################################
     log.info("eom.envval: Performing Automatic Validation of %s" %\
              envid_lower)
+    args.enval_success = False
     # Set up the env_validate commands so that they write to the
     # tty as well as pipe to the jcomment utility.  We'll use the tty
     # output to determine whether to continue with app deploy.
@@ -392,6 +393,7 @@ def main(argv=None): # IGNORE:C0111
             sys.exit(1)
     else:
         log.info("eom.valpass: env-validation PASS for %s" % envid_lower)
+        args.enval_success = True
     #######################################################################
     # Run the pre deploy script
     #######################################################################
@@ -545,6 +547,14 @@ def main(argv=None): # IGNORE:C0111
             log.warn(
                 "eom.notpro: ENV REQ:%s cannot be set to"
                 " Verification state" % args.envreq)
+
+    if args.close_tickets and args.enval_success and args.deploy_success:
+        db_issue = proproj_result_dict["dbtask"]
+        pp_issue = proproj_result_dict["proproj"]
+        if db_issue != "unknown":
+            jclose_cmd = "jclose -u %s %s %s" % (auth.user, db_issue, pp_issue )
+        else:
+            jclose_cmd = "jclose -u %s %s" % (auth.user, pp_issue )
 
     log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
              time.asctime(time.gmtime(time.time())))
