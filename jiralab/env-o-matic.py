@@ -100,11 +100,11 @@ class EOMdbgen(jiralab.Job):
 
             pp_path = ("" if self.args.nopostpatch else\
                '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
-
-            dbgen_build_cmd = ('time dbgen -u %s -e %s -r %s %s %s %s'
+            dbgen_to = self.args.DBGEN_TO - 10
+            dbgen_build_cmd = ('time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
             ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"') % \
                 (self.auth.user, envid, self.args.release, 
-                 pp_path, self.use_siebel, dbgendb,
+                 pp_path, self.use_siebel, dbgen_to, dbgendb,
                  self.auth.user, self.pprd["dbtask"])
 
             rval = reg_session.docmd(dbgen_build_cmd,

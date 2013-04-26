@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.983
+__version__ = 0.984
 __date__ = '2012-11-15'
-__updated__ = '2013-04-17'
+__updated__ = '2013-04-15'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -70,6 +70,10 @@ def main(argv=None):  # IGNORE:C0111
         parser.add_argument("--withsiebel", dest="withsiebel", action='store_true',
                          default=False, 
                          help="set to build a Siebel database along with Delphix")
+        parser.add_argument("--timeout", dest="timeout",
+                        default=AUTOPROV_TO, type=int,
+                        help="number of sec to wait for db"
+                        "creation to complete. default(%d)" % AUTOPROV_TO)
         parser.add_argument('-v', '--version', action='version',
                         version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug",
@@ -159,7 +163,7 @@ def main(argv=None):  # IGNORE:C0111
         auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"
             % (envnum, args.release, use_siebel))
         rval = reg_session.docmd(auto_provision_cmd,
-                        ["ALL DONE!!!", "Error"], timeout=AUTOPROV_TO)
+                        ["ALL DONE!!!", "Error"], timeout=args.timeout)
         if DEBUG:
             print ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
