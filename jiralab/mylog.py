@@ -56,10 +56,6 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False,
     log.setLevel(n_level)
     if fmt:
         formatter = fmt
-    elif gmt:
-        formatter = logging.Formatter(
-            '%(asctime)s %(levelname)s: %(name)s:[%(process)d] %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S +0000')
     else:
         formatter = logging.Formatter(
             '%(asctime)s %(levelname)s: %(name)s:[%(process)d] %(message)s',

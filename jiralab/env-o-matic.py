@@ -30,6 +30,21 @@ DEPLOY_WAIT = 600
 CTOOL_TO = 600
 TJOIN_TO = 60.0
 
+def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
+    if result_set:
+        rval = s.docmd(cmd, result_set, timeout=to)
+    else:
+        rval = s.docmd(cmd,[s.session.PROMPT],timeout=to)
+    if debug:
+        if dbstring:
+            log.debug(dbstring % rval)
+        else:
+            log.debug ("eom.deb: Rval= %d; \nbefore: %s\nafter: %s"
+                        % (rval, s.before, s.after))
+    if rval == 0:
+        log.warn("eom.to: cmd: (%s) timed out after %d sec." % ( cmd, to))
+    return rval
+
 class EOMreimage(jiralab.Job):
     '''
     This class is a container for the re-imaging task, it inherits from 
@@ -38,44 +53,33 @@ class EOMreimage(jiralab.Job):
     on a reg server to be used
     '''
     def run(self):
-            envid = self.args.env.upper()       # insure UPPERCASE env name
-            envid_l = self.args.env.lower() # insure lowercase env name
-            envnum = envid[-2:]                 #just the number
-            # Start re-imaging
-            self.log.info("eom.reimg.start:(%s) Reimaging %s start @ %s UTC" %\
-                     (self.name, envid, time.asctime(time.gmtime(time.time()))))
-            reimage_cmd = (('time provision -e %s reimage -v 2>&1'
-            '|jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"')\
-                % ( envid_l, self.auth.user, self.pprd["proproj"]))
-            if self.debug:
-                self.log.debug("eom.deb:(%s) Issuing Re-image command: %s" %\
-                               (self.name, reimage_cmd))
-            rval = self.ses.docmd(reimage_cmd,
-                                  [self.ses.session.PROMPT],
-                                  timeout=self.args.REIMAGE_TO)
-            if self.debug:
-                self.log.debug ("eom.deb:(%s) Rval= %d; \nbefore: %s\nafter: %s"
-                        % (self.name, rval, self.ses.before, self.ses.after))
-            self.log.info("eom.sleep:(%s) Re-image complete, sleeping 5 minutes"
-                          % self.name)
-            time.sleep(300)
-    
-            self.log.info("eom.rimgval: Verifying re-imaging of roles in %s"
-                          % envid)
+        envid = self.args.env.upper()       # insure UPPERCASE env name
+        envid_l = self.args.env.lower() # insure lowercase env name
+        envnum = envid[-2:]                 #just the number
+        # Start re-imaging
+        self.log.info("eom.reimg.start:(%s) Reimaging %s start @ %s UTC" %\
+                 (self.name, envid, time.asctime(time.gmtime(time.time()))))
+        reimage_cmd = (('time provision -e %s reimage -v 2>&1'
+        '|jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"')\
+            % ( envid_l, self.auth.user, self.pprd["proproj"]))
+        rval = execute(self.ses, reimage_cmd, self.debug, self.log, 
+                       to=self.args.REIMAGE_TO)
+        self.log.info("eom.sleep:(%s) Re-image complete, sleeping 5 minutes"
+                      % self.name)
+        time.sleep(300)
 
-            reimage_validate_string = ('verify-reimage %s '
-            '|jcmnt -f -u %s -i %s -t'
-            ' "check this list for re-imaging status"'%
-                (envid_l, self.auth.user, self.pprd["proproj"]))
-            rval = self.ses.docmd(reimage_validate_string,
-                            [self.ses.session.PROMPT],
-                            timeout=self.args.VERIFY_TO)
-            if DEBUG:
-                self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                           (rval, self.ses.before, self.ses.after))
+        self.log.info("eom.rimgval: Verifying re-imaging of roles in %s"
+                      % envid)
 
-            self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
-                          (self.name, time.asctime(time.gmtime(time.time()))))
+        reimage_validate_string = ('verify-reimage %s '
+        '|jcmnt -f -u %s -i %s -t'
+        ' "check this list for re-imaging status"'%
+            (envid_l, self.auth.user, self.pprd["proproj"]))
+        rval = execute(self.ses, reimage_validate_string, self.debug, self.log, 
+                       to=self.args.VERIFY_TO)
+
+        self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
+                      (self.name, time.asctime(time.gmtime(time.time()))))
 
 class EOMdbgen(jiralab.Job):
     '''
@@ -85,41 +89,37 @@ class EOMdbgen(jiralab.Job):
     on a reg server to be used
     '''
     def run(self):
-            ses = self.ses
-            envid = self.args.env.upper()       # insure UPPERCASE env name
-            envid_l = self.args.env.lower() # insure lowercase env name
-            envnum = envid[-2:]                 #just the number
-            self.log.info(
-                    "eom.dbcreate.start:(%s) Building Database start @ %s UTC,"
-                    % (self.name, time.asctime(time.gmtime(time.time()))))
+        ses = self.ses
+        envid = self.args.env.upper()       # insure UPPERCASE env name
+        envid_l = self.args.env.lower() # insure lowercase env name
+        envnum = envid[-2:]                 #just the number
+        self.log.info(
+                "eom.dbcreate.start:(%s) Building Database start @ %s UTC,"
+                % (self.name, time.asctime(time.gmtime(time.time()))))
 
-            if self.args.debug > 1:
-                dbgendb = "-D"
-            else:
-                dbgendb = ""
+        if self.args.debug > 1:
+            dbgendb = "-D"
+        else:
+            dbgendb = ""
 
 
-            pp_path = ("" if self.args.nopostpatch else\
-               '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
-            dbgen_to = self.args.DBGEN_TO - 10
-            dbgen_build_cmd = ('time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
-            ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"') % \
-                (self.auth.user, envid, self.args.release, 
-                 pp_path, self.use_siebel, dbgen_to, dbgendb,
-                 self.auth.user, self.pprd["dbtask"])
+        pp_path = ("" if self.args.nopostpatch else\
+           '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
+        dbgen_to = self.args.DBGEN_TO - 10
+        dbgen_build_cmd = ('time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
+        ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"') % \
+            (self.auth.user, envid, self.args.release, 
+             pp_path, self.use_siebel, dbgen_to, dbgendb,
+             self.auth.user, self.pprd["dbtask"])
 
-            rval = ses.docmd(dbgen_build_cmd,
-                                [ses.session.PROMPT],
-                                timeout=self.args.DBGEN_TO)
-            if rval > 1:
-                self.log.warn(
-                    "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
-                    % (self.name, self.args.DBGEN_TO))
-            if DEBUG:
-                self.log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %
-                           (rval, ses.before, ses.after))
-            self.log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
-                     (self.name, time.asctime(time.gmtime(time.time()))))
+        rval = execute(self.ses, dbgen_build_cmd, self.debug, self.log, 
+                       to=self.args.DBGEN_TO)
+        if rval > 1:
+            self.log.warn(
+                "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
+                % (self.name, self.args.DBGEN_TO))
+        self.log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
+                 (self.name, time.asctime(time.gmtime(time.time()))))
 
 def main(argv=None): # IGNORE:C0111
 
@@ -184,12 +184,8 @@ def main(argv=None): # IGNORE:C0111
     # Become the relmgt user, all tools are run as this user
     log.info ("eom.relmgt: Becoming relmgt @ %s UTC" %\
               time.asctime(time.gmtime(time.time())))
-    rval = ses.docmd("sudo -i -u relmgt",
-                             [ses.session.PROMPT])
-    if DEBUG:
-        log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                   (rval, ses.before, ses.after))
 
+    rval = execute(ses,"sudo -i -u relmgt",DEBUG,log)
 
     try:
         jreg = jiralab.Reg(args.release) # get reg build mapping for JIRA
@@ -237,11 +233,9 @@ def main(argv=None): # IGNORE:C0111
         use_siebel = ("--withsiebel" if args.withsiebel else "")
         proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, 
                                         args.env, jira_release, use_siebel)
-        rval = ses.docmd(proproj_cmd, ["\{*\}",
-                                               ses.session.PROMPT])
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" % (rval,
-                                    ses.before, ses.after))
+
+        rval = execute(ses,proproj_cmd, DEBUG, log, result_set=["\{*\}",
+                                              ses.session.PROMPT])
         if rval == 1 :
             PPRESULT = 1
             proproj_result_string = (
@@ -358,11 +352,7 @@ def main(argv=None): # IGNORE:C0111
         ' | jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
         (envnum, auth.user, pprj)
 
-    rval = ses.docmd(env_validate_string,
-                             [ses.session.PROMPT],timeout=args.VERIFY_TO)
-    if DEBUG:
-        log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                   (rval, ses.before, ses.after))
+    rval = execute(ses, env_validate_string, DEBUG, log, to=args.VERIFY_TO)
     #######################################################################
     # Check the results of env-validate to see if we can proceed
     #######################################################################
@@ -372,8 +362,7 @@ def main(argv=None): # IGNORE:C0111
         env_valfail_string = ('jcmnt -f -u %s -i %s'
                         ' -t "env-validate timed out after %d seconds."' % 
                         (auth.user, pprj, args.VERIFY_TO))
-        rval = ses.docmd(env_valfail_string,
-                             [ses.session.PROMPT],timeout=args.VERIFY_TO)
+        rval = execute(ses, env_valfail_string, DEBUG, log)
         sys.exit(1)
     # regex's to look for PASS or if not PASS make sure that the failures
     # are not because of ssh or sudo failures
@@ -404,11 +393,7 @@ def main(argv=None): # IGNORE:C0111
             (envid_l, auth.user, pprj)
         log.info ("eom.predeploy: Running predeploy script: %s" % 
                   envpatch_cmd)
-        rval = ses.docmd(envpatch_cmd,
-                            [ses.session.PROMPT], timeout=CMD_TO)
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                       (rval, ses.before, ses.after))
+        rval = execute(ses, envpatch_cmd, DEBUG, log)
     #######################################################################
     # get deploy options and run eom-rabbit-deploy 
     #######################################################################
@@ -460,25 +445,22 @@ def main(argv=None): # IGNORE:C0111
             pass
         log.info("eom.appstrt: Starting App deploy : %s" % 
                  eom_rabbit_deploy_cmd)
-        rval = ses.docmd(eom_rabbit_deploy_cmd,
-                    [ses.session.PROMPT], timeout=deploy_timeout)
+        rval = execute(ses, eom_rabbit_deploy_cmd, DEBUG,
+                       log, to=deploy_timeout)
         ###################################################################
         # Check the results of app deploy to see if we can proceed
         ###################################################################
-        if rval > 1:   # app deply timed out write failure to log and ticket
+        if rval == 0:   # app deply timed out write failure to log and ticket
             log.error("eom.appto: application deployment"
                       " timed out after %d seconds, exiting."
                       % deploy_timeout)
             env_appfail_string = ('jcmnt -f -u %s -i %s'
                         ' -t "App Deploy timed out after %d seconds."' % 
                             (auth.user, pprj, args.VERIFY_TO))
-            rval = ses.docmd(env_appfail_string,
-                            [ses.session.PROMPT],timeout=CMD_TO)
-
+            rval = execute(ses, env_appfail_string, DEBUG,
+                           log, to=args.VERIFY_TO)
             sys.exit(1)
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                       (rval, ses.before, ses.after))
+            
         dply_result = ses.before.split('\n')
 
         for line in dply_result:
@@ -509,11 +491,7 @@ def main(argv=None): # IGNORE:C0111
             (envid_l, auth.user, pprj)
         log.info ("eom.valbigip: Running BigIP validation: %s" % 
                   valbigip_cmd)
-        rval = ses.docmd(valbigip_cmd,
-                            [ses.session.PROMPT], timeout=CMD_TO)
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                       (rval, ses.before, ses.after))                         
+        rval = execute(ses, valbigip_cmd, DEBUG, log)                         
     #######################################################################
     # Run the content tool
     #######################################################################
@@ -525,15 +503,11 @@ def main(argv=None): # IGNORE:C0111
             (auth.user, envid_l, args.release, auth.user, pprj)
         log.info ("eom.ctntool: Running content tool: %s" % 
                   content_cmd)
-        rval = ses.docmd(content_cmd,
-                            [ses.session.PROMPT], timeout=CTOOL_TO)
-        if rval >1:
-            log.warn("eom.ctntoolto: Content Tool time-out after %5 secs" % CTOOL_TO)
-            ses.docmd('jcmnt -u %s -i %s -t "Content Tool time-out after %s secs"' %\
-            (auth.user, pprj, CTOOL_TO),[ses.session.PROMPT]) 
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                       (rval, ses.before, ses.after))
+
+        rval = execute(ses, content_cmd, DEBUG, log, to=CTOOL_TO)
+        if rval == 0:
+            execute(ses, 'jcmnt -u %s -i %s -t "Content Tool time-out after %s secs"' %\
+            (auth.user, pprj, CTOOL_TO), DEBUG, log) 
 
     #######################################################################
     #                         EXECUTION COMPLETE
@@ -567,14 +541,8 @@ def main(argv=None): # IGNORE:C0111
         else:
             jclose_cmd = "jclose -u %s %s" % (auth.user, pp_issue )
 
-        rval = ses.docmd(jclose_cmd,
-                            [ses.session.PROMPT], timeout=CTOOL_TO)
         log.info("eom.close: Closing build tickets: %s" % jclose_cmd)
-
-        if DEBUG:
-            log.debug ("eom.deb: Rval= %d; before: %s\nafter: %s" %\
-                       (rval, ses.before, ses.after))
-
+        execute(ses, jclose_cmd, DEBUG, log)
     log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
              time.asctime(time.gmtime(time.time())))
     exit(0)
