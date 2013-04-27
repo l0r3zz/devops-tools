@@ -19,7 +19,7 @@ from argparse import RawDescriptionHelpFormatter
 __all__ = []
 __version__ = 0.984
 __date__ = '2012-11-15'
-__updated__ = '2013-04-15'
+__updated__ = '2013-04-25'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''

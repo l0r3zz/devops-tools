@@ -17,9 +17,9 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 1.01
+__version__ = 1.012
 __date__ = '2012-11-20'
-__updated__ = '2013-04-23'
+__updated__ = '2013-04-26'
 
 ###############################################################################
 #    Hardwired Timeout values that can be overridden by options
