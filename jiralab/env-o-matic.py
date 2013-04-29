@@ -356,7 +356,7 @@ def main(argv=None): # IGNORE:C0111
     #######################################################################
     # Check the results of env-validate to see if we can proceed
     #######################################################################
-    if rval > 1:   # env-validate timed out write failure to log and ticket
+    if rval == 0:   # env-validate timed out write failure to log and ticket
         log.error("eom.envalto: env-validation"
                   " timed out after %d seconds, exiting." % args.VERIFY_TO)
         env_valfail_string = ('jcmnt -f -u %s -i %s'
