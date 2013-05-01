@@ -17,9 +17,9 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 1.04
+__version__ = 1.05
 __date__ = '2012-11-20'
-__updated__ = '2013-04-30'
+__updated__ = '2013-05-01'
 
 ###############################################################################
 #    Hardwired Timeout values that can be overridden by options
@@ -52,9 +52,10 @@ class eom_startup(object):
         self.program_version = "v%s" % __version__
         self.program_build_date = str(__updated__)
         self.program_version_message = '%%(prog)s %s (%s)' % (
-                                                        self.program_version,
-                                                        self.program_build_date)
-        self.program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+                                                self.program_version,
+                                                self.program_build_date)
+        self.program_shortdesc = ("eom (env-o-matic)--"
+                        "Basic Automation to build out DEV/QA environments")
         self.program_log_id = "%s %s (%s)" % (self.program_name,
                                               self.program_version,
                                               self.program_build_date)

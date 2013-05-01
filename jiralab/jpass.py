@@ -20,9 +20,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2013-01-02'
-__updated__ = '2013-01-2'
+__updated__ = '2013-05-01'
 
 
 TESTRUN = 0
@@ -54,7 +54,7 @@ def main(argv=None):  # IGNORE:C0111
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version,
             program_build_date)
-    program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_shortdesc = "jpass -- setup the password vault for a user"
 
     try:
         # Setup argument parser

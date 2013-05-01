@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 '''
-dbgen -- Create Delphix based Databases
+dbgen -- Create Delphix and Siebel  based Databases
 @author:     geowhite
 @copyright:  2013 StubHub. All rights reserved.
 @license:    Apache License 2.0
@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.984
+__version__ = 0.985
 __date__ = '2012-11-15'
-__updated__ = '2013-04-25'
+__updated__ = '2013-05-01'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -50,7 +50,7 @@ def main(argv=None):  # IGNORE:C0111
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version,
                                                      program_build_date)
-    program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_shortdesc ="dbgen -- Create Delphix and Siebel based Databases"
 
     try:
         # Setup argument parser

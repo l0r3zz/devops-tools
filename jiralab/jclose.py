@@ -27,9 +27,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.4
+__version__ = 0.5
 __date__ = '2013-04-05'
-__updated__ = '2013-04-11'
+__updated__ = '2013-05-01'
 
 
 def main(argv=None):  # IGNORE:C0111
@@ -45,7 +45,7 @@ def main(argv=None):  # IGNORE:C0111
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version,
             program_build_date)
-    program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_shortdesc ="jclose -- close JIRA tickets from any command line"
 
     try:
         # Setup argument parser

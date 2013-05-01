@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 '''
-proproj -- Create a Provisioning project in JIRA and kick off provisioning processes
+proproj -- Create Provisioning and DB tickets in JIRA
 
 @author:     geowhite
-        
-@copyright:  2012 StubHub. All rights reserved.
-        
+
+@copyright:  2013 StubHub. All rights reserved.
+
 @license:    Apache License 2.0
 
 @contact:    geowhite@stubhub.com
@@ -24,25 +24,27 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.75
+__version__ = 0.76
 __date__ = '2012-10-28'
-__updated__ = '2013-4-14'
+__updated__ = '2013-5-1'
 
 TESTRUN = 0
+
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
     def __init__(self, msg):
         super(CLIError).__init__(type(self))
         self.msg = "E: %s" % msg
+
     def __str__(self):
         return self.msg
+
     def __unicode__(self):
         return self.msg
 
 
-
-def main(argv=None): # IGNORE:C0111
+def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
     DEBUG = 0
     if argv is None:
@@ -54,7 +56,7 @@ def main(argv=None): # IGNORE:C0111
     program_version = "v%s" % __version__
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
-    program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_shortdesc ="proproj -- Create Provisioning and DB tickets in JIRA"
 
     try:
         # Setup argument parser
@@ -105,7 +107,7 @@ def main(argv=None): # IGNORE:C0111
         pp_summary = "%s: Configure readiness for code deploy" % envid
         use_siebel = ("/Siebel" if args.withsiebel else "")
         db_summary = "%s: Create Delphix%s Database for %s environment" % (envid,use_siebel,jira_release)
-        
+
         # Create the PROPROJ ticket
         proproj_dict = {
                         'project': {'key':'PROPROJ'},
@@ -118,7 +120,7 @@ def main(argv=None): # IGNORE:C0111
                         'customfield_10130': {'value': jira_release},
                         }
         new_proproj = jira.create_issue(fields=proproj_dict)
-        
+
         #Create the DB ticket
         db_dict = {
                         'project': {'key':'DB'},
@@ -132,7 +134,7 @@ def main(argv=None): # IGNORE:C0111
                         'customfield_10130': {'value': jira_release},
                         }
         new_db = jira.create_issue(fields=db_dict)
-        
+
         # Now block the PROPROJ ticket with the DB ticket.
         link = jira.create_issue_link(type="Dependency",inwardIssue=new_proproj.key, outwardIssue=new_db.key)
 
@@ -146,14 +148,14 @@ def main(argv=None): # IGNORE:C0111
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-    
+
 #   except Exception, e:
 
 #        indent = len(program_name) * " "
 #        sys.stderr.write(program_name + ": " + str(e) + "\n")
 #        sys.stderr.write(indent + "  for help use --help\n")
 #        return 2
-    
+
 
 if __name__ == "__main__":
 

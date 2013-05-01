@@ -18,9 +18,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.31
 __date__ = '2013-04-20'
-__updated__ = '2013-04-22'
+__updated__ = '2013--5-01'
 
 CONTENT_TO = 900
 
@@ -39,7 +39,7 @@ def main(argv=None):  # IGNORE:C0111
     program_build_date = str(__updated__)
     program_version_message = '%%(prog)s %s (%s)' % (program_version,
                                                      program_build_date)
-    program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_shortdesc ="jcontent - wrapper around REGs content tool"
 
 
     # Setup argument parser
