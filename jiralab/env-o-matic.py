@@ -222,6 +222,10 @@ def main(argv=None): # IGNORE:C0111
         else:    
             pprj =proproj_result_dict["proproj"]
 
+        if pprj == "unknown":
+            log.error(
+                    "eom.noticket: Invalid or no ticket specified for restart")
+            sys.exit(2)
         log.info("eom.rststruct: Restarting with structure: %s" %
                  json.dumps(proproj_result_dict))
     #######################################################################
@@ -369,12 +373,15 @@ def main(argv=None): # IGNORE:C0111
     rgx_envPASS = "env-validate\[[0-9]*\] results: PASS"
     rgx_envsudoFAIL = "env-validate\[[0-9]*\] PRIORITY=WARNING .+sudo test"
     rgx_envsshFAIL = "env-validate\[[0-9]*\] PRIORITY=WARNING .+ssh test"
+    rgx_envpexTO = "pexpect.TIMEOUT"
     
     if not re.search(rgx_envPASS,ses.before):
         # validation didn't pass, see if we want ti ignore it
         if args.ignorewarnings and (
             not re.search(rgx_envsudoFAIL, ses.before)) and (
-            not re.search(rgx_envsshFAIL, ses.before)):
+            not re.search(rgx_envsshFAIL, ses.before)
+#            and not re.search(rgx_envpexTO, ses.after)
+            ):
             log.warn("eom.prvwarn: Warnings present, proceeding anyway")
         else:
             log.info("eom.prvext Provision step had unrecoverable warnings"
