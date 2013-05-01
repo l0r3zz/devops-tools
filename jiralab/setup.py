@@ -13,7 +13,7 @@ setup(
     # metadata for upload to PyPI
     author = "Geoff White",
     author_email = "gwhite@ebay.com",
-    description = "Continuous Delivery Tools that talk to jira",
+    description = "Continuous Delivery Tools that talk to Jira",
     license = "Restricted",
     keywords = "jira eom devops env-o-matic ",
     entry_points = {
