@@ -1,4 +1,4 @@
-#!/nas/reg/local/bin/python
+#!/usr/bin/env python
 # encoding: utf-8
 '''
 jclose -- close JIRA tickets from any command line
