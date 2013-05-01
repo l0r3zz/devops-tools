@@ -119,6 +119,9 @@ def main(argv=None):  # IGNORE:C0111
                         'description': pp_summary,
                         'customfield_10130': {'value': jira_release},
                         }
+        if DEBUG :
+            print( json.dumps(proproj_dict))
+
         new_proproj = jira.create_issue(fields=proproj_dict)
 
         #Create the DB ticket
@@ -133,6 +136,8 @@ def main(argv=None):  # IGNORE:C0111
                         'description': db_summary,
                         'customfield_10130': {'value': jira_release},
                         }
+
+
         new_db = jira.create_issue(fields=db_dict)
 
         # Now block the PROPROJ ticket with the DB ticket.
