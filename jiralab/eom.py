@@ -1,7 +1,7 @@
 #!/nas/reg/local/bin/python
 # encoding: utf-8
 '''
-env-o-matic - Basic automation to buildout a virtual environment
+eom (env-o-matic) - Basic automation to buildout a virtual environment
               given an ENVIRONMENT ID and ENV request ticket
 @author:     geowhite
 @copyright:  2013 StubHub. All rights reserved.
