@@ -7,7 +7,9 @@ setup(
     name = "jiralab",
     version = "1.1.0",
     packages = find_packages(),
-    py_modules = ['ez_setup','proproj','jcomment','eom','dbgen','jclose'],
+    py_modules = ['ez_setup','proproj','jcomment','eom','dbgen','jclose',
+                  'aes','jiralab','eom_init','mylog','pexpect','pxssh',
+                  'jcontent'],
     install_requires = ['jira_python>=0.13', 'PyYAML'],
 
     # metadata for upload to PyPI
