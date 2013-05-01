@@ -1,4 +1,4 @@
-#!/nas/reg/local/bin/python
+#!/usr/bin/env python
 # encoding: utf-8
 '''
 eom_init - Argument parsing and init file parsing for env-o-matic

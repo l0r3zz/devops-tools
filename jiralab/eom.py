@@ -1,4 +1,4 @@
-#!/nas/reg/local/bin/python
+#!/usr/bin/env python
 # encoding: utf-8
 '''
 eom (env-o-matic) - Basic automation to buildout a virtual environment

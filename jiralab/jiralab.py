@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 '''
 jiralab -- useful classes and methods to work with JIRA tickets
