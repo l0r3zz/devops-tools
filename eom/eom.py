@@ -30,6 +30,7 @@ DEPLOY_WAIT = 600
 CTOOL_TO = 600
 TJOIN_TO = 60.0
 PREPOST_TO = 240
+SIEBEL_TO = 1800
 
 def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
     if result_set:

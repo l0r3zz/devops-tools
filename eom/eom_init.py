@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 '''
-eom_init - Argument parsing and init file parsing for env-o-matic
+eom_init     Argument parsing and init file parsing for env-o-matic
 @author:     geowhite
 @copyright:  2013 StubHub. All rights reserved.
 @license:    Apache License 2.0
