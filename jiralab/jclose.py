@@ -19,6 +19,7 @@ jclose is a CLI based tool that allows you to close a JIRA issue from any
 
 import sys
 import os
+from jira.exceptions import JIRAError
 from jira.client import JIRA
 import jiralab
 
@@ -122,12 +123,16 @@ def main(argv=None):  # IGNORE:C0111
 
         exitstatus = 0
         for issueid in issuelist:
-            issue = jira.issue(issueid)
-            transitions = jira.transitions(issue)
-
+            try:
+                issue = jira.issue(issueid)
+                transitions = jira.transitions(issue)
+            except JIRAError:
+                print( "No ticket found for %s" % issueid)
+                continue
+                 
             if DEBUG :
                 print [(t['id'], t['name']) for t in transitions]
-    
+
             for t in transitions:
                 if 'Close' in t['name']:
                     jira.transition_issue(issue, int( t['id']),
@@ -158,5 +163,4 @@ def main(argv=None):  # IGNORE:C0111
 
 
 if __name__ == "__main__":
-
-    sys.exit(main())
+    main()

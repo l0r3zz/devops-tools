@@ -121,7 +121,7 @@ class EOMdbgen(jiralab.Job):
         self.log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
                  (self.name, time.asctime(time.gmtime(time.time()))))
 
-def main(argv=None): # IGNORE:C0111
+def Main(argv=None): # IGNORE:C0111
 
     #######################################################################
     # Get cmd line options, start logging, read ini file, validate options
@@ -554,11 +554,9 @@ def main(argv=None): # IGNORE:C0111
              time.asctime(time.gmtime(time.time())))
     exit(0)
 
-
-
-if __name__ == "__main__":
+def main():
     try:  # Catch keyboard interrupts (^C)
-        exit_status = main()
+        exit_status = Main()
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         sys.exit(0)
@@ -572,5 +570,8 @@ if __name__ == "__main__":
 #        sys.stderr.write(indent + "  for help use --help\n")
 #        return 2
     sys.exit(exit_status)
+    
+if __name__ == "__main__":
+    main()
 
     

@@ -23,11 +23,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 __all__ = []
-__version__ = 0.2
+__version__ = 0.3
 __date__ = '2013-01-13'
-__updated__ = '2013-04-07'
-
-TESTRUN = 0
+__updated__ = '2013-05-01'
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -108,6 +106,8 @@ def main(argv=None): # IGNORE:C0111
                         }       
         new_tools = jira.create_issue(fields=tools_dict)
         
+        sys.exit()
+        
 
         
 
@@ -116,7 +116,7 @@ def main(argv=None): # IGNORE:C0111
         return 0
     
     except Exception, e:
-        if DEBUG or TESTRUN:
+        if DEBUG:
             raise(e)
         indent = len(program_name) * " "
         sys.stderr.write(program_name + ": " + str(e) + "\n")
@@ -126,8 +126,4 @@ def main(argv=None): # IGNORE:C0111
 
 if __name__ == "__main__":
 
-    if TESTRUN:
-        import doctest
-        doctest.testmod()
-
-    sys.exit(main())
+    main()

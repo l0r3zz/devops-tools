@@ -24,12 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.76
+__version__ = 0.77
 __date__ = '2012-10-28'
 __updated__ = '2013-5-1'
-
-TESTRUN = 0
-
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -149,6 +146,7 @@ def main(argv=None):  # IGNORE:C0111
                        "dbtask": new_db.key,
                        "envreq" : "unknown", }
         print( json.dumps(result_dict,sort_keys=True))
+        sys.exit(0)
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
@@ -163,9 +161,4 @@ def main(argv=None):  # IGNORE:C0111
 
 
 if __name__ == "__main__":
-
-    if TESTRUN:
-        import doctest
-        doctest.testmod()
-
-    sys.exit(main())
+    main()

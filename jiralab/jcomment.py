@@ -117,6 +117,7 @@ def main(argv=None):  # IGNORE:C0111
                         }
         jira = JIRA(jira_options, basic_auth=(auth.user, auth.password))
         jira.add_comment(issueid, comment_text)
+        sys.exit(0)
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
@@ -131,4 +132,4 @@ def main(argv=None):  # IGNORE:C0111
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

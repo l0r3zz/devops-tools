@@ -18,7 +18,7 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.31
+__version__ = 0.32
 __date__ = '2013-04-20'
 __updated__ = '2013--5-01'
 
@@ -134,5 +134,4 @@ def main(argv=None):  # IGNORE:C0111
     sys.exit(0)
     
 if __name__ == "__main__":
-
-    sys.exit(main())
+    main()

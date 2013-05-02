@@ -21,9 +21,9 @@ import threading
 
 
 __all__ = []
-__version__ = 0.83
+__version__ = 0.84
 __date__ = '2012-11-04'
-__updated__ = '2013-04-11'
+__updated__ = '2013-05-01'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -51,7 +51,7 @@ class Reg():
                      "rb1305.1" : "ecomm_13.5.1",
                      "rb_ecomm_13_5" : "ecomm_13.5",
                      "rb_ecomm_13_5_1" : "ecomm_13.5.1",
-                     "rb_ecomm_13_6" : "ecomm_13_6",
+                     "rb_ecomm_13_6" : "ecomm_13.6",
                       }
 
         self.reghandle = reghandle
