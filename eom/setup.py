@@ -4,7 +4,7 @@ from ez_setup import use_setuptools
 use_setuptools()
 from setuptools import setup, find_packages
 setup(
-    name = "jiralab",
+    name = "eom",
     version = "1.1.0",
     packages = find_packages(),
     py_modules = ['ez_setup','proproj','jcomment','eom','dbgen','jclose',
@@ -15,7 +15,7 @@ setup(
     # metadata for upload to PyPI
     author = "Geoff White",
     author_email = "gwhite@ebay.com",
-    description = "Continuous Delivery Tools that talk to Jira",
+    description = "EOM: Continuous Delivery Tools that talk to Jira",
     license = "Restricted",
     keywords = "jira eom devops env-o-matic ",
     entry_points = {
@@ -25,6 +25,7 @@ setup(
             'jclose = jclose:main',
             'jcontent = jcontent:main',
             'env-o-matic = eom:main',
+            'eom = eom:main',
             'dbgen = dbgen:mail',
             ]
     }
