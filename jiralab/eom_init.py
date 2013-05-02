@@ -17,7 +17,7 @@ from argparse import RawDescriptionHelpFormatter
 
 
 __all__ = []
-__version__ = 1.06
+__version__ = 1.061
 __date__ = '2012-11-20'
 __updated__ = '2013-05-01'
 

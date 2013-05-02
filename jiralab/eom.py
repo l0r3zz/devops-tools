@@ -29,6 +29,7 @@ CMD_TO = 120
 DEPLOY_WAIT = 600
 CTOOL_TO = 600
 TJOIN_TO = 60.0
+PREPOST_TO = 240
 
 def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
     if result_set:
@@ -400,7 +401,7 @@ def Main(argv=None): # IGNORE:C0111
             (envid_l, auth.user, pprj)
         log.info ("eom.predeploy: Running predeploy script: %s" % 
                   envpatch_cmd)
-        rval = execute(ses, envpatch_cmd, DEBUG, log)
+        rval = execute(ses, envpatch_cmd, DEBUG, log, to=PREPOST_TO)
     #######################################################################
     # get deploy options and run eom-rabbit-deploy 
     #######################################################################

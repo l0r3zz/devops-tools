@@ -21,7 +21,7 @@ import threading
 
 
 __all__ = []
-__version__ = 0.84
+__version__ = 0.85
 __date__ = '2012-11-04'
 __updated__ = '2013-05-01'
 
@@ -44,14 +44,13 @@ class Reg():
         # FIX ME  just a quick hack, this should be done by a mapping function
         # so that we don't have to continuously track it
         jira_dict = {
-                     "ecomm_13.5" : "ecomm_13.5",
-                     "ecomm_13.5.1" : "ecomm_13.5.1",
+                     "rb1306"     : "ecomm_13.6",
                      "ecomm_13.6" : "ecomm_13.6",
-                     "rb1305" : "ecomm_13.5",
-                     "rb1305.1" : "ecomm_13.5.1",
-                     "rb_ecomm_13_5" : "ecomm_13.5",
-                     "rb_ecomm_13_5_1" : "ecomm_13.5.1",
                      "rb_ecomm_13_6" : "ecomm_13.6",
+                     "ecomm_13.6.1" : "ecomm_13.6.1",
+                     "rb_ecomm_13_6_1" : "ecomm_13.6.1",
+                     "ecomm_13.7" : "ecomm_13.7",
+                     "rb_ecomm_13_7" : "ecomm_13.7",
                       }
 
         self.reghandle = reghandle
