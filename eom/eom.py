@@ -9,9 +9,9 @@ eom (env-o-matic) - Basic automation to buildout a virtual environment
 @contact:    geowhite@stubhub.com
 '''
 __all__ = []
-__version__ = 1.07
+__version__ = 1.071
 __date__ = '2012-11-20'
-__updated__ = '2013-05-02'
+__updated__ = '2013-05-03'
 
 import sys
 import os
@@ -273,7 +273,7 @@ class eom_startup(object):
         to_grp.add_argument("--content_to", dest="CONTENT_TO", 
                             default=CONTENT_TO, type=int,
                             help="set the timeout for content refresh in sec.")
-        to_grp.add_argument("--dbggen_to", dest="DBGEN_TO", 
+        to_grp.add_argument("--dbgen_to", dest="DBGEN_TO", 
                             default=DBGEN_TO, type=int,
                             help="set the timeout for database creation in sec.")
         to_grp.add_argument("--verify_to", dest="VERIFY_TO", 
