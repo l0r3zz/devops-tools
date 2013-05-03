@@ -152,7 +152,7 @@ class EOMdbgen(jiralab.Job):
 
 ###############################################################################
 #    This class handles all of the argument parsing and eom_init config file
-#    parsing, it returns an argeparse Namespace object that can be passed around
+#    parsing, it returns an argparse Namespace object that can be passed around
 ###############################################################################
 class eom_startup(object):
     '''
@@ -397,6 +397,10 @@ def Main(argv=None): # IGNORE:C0111
     start_ctx = eom_startup(argv)
     args = start_ctx.args
     exit_status =0
+    
+    # Authenticate user name and password
+    auth = jiralab.Auth(args)
+    auth.getcred()
 
     envid = args.env.upper()       # insure UPPERCASE environment name
     envid_l = args.env.lower() # insure lowercase environment name
@@ -436,8 +440,6 @@ def Main(argv=None): # IGNORE:C0111
     #######################################################################    
     log.info('eom.start: %s :: %s' % (start_ctx.program_log_id, args))    
     # Get the login credentials from the user or from the vault
-    auth = jiralab.Auth(args)
-    auth.getcred()
 
     # Login to the reg server
     # We do all orchestration from a single reg erver
