@@ -88,6 +88,7 @@ class Job(threading.Thread):
         self.pprd = kwargs.get('proproj_result_dict', None)
         self.name = kwargs.get('name', None)
         self.use_siebel = kwargs.get('use_siebel', None)
+        self.stage_q = kwargs.get('queue', None)
 
 
         if not self.ses :

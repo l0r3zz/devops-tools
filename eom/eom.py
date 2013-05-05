@@ -21,12 +21,13 @@ from datetime import date
 import mylog
 import logging
 import yaml
+import Queue
 import getpass
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.08
+__version__ = 1.081
 __date__ = '2012-11-20'
 __updated__ = '2013-05-04'
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -115,6 +116,10 @@ class EOMreimage(jiralab.Job):
     on a reg server to be used
     '''
     def run(self):
+        q = self.stage_q
+        if q :
+            q.get()
+
         envid = self.args.env.upper()       # insure UPPERCASE env name
         envid_l = self.args.env.lower() # insure lowercase env name
         # Start re-imaging
@@ -141,6 +146,8 @@ class EOMreimage(jiralab.Job):
 
         self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
                       (self.name, time.asctime(time.gmtime(time.time()))))
+        if q:
+            q.task_done()
 
 class EOMdbgen(jiralab.Job):
     '''
@@ -150,6 +157,9 @@ class EOMdbgen(jiralab.Job):
     on a reg server to be used
     '''
     def run(self):
+        q = self.stage_q
+        if q :
+            q.get()
         ses = self.ses
         envid = self.args.env.upper()       # insure UPPERCASE env name
 
@@ -180,6 +190,8 @@ class EOMdbgen(jiralab.Job):
                 % (self.name, self.args.DBGEN_TO))
         self.log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
                  (self.name, time.asctime(time.gmtime(time.time()))))
+        if q:
+            q.task_done()
 
 class eom_startup(object):
     '''
@@ -429,6 +441,7 @@ class Eom():
         self.envid = envid = args.env.upper()
         self.envid_l = envid_l = args.env.lower() # insure lowercase environment name
         self.envnum = envid[-2:]            #just the number
+        self.stage_q = Queue.Queue()
         
         #######################################################################
         #                  Set up and start Logging
@@ -632,7 +645,10 @@ class Eom():
             # Start re-imaging in a thread
             reimage_task = EOMreimage(args, auth, log,
                             name="re-image-thread",
-                            proproj_result_dict=self.proproj_result_dict)
+                            proproj_result_dict=self.proproj_result_dict,
+                            queue = self.stage_q,
+                            )
+            self.stage_q.put(reimage_task)
             reimage_task.daemon = True
             reimage_task.start()
             self.reimage_task = reimage_task # FIXME need to refactor this for threads
@@ -663,7 +679,10 @@ class Eom():
                             name="dbgen-thread",
                             proproj_result_dict=self.proproj_result_dict,
                             session=ses,
-                            use_siebel=self.use_siebel)
+                            use_siebel=self.use_siebel,
+                            queue=self.stage_q
+                            )
+            self.stage_q.put(dbgen_task)
             dbgen_task.daemon = True
             dbgen_task.start()
             self.dbgen_task = dbgen_task  # FIXME refactor for threads
@@ -698,6 +717,11 @@ class Eom():
             while reimage_task.is_alive():
                 reimage_task.join(TJOIN_TO)
             log.info("eom.reimtdone: reimage thread DONE")
+
+        if not args.skipdbgen or not args.skipreimage:
+            log.info("eom.jobwait: waiting for parallel jobs to complete")
+            self.stage_q.join()
+            log.info("eom.jobdone: jobs are DONE")
     
         #######################################################################
         # We should be done with Provisioning, run the env-validate suit
