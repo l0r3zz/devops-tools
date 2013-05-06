@@ -27,7 +27,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.083
+__version__ = 1.084
 __date__ = '2012-11-20'
 __updated__ = '2013-05-06'
 
@@ -215,6 +215,7 @@ class EOMdbgen(jiralab.Job):
             dbgen_to = args.DBGEN_TO - 10
             dbgen_build_cmd = (
                 'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
+                ' |tee /dev/tty'
                 ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' %
                 (user, envid, args.release, 
                  pp_path, self.use_siebel, dbgen_to, dbgendb,
@@ -225,9 +226,10 @@ class EOMdbgen(jiralab.Job):
                 log.warn(
                     "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
                     % (name, args.DBGEN_TO))
-                
-#FIXME: Need better error reporting for failed Database creation
-             
+            # Look for errors in the delphix-auto-provision output
+            if 'Error' in ses.session.before:
+                log.warn("eom.dbcreate.err:(%s) dbgen encountered an error" % name)
+
             log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
                      (name, time.asctime(time.gmtime(time.time()))))
 
