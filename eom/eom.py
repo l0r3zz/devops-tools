@@ -696,7 +696,6 @@ class Eom(object):
             reimage_task.daemon = True
             reimage_task.start()
             self.reimage_task = reimage_task # FIXME need to refactor this for threads
-            log.info("eom.rimwait: Waiting for re-image to complete")
             rval = 1
             return rval
 
@@ -729,8 +728,7 @@ class Eom(object):
             self.stage_q.put(dbgen_task)
             dbgen_task.daemon = True
             dbgen_task.start()
-            self.dbgen_task = dbgen_task  # FIXME refactor for threads
-            log.info("eom.dbgwait: Waiting for dbgen to complete")     
+            self.dbgen_task = dbgen_task   
             rval = 1
             return rval
 
