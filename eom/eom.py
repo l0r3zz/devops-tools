@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 '''
-eom (env-o-matic) - Basic automation to buildout a virtual environment
-              given an ENVIRONMENT ID and ENV request ticket
-@author:     geowhite
+eom (env-o-matic) - Basic automation to build-out a virtual environment
+
+@author:     Geoff White
 @copyright:  2013 StubHub. All rights reserved.
 @license:    Apache License 2.0
 @contact:    geowhite@stubhub.com
@@ -27,15 +27,18 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.081
+__version__ = 1.083
 __date__ = '2012-11-20'
-__updated__ = '2013-05-04'
-REGSERVER = "srwd00reg010.stubcorp.dev"
+__updated__ = '2013-05-06'
+
+REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEBUG = 0
+PEXTO = 0      # Pexpect command timed-out
+PEXOK = 1      # Pexpect command returned OK
+
 ###############################################################################
 #    Hardwired Timeout values that can be overridden by options
 ###############################################################################
-
 REIMAGE_TO = 3600
 DBGEN_TO = 3600
 VERIFY_TO = 720
@@ -48,7 +51,6 @@ CTOOL_TO = 900
 TJOIN_TO = 60.0
 PREPOST_TO = 240
 SIEBEL_TO = 1800
-
 
 ###############################################################################
 #    Workhorse functions
@@ -83,12 +85,20 @@ def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
         else:
             log.debug ("eom.deb: Rval= %d; \nbefore: %s\nafter: %s"
                         % (rval, s.before, s.after))
-    if rval == 0:
+    if rval == PEXTO:
         log.warn("eom.to: cmd: (%s) timed out after %d sec." % ( cmd, to))
     return rval
 
 
 def main():
+    '''
+    This is the main routine.
+    Note that the methods in the Eom class that are decorated with 
+    @assignSequence are methods that will be called and executed, in sequence,
+    based on the sequence number that is assigned to them. The methods are 
+    gathered via the dir() and then only the methods that have the "seq" 
+    attribute are sorted and executed in sequence
+    '''
     try:  # Catch keyboard interrupts (^C)
         eom = Eom()
         functions = sorted(
@@ -116,39 +126,58 @@ class EOMreimage(jiralab.Job):
     on a reg server to be used
     '''
     def run(self):
-        q = self.stage_q
-        if q :
-            q.get()
+        try:
+            q = self.stage_q
+            ses = self.ses
+            args = self.args
+            user = self.auth.user
+            log = self.log
+            ppj = self.pprd["proproj"]
+            name = self.name
+            debug = self.debug
+            if q :
+                q.get()
+    
+            envid = self.args.env.upper()   # insure UPPERCASE env name
+            envid_l = self.args.env.lower() # insure lowercase env name
+            # Start re-imaging
+            log.info("eom.reimg.start:(%s) Reimaging %s start @ %s UTC" %
+                     (name, envid, time.asctime(time.gmtime(time.time()))))
+            reimage_cmd = (('time provision -e %s reimage -v 2>&1'
+            '|jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"')
+                % ( envid_l, user, ppj))
+            rval = execute(ses, reimage_cmd, debug, log, to=args.REIMAGE_TO)
+            if rval == PEXTO:
+                log.warn("eom.rimgto: Re-image operation timed out")
+                execute(ses,"jcmnt -u %s -i %s re-image operation time-out"
+                        % (user,ppj))
+                return
+    
+            log.info("eom.sleep:(%s) Re-image complete, sleeping 5 minutes"
+                          % name)
+            time.sleep(300)
+    
+            log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
+    
+            reimage_validate_string = ('verify-reimage %s '
+            '|jcmnt -f -u %s -i %s -t'
+            ' "check this list for re-imaging status"'% (envid_l, user, ppj))
+            rval = execute(ses, 
+                           reimage_validate_string, debug, log, 
+                           to=args.VERIFY_TO)
+    
+            log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
+                          (name, time.asctime(time.gmtime(time.time()))))
 
-        envid = self.args.env.upper()       # insure UPPERCASE env name
-        envid_l = self.args.env.lower() # insure lowercase env name
-        # Start re-imaging
-        self.log.info("eom.reimg.start:(%s) Reimaging %s start @ %s UTC" %\
-                 (self.name, envid, time.asctime(time.gmtime(time.time()))))
-        reimage_cmd = (('time provision -e %s reimage -v 2>&1'
-        '|jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"')\
-            % ( envid_l, self.auth.user, self.pprd["proproj"]))
-        rval = execute(self.ses, reimage_cmd, self.debug, self.log, 
-                       to=self.args.REIMAGE_TO)
-        self.log.info("eom.sleep:(%s) Re-image complete, sleeping 5 minutes"
-                      % self.name)
-        time.sleep(300)
+        except:
+            log.error(
+                "eom.threadexcpt: exception occurred in thread %s" % name)
+        finally:
+            if q:
+                q.task_done()
+        return
 
-        self.log.info("eom.rimgval: Verifying re-imaging of roles in %s"
-                      % envid)
-
-        reimage_validate_string = ('verify-reimage %s '
-        '|jcmnt -f -u %s -i %s -t'
-        ' "check this list for re-imaging status"'%
-            (envid_l, self.auth.user, self.pprd["proproj"]))
-        rval = execute(self.ses, reimage_validate_string, self.debug, self.log, 
-                       to=self.args.VERIFY_TO)
-
-        self.log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
-                      (self.name, time.asctime(time.gmtime(time.time()))))
-        if q:
-            q.task_done()
-
+                    
 class EOMdbgen(jiralab.Job):
     '''
     This class is a container for the database generation task, it inherits from 
@@ -157,42 +186,57 @@ class EOMdbgen(jiralab.Job):
     on a reg server to be used
     '''
     def run(self):
-        q = self.stage_q
-        if q :
-            q.get()
-        ses = self.ses
-        envid = self.args.env.upper()       # insure UPPERCASE env name
+        try:
+            q = self.stage_q
+            ses = self.ses
+            args = self.args
+            user = self.auth.user
+            log = self.log
+            ppj = self.pprd["proproj"]
+            name = self.name
+            debug = self.debug
 
-        self.log.info(
-                "eom.dbcreate.start:(%s) Building Database start @ %s UTC,"
-                % (self.name, time.asctime(time.gmtime(time.time()))))
+            if q :
+                q.get()
+            envid = self.args.env.upper()       # insure UPPERCASE env name
+    
+            log.info(
+                    "eom.dbcreate.start:(%s) Building Database start @ %s UTC,"
+                    % (name, time.asctime(time.gmtime(time.time()))))
+    
+            if args.debug > 1:
+                dbgendb = "-D"
+            else:
+                dbgendb = ""
+    
+    
+            pp_path = ("" if args.nopostpatch else\
+               '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
+            dbgen_to = args.DBGEN_TO - 10
+            dbgen_build_cmd = (
+                'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
+                ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' %
+                (user, envid, args.release, 
+                 pp_path, self.use_siebel, dbgen_to, dbgendb,
+                 user, ppj))
+    
+            rval = execute(ses, dbgen_build_cmd, debug, log, to=args.DBGEN_TO)
+            if rval == PEXTO:
+                log.warn(
+                    "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
+                    % (name, args.DBGEN_TO))
 
-        if self.args.debug > 1:
-            dbgendb = "-D"
-        else:
-            dbgendb = ""
+            log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
+                     (name, time.asctime(time.gmtime(time.time()))))
 
+        except:
+            log.error(
+                "eom.threadexcpt: exception occurred in thread %s" % self.name)
+        finally:
+            if q:
+                q.task_done()
 
-        pp_path = ("" if self.args.nopostpatch else\
-           '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
-        dbgen_to = self.args.DBGEN_TO - 10
-        dbgen_build_cmd = ('time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
-        ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"') % \
-            (self.auth.user, envid, self.args.release, 
-             pp_path, self.use_siebel, dbgen_to, dbgendb,
-             self.auth.user, self.pprd["dbtask"])
-
-        rval = execute(ses, dbgen_build_cmd, self.debug, self.log, 
-                       to=self.args.DBGEN_TO)
-        if rval > 1:
-            self.log.warn(
-                "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
-                % (self.name, self.args.DBGEN_TO))
-        self.log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
-                 (self.name, time.asctime(time.gmtime(time.time()))))
-        if q:
-            q.task_done()
-
+                            
 class eom_startup(object):
     '''
     This class handles all of the argument parsing and eom_init config file
@@ -426,7 +470,7 @@ class eom_startup(object):
 ###############################################################################
 #                        Class Eom
 ###############################################################################
-class Eom():
+class Eom(object):
     def __init__(self):
         #######################################################################
         # Get cmd line options, start logging, read ini file, validate options
@@ -439,20 +483,20 @@ class Eom():
         auth.getcred()
     
         self.envid = envid = args.env.upper()
-        self.envid_l = envid_l = args.env.lower() # insure lowercase environment name
+        self.envid_l = envid_l = args.env.lower()
         self.envnum = envid[-2:]            #just the number
-        self.stage_q = Queue.Queue()
+        self.stage_q = Queue.Queue()        # use this queue for thread seq
         
         #######################################################################
         #                  Set up and start Logging
         #######################################################################    
         try:
             if args.logfile:
-                self.log = log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
-                                  lfile=args.logfile, cnsl=True)
+                self.log = log = mylog.logg('env-o-matic', llevel='INFO', 
+                        gmt=True, lfile=args.logfile, cnsl=True)
             else:
-                self.log = log = mylog.logg('env-o-matic', llevel='INFO', gmt=True,
-                                  cnsl=True, sh=sys.stdout)
+                self.log = log = mylog.logg('env-o-matic', llevel='INFO',
+                        gmt=True, cnsl=True, sh=sys.stdout)
         except UnboundLocalError:
             print("Can't open Log file, check path\n")
             sys.exit(1)
@@ -565,7 +609,7 @@ class Eom():
     
             rval = execute(ses,proproj_cmd, DEBUG, log, result_set=["\{*\}",
                                                   ses.session.PROMPT])
-            if rval == 1 :
+            if rval == PEXOK :
                 PPRESULT = 1
                 proproj_result_string = (
                             ses.before + ses.after).split("\n")
@@ -703,25 +747,12 @@ class Eom():
         #######################################################################
         #   Wait for all the threads to complete
         #######################################################################
-        # FIXME - this is a temp hack, need some form
-        # of proper thread sequencing between the stages
-
-
-        if not args.skipdbgen:
-            dbgen_task = self.dbgen_task
-            while dbgen_task.is_alive():
-                dbgen_task.join(TJOIN_TO)
-            log.info("eom.dbtdone: Dbgen thread DONE")
-        if not args.skipreimage:
-            reimage_task = self.reimage_task
-            while reimage_task.is_alive():
-                reimage_task.join(TJOIN_TO)
-            log.info("eom.reimtdone: reimage thread DONE")
 
         if not args.skipdbgen or not args.skipreimage:
-            log.info("eom.jobwait: waiting for parallel jobs to complete")
+            log.info("eom.jobwait: waiting for parallel jobs from previous"
+                     " stage to complete")
             self.stage_q.join()
-            log.info("eom.jobdone: jobs are DONE")
+            log.info("eom.jobdone: jobs are done, merging execution")
     
         #######################################################################
         # We should be done with Provisioning, run the env-validate suit
@@ -748,7 +779,8 @@ class Eom():
         #######################################################################
         # Check the results of env-validate to see if we can proceed
         #######################################################################
-        if rval == 0:   # env-validate timed out write failure to log and ticket
+        if rval == PEXTO:   
+        # env-validate timed out, write failure to log and ticket
             log.error("eom.envalto: env-validation"
                       " timed out after %d seconds, exiting." % args.VERIFY_TO)
             env_valfail_string = ('jcmnt -f -u %s -i %s'
@@ -869,7 +901,7 @@ class Eom():
             ###################################################################
             # Check the results of app deploy to see if we can proceed
             ###################################################################
-            if rval == 0:   # app deply timed out write failure to log and ticket
+            if rval == PEXTO:   # app deply timed out write failure to log and ticket
                 log.error("eom.appto: application deployment"
                           " timed out after %d seconds, exiting."
                           % deploy_timeout)
@@ -921,7 +953,7 @@ class Eom():
                       content_cmd)
     
             rval = execute(ses, content_cmd, DEBUG, log, to=CTOOL_TO)
-            if rval == 0:
+            if rval == PEXTO:
                 execute(ses, 'jcmnt -u %s -i %s -t "Content Tool time-out after %s secs"' %\
                 (auth.user, pprj, CTOOL_TO), DEBUG, log) 
             return rval
@@ -1011,11 +1043,5 @@ class Eom():
 ###############################################################################    
 
 if __name__ == "__main__":
-#    try:
-        main()
-#    except Exception, e:
-#        if DEBUG:
-#            raise
-#        sys.stderr.write("env-o-matic: " + str(e) + "\n")
-#        sys.stderr.write("  for help use --help\n")
-#        sys.exit(2)
+    
+    main()
