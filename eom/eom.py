@@ -749,6 +749,7 @@ class Eom(object):
         #######################################################################
 
         if not args.skipdbgen or not args.skipreimage:
+            time.sleep(10)
             log.info("eom.jobwait: waiting for parallel jobs from previous"
                      " stage to complete")
             self.stage_q.join()
