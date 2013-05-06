@@ -192,7 +192,7 @@ class EOMdbgen(jiralab.Job):
             args = self.args
             user = self.auth.user
             log = self.log
-            ppj = self.pprd["proproj"]
+            dbt = self.pprd["dbtask"]
             name = self.name
             debug = self.debug
 
@@ -218,14 +218,16 @@ class EOMdbgen(jiralab.Job):
                 ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' %
                 (user, envid, args.release, 
                  pp_path, self.use_siebel, dbgen_to, dbgendb,
-                 user, ppj))
+                 user, dbt))
     
             rval = execute(ses, dbgen_build_cmd, debug, log, to=args.DBGEN_TO)
             if rval == PEXTO:
                 log.warn(
                     "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
                     % (name, args.DBGEN_TO))
-
+                
+#FIXME: Need better error reporting for failed Database creation
+             
             log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
                      (name, time.asctime(time.gmtime(time.time()))))
 
