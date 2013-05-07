@@ -27,7 +27,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.085
+__version__ = 1.086
 __date__ = '2012-11-20'
 __updated__ = '2013-05-06'
 
@@ -476,10 +476,15 @@ class eom_startup(object):
 #                        Class Eom
 ###############################################################################
 class Eom(object):
-    def __init__(self):
+    def __init__(self,argv=None):
         #######################################################################
         # Get cmd line options, start logging, read ini file, validate options
         #######################################################################
+        # This let's you provide arguments as callable parameters, if your not
+        # running the program from __main__
+        if argv:
+            sys.argv.extend(argv)
+            
         start_ctx = eom_startup()
         args = self.args = start_ctx.args
         
