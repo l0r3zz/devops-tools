@@ -27,11 +27,12 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.084
+__version__ = 1.085
 __date__ = '2012-11-20'
 __updated__ = '2013-05-06'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
+DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
 DEBUG = 0
 PEXTO = 0      # Pexpect command timed-out
 PEXOK = 1      # Pexpect command returned OK
@@ -290,7 +291,7 @@ class eom_startup(object):
         parser.add_argument("-R", "--restart", dest="restart_issue",
                             help="ENV or PROPROJ issue to restart from, ")
         parser.add_argument("-l", "--logfile", dest="logfile",
-                            default="/nas/reg/log/jiralab/env-o-matic.log",
+                            default=DEFAULT_LOG_PATH,
                             help="file to log to (if none, log to console)" )
         parser.add_argument("-c", "--config", dest="eom_ini_file",
                             default=None, help="load a specific .eom.ini file")
