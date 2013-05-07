@@ -802,13 +802,16 @@ class Eom(object):
         rgx_envPASS = "env-validate\[[0-9]*\] results: PASS"
         rgx_envsudoFAIL = "env-validate\[[0-9]*\] PRIORITY=WARNING .+sudo test"
         rgx_envsshFAIL = "env-validate\[[0-9]*\] PRIORITY=WARNING .+ssh test"
+        rgx_envdbFAIL = ("env-validate\[[0-9]*\] "
+                        "PRIORITY=WARNING .+D(08|19|16)DE[0-9]{2}.+Failed")
         
         if not re.search(rgx_envPASS,ses.before):
             # validation didn't pass, see if we want ti ignore it
             if args.ignorewarnings and (
-                not re.search(rgx_envsudoFAIL, ses.before)) and (
-                not re.search(rgx_envsshFAIL, ses.before)
-    #            and not re.search(rgx_envpexTO, ses.after)
+                not re.search(rgx_envsudoFAIL, ses.before) and 
+                not re.search(rgx_envsshFAIL, ses.before)  and
+                not re.search(rgx_envdbFAIL, ses.before)
+
                 ):
                 log.warn("eom.prvwarn: Warnings present, proceeding anyway")
             else:
