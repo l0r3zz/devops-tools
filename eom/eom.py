@@ -777,6 +777,11 @@ class Eom(object):
             '| tee /dev/tty'
             ' | jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
             (envnum, auth.user, pprj)
+        elif 'srwq' in envid_l :
+            env_validate_string = ('env-validate -d srwq -e %s 2>&1'
+            '| tee /dev/tty'
+            ' | jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
+            (envnum, auth.user, pprj)
         else :
             env_validate_string = ('env-validate -e %s 2>&1 '
             '| tee /dev/tty'
