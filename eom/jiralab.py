@@ -169,10 +169,11 @@ class CliHelper:
     '''Helper class to do  CLI login, command stream execution
     and file transfers '''
 
-    def __init__(self, host, port=22, debug=False):
+    def __init__(self, host, port=22, log, debug=False):
         self.host = host
         self.port = port
         self.debug = debug
+        self.log = log
         self.session = pxssh.pxssh()
 
     def login(self, user="admin", password="admin", prompt="[#$]", timeout=30):
@@ -188,13 +189,15 @@ class CliHelper:
 
         except pxssh.ExceptionPxssh, e:
             self.login = False
-            raise(e)
+            self.log.error(
+                    "eom.cliloginfail: Login failure to %s user: %s, %s" % (self.host, self.user, e))
+            return False
 
         self.session.PROMPT = prompt
         self.PROMPT = self.session.PROMPT
         self.before = self.session.before
         self.after = self.session.after
-        self.login = True
+        return True
 
     def logout(self):
             self.session.logout()

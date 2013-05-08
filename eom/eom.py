@@ -542,8 +542,12 @@ class Eom(object):
 
         log.info ("eom.login: Logging into %s  @ %s UTC" %\
                 (REGSERVER, time.asctime(time.gmtime(time.time()))))
-        self.ses = ses = jiralab.CliHelper(REGSERVER)
-        ses.login(auth.user,auth.password,prompt="\$[ ]")
+        self.ses = ses = jiralab.CliHelper(REGSERVER,log)
+        # Die if the login failed.
+        if not ses.login(auth.user,auth.password,prompt="\$[ ]"):
+            log.error("eom.badexit: Exiting with error")
+            sys.exit(2)
+
         if DEBUG:
             log.debug ("eom.deb: before: %s\nafter: %s" % (ses.before,
                                                            ses.after))
