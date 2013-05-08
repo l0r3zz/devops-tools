@@ -21,9 +21,9 @@ import threading
 
 
 __all__ = []
-__version__ = 0.86
+__version__ = 0.87
 __date__ = '2012-11-04'
-__updated__ = '2013-05-04'
+__updated__ = '2013-05-08'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
