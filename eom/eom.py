@@ -73,10 +73,10 @@ def assignSequence(seq):
     return do_assignment
 
 def stage_entry(log):
-    log.info("eom.stgentry: stage %s ENTRY" % inspect.stack()[0][3])
+    log.info("eom.stgentry: stage %s ENTRY" % inspect.stack()[1][3])
 
 def stage_exit(log):
-    log.info("eom.stgexit: stage %s EXIT" % inspect.stack()[0][3])
+    log.info("eom.stgexit: stage %s EXIT" % inspect.stack()[1][3])
 
 def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
     """
