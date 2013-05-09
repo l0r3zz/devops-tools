@@ -28,9 +28,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.089
+__version__ = 1.09
 __date__ = '2012-11-20'
-__updated__ = '2013-05-08'
+__updated__ = '2013-05-09'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -752,7 +752,7 @@ class Eom(object):
             dbgen_task = EOMdbgen(args, auth, log,
                             name="dbgen-thread",
                             proproj_result_dict=self.proproj_result_dict,
-                            session=ses,
+#                            session=ses,
                             use_siebel=self.use_siebel,
                             queue=self.stage_q
                             )
