@@ -815,7 +815,7 @@ class Eom(object):
                         "PRIORITY=WARNING .+D(08|19|16)DE[0-9]{2}.+Failed")
         
         if not re.search(rgx_envPASS,ses.before):
-            # validation didn't pass, see if we want ti ignore it
+            # validation didn't pass, see if we want to ignore it
             if args.ignorewarnings and (
                 not re.search(rgx_envsudoFAIL, ses.before) and 
                 not re.search(rgx_envsshFAIL, ses.before)  and
