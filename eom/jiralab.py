@@ -169,7 +169,7 @@ class CliHelper:
     '''Helper class to do  CLI login, command stream execution
     and file transfers '''
 
-    def __init__(self, host, log, port=22, debug=False):
+    def __init__(self, host, log=None, port=22, debug=False):
         self.host = host
         self.port = port
         self.debug = debug
