@@ -97,7 +97,7 @@ class Job(threading.Thread):
                       (self.name, REGSERVER,
                        time.asctime(time.gmtime(time.time()))))
             # Create a remote shell object
-            self.ses = CliHelper(REGSERVER)
+            self.ses = CliHelper(REGSERVER,log)
             self.ses.login(self.auth.user, self.auth.password,prompt="\$[ ]")
             if self.debug:
                 log.debug ("eom.deb:(%s) before: %s\nafter: %s" %
