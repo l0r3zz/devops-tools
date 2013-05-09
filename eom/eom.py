@@ -23,11 +23,12 @@ import logging
 import yaml
 import Queue
 import getpass
+import inspect
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.088
+__version__ = 1.089
 __date__ = '2012-11-20'
 __updated__ = '2013-05-08'
 
@@ -71,6 +72,11 @@ def assignSequence(seq):
         return to_func
     return do_assignment
 
+def stage_entry(log):
+    log.info("eom.stgentry: stage %s ENTRY" % inspect.stack()[0][3])
+
+def stage_exit(log):
+    log.info("eom.stgexit: stage %s EXIT" % inspect.stack()[0][3])
 
 def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
     """
@@ -539,6 +545,7 @@ class Eom(object):
         log = self.log
         auth = self.auth
         args = self.args
+        stage_entry(log)
 
         log.info ("eom.login: Logging into %s  @ %s UTC" %\
                 (REGSERVER, time.asctime(time.gmtime(time.time()))))
@@ -563,6 +570,7 @@ class Eom(object):
         except jiralab.JIRALAB_CLI_ValueError :
             print( "eom.relerr: No release named %s" % args.release)
             exit(2)
+        stage_exit(log)
         return rval
 
     @assignSequence(200)
@@ -577,6 +585,7 @@ class Eom(object):
         log = self.log
         jira_release = self.jira_release
         ses = self.ses
+        stage_entry(log)
         
         if  args.restart_issue:
             restart_issue = args.restart_issue
@@ -673,6 +682,7 @@ class Eom(object):
                      args.envreq)
       
         rval=1
+        stage_exit(log)
         return rval
 
     @assignSequence(300)
@@ -689,15 +699,18 @@ class Eom(object):
         envid = self.envid
         log = self.log
         pprj = self.pprj
+        stage_entry(log)
 
         
         if args.skipreimage:
             log.info("eom.noreimg: Skipping the re-image of %s" % envid)
+            stage_exit(log)
             return None
         elif 'unknown' in pprj:
             log.info("eom.reimgenv: Reimaging with an ENV issue"
                      " not yet supported. Skipping...")
-            args.skipreimage = True 
+            args.skipreimage = True
+            stage_exit(log) 
             return None
         else:
             # Start re-imaging in a thread
@@ -711,6 +724,7 @@ class Eom(object):
             reimage_task.start()
             self.reimage_task = reimage_task # FIXME need to refactor this for threads
             rval = 1
+            stage_exit(log)
             return rval
 
     @assignSequence(410)
@@ -721,15 +735,18 @@ class Eom(object):
         ses = self.ses
         log = self.log
         pprj = self.pprj
+        stage_entry(log)
         #######################################################################
         #                   Handle database creation here
         #######################################################################
         if args.skipdbgen:
             log.info("eom.nodbgen: Skipping the db creation of %s" % envid)
+            stage_exit(log)
             return None
         elif 'unknown' in pprj:
             log.warn("eom.nodbgenrst: dbgen restart not yet supported")
             args.skipdbgen = True
+            stage_exit(log)
             return None
         else:
             dbgen_task = EOMdbgen(args, auth, log,
@@ -744,6 +761,7 @@ class Eom(object):
             dbgen_task.start()
             self.dbgen_task = dbgen_task   
             rval = 1
+            stage_exit(log)
             return rval
 
     @assignSequence(500)
@@ -755,6 +773,7 @@ class Eom(object):
         ses = self.ses
         log = self.log
         pprj = self.pprj
+        stage_entry(log)
 
         #######################################################################
         #   Wait for all the threads to complete
@@ -831,6 +850,7 @@ class Eom(object):
         else:
             log.info("eom.valpass: env-validation PASS for %s" % envid_l)
             args.enval_success = True
+        stage_exit(log)
         return rval
 
     @assignSequence(600)
@@ -841,6 +861,7 @@ class Eom(object):
         ses = self.ses
         log = self.log
         pprj = self.pprj
+        stage_entry(log)
         #######################################################################
         # Run the pre deploy script
         #######################################################################
@@ -851,9 +872,10 @@ class Eom(object):
             log.info ("eom.predeploy: Running predeploy script: %s" % 
                       envpatch_cmd)
             rval = execute(ses, envpatch_cmd, DEBUG, log, to=PREPOST_TO)
-            return rval
         else:
-            return None
+            rval = None
+        stage_exit(log)
+        return rval
 
     @assignSequence(700)
     def app_deploy_stage(self):
@@ -863,6 +885,7 @@ class Eom(object):
         ses = self.ses
         log = self.log
         pprj = self.pprj
+        stage_entry(log)
         #######################################################################
         # get deploy options and run eom-rabbit-deploy 
         #######################################################################
@@ -873,6 +896,7 @@ class Eom(object):
         if args.deploy[0] == 'no':
             args.deploy_success = False
             log.info("eom.skipappdply: Skipping Application Deployment")
+            stage_exit(log)
             return None
         else:
             args.deploy_success = True  
@@ -918,7 +942,6 @@ class Eom(object):
                      eom_rabbit_deploy_cmd)
             rval = execute(ses, eom_rabbit_deploy_cmd, DEBUG,
                            log, to=deploy_timeout)
-    
             ###################################################################
             # Check the results of app deploy to see if we can proceed
             ###################################################################
@@ -950,8 +973,9 @@ class Eom(object):
                 if 'Deployment logs:' in line:
                     deploy_logs = line.rstrip()
                     log.info("eom.appdeplylog: %s" % deploy_logs)
+            stage_exit(log)
             return rval
-    
+
     @assignSequence(800)
     def post_deploy_stage(self):
         args = self.args
@@ -960,6 +984,7 @@ class Eom(object):
         ses = self.ses
         log = self.log
         pprj = self.pprj
+        stage_entry(log)
     
         #######################################################################
         # Run the content tool
@@ -977,9 +1002,10 @@ class Eom(object):
             if rval == PEXTO:
                 execute(ses, 'jcmnt -u %s -i %s -t "Content Tool time-out after %s secs"' %\
                 (auth.user, pprj, CTOOL_TO), DEBUG, log) 
-            return rval
         else:
-            return None
+            rval = None
+        stage_exit(log)
+        return rval
 
     @assignSequence(810)
     def net_deploy_stage(self):
@@ -993,6 +1019,7 @@ class Eom(object):
         ses = self.ses
         log = self.log
         pprj = self.pprj
+        stage_entry(log)
         #######################################################################
         #        Perform big_IP verification: 
         #######################################################################
@@ -1006,9 +1033,10 @@ class Eom(object):
             log.info ("eom.valbigip: Running BigIP validation: %s" % 
                       valbigip_cmd)
             rval = execute(ses, valbigip_cmd, DEBUG, log)
-            return rval
         else:
-            return None
+            rval = None
+        stage_exit(log)
+        return rval
 
     @assignSequence(950)
     def smoketest_stage(self):
@@ -1020,6 +1048,7 @@ class Eom(object):
         auth = self.auth
         ses = self.ses
         log = self.log
+        stage_entry(log)
         #######################################################################
         #                         EXECUTION COMPLETE
         #######################################################################
@@ -1057,6 +1086,7 @@ class Eom(object):
         log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
                  time.asctime(time.gmtime(time.time())))
         rval = 1
+        stage_exit(log)
         return rval
 
 ###############################################################################
