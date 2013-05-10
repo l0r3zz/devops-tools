@@ -832,7 +832,6 @@ class Eom(object):
         rgx_envsshFAIL = "env-validate\[[0-9]*\] PRIORITY=WARNING .+ssh test"
         rgx_envdbFAIL = ("env-validate\[[0-9]*\] "
                         "PRIORITY=WARNING .+D(08|19|16)DE[0-9]{2}.+Failed")
-        time.sleep(5) # wait for results to stabilize
         if not re.search(rgx_envPASS,ses.before):
             # validation didn't pass, see if we want to ignore it
             if args.ignorewarnings and (
