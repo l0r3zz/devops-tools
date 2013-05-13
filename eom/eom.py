@@ -28,9 +28,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.09
+__version__ = 1.092
 __date__ = '2012-11-20'
-__updated__ = '2013-05-09'
+__updated__ = '2013-05-12'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -924,16 +924,46 @@ class Eom(object):
     
             cr = "--content-refresh" if args.content_refresh else ""
             deploy_timeout = (args.DEPLOY_TO + args.CONTENT_TO 
-                              if args.content_refresh else args.DEPLOY_TO) 
+                              if args.content_refresh else args.DEPLOY_TO)
+
+            # get the release ID and build label from the eom arguments 
             r = args.release
             bl = args.build_label
+            # Now fet a data structure containing the current reg info based
+            # On the suppiled build label
+            build_label_cmd = ( "build-id-info %s" % bl)  
+            rval = execute(ses,build_label_cmd, DEBUG, log, result_set=["\{*\}",
+                                                  ses.session.PROMPT])
+            if rval == PEXOK :
+                bii_str_array = (ses.before + ses.after).split("\n")
+                bl_result_string = "".join(
+                        [" " + x.replace("\r","") for x in bii_str_array[1:]])
+                bl_result_dict = json.loads(bl_result_string)
+                self.bl_result_dict = bl_result_dict
+                log.info("eom.tcreat: Build Artifacts Structure:: %s" %
+                         bl_result_string)
+                build_label = bl_result_dict["build_label"]
+                build_tree = bl_result_dict["build_tree_iteration"]
+
+                build_tree_opt = "--tree %s" % build_tree if build_tree else ""
+            else:
+                log.error("eom.bidfail: build-id-info failed, can't continue")
+                sys.exit(2)
+                
             deploy_opts = " ".join(["--" + x  for x in args.deploy])
             deply_issue = args.envreq if args.envreq else pprj
+            
             eom_rabbit_deploy_cmd = (
-            "eom-rabbit-deploy --env %s --release %s --build-label %s %s %s"
+            "eom-rabbit-deploy --env %s --release %s --build-label %s %s %s %s"
             '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
-            (envid_l, r, bl,deploy_opts,cr,auth.user, 
-             deply_issue,bl)
+            (envid_l, r, build_label, deploy_opts, build_tree_opt,
+             cr, auth.user, deply_issue, bl_result_dict["build_tree_id"])
+#
+#            eom_rabbit_deploy_cmd = (
+#            "eom-rabbit-deploy --env %s --release %s --build-label %s %s %s"
+#            '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
+#            (envid_l, r, bl,deploy_opts,cr,auth.user, 
+#             deply_issue,bl)
     
             if args.envreq:
                 pass
