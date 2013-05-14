@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.986
+__version__ = 0.987
 __date__ = '2012-11-15'
-__updated__ = '2013-05-01'
+__updated__ = '2013-05-14'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -103,6 +103,10 @@ def main(argv=None):  # IGNORE:C0111
 
         envid = args.env.upper()
         envnum = envid[-2:]  # just the number
+        envbank =envid[3].upper() # get the letter indicating the QA/Dev bank
+        if envbank == 'E':
+            print( "Sorry, dbgen does not yet support PE environments")
+            exit(2)
 
         auth = jiralab.Auth(args)
         auth.getcred()
@@ -160,8 +164,8 @@ def main(argv=None):  # IGNORE:C0111
         print("Running the auto-provision script")
         use_siebel = ("Y" if args.withsiebel else "")
 
-        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s"
-            % (envnum, args.release, use_siebel))
+        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s %s"
+            % (envnum, args.release, envbank,  use_siebel))
         rval = reg_session.docmd(auto_provision_cmd,
                         ["ALL DONE!!!", "Error"], timeout=args.timeout)
         if DEBUG:
