@@ -164,7 +164,7 @@ def main(argv=None):  # IGNORE:C0111
         print("Running the auto-provision script")
         use_siebel = ("Y" if args.withsiebel else "")
 
-        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s %s"
+        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision-v2.1 %s %s Ecomm %s %s"
             % (envnum, args.release, envbank,  use_siebel))
         rval = reg_session.docmd(auto_provision_cmd,
                         ["ALL DONE!!!", "Error"], timeout=args.timeout)
