@@ -182,10 +182,10 @@ def main(argv=None):  # IGNORE:C0111
                         reg_session.after))
 
             old_db_search_space = re.search(
-                                'Found Database[ ]+(?P<odb>D(08|19|16)DE[0-9]{2})'
+                                'Found Database[ ]+(?P<odb>D(08|19|16)[DQ]E[0-9]{2})'
                                         , reg_session.before)
             sn_search_space = re.search(
-                                'DBNAME\:[ ]+(?P<sn>D(08|19|16)DE[0-9]{2})',
+                                'DBNAME\:[ ]+(?P<sn>D(08|19|16)[DQ]E[0-9]{2})',
                                         reg_session.before)
 
             if sn_search_space:  # make sure we found something
