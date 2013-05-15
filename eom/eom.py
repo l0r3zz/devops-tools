@@ -28,9 +28,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.092
+__version__ = 1.093
 __date__ = '2012-11-20'
-__updated__ = '2013-05-12'
+__updated__ = '2013-05-14'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -221,7 +221,7 @@ class EOMdbgen(jiralab.Job):
                '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
             dbgen_to = args.DBGEN_TO - 10
             dbgen_build_cmd = (
-                'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
+                'time dbgentest -u %s -e %s -r %s %s %s --timeout=%d %s'
                 ' |tee /dev/tty'
                 ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' %
                 (user, envid, args.release, 
