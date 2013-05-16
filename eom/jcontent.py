@@ -18,9 +18,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.32
+__version__ = 0.33
 __date__ = '2013-04-20'
-__updated__ = '2013--5-01'
+__updated__ = '2013--5-16'
 
 CONTENT_TO = 900
 
@@ -84,6 +84,10 @@ def main(argv=None):  # IGNORE:C0111
     auth = jiralab.Auth(args)
     auth.getcred()
 
+    if len(args.rem) < 3:
+        print ("Error: Not enough arguments supplied, exiting")
+        exit(0)
+
     # Login to the reg server
     print("Logging into %s" % REGSERVER)
     reg_session = jiralab.CliHelper(REGSERVER)
@@ -104,6 +108,7 @@ def main(argv=None):  # IGNORE:C0111
     if DEBUG:
         print ("Rval= %d; before: %s\nafter: %s" % (rval,
                     reg_session.before, reg_session.after))
+
     for i in xrange(3):
         rval = reg_session.docmd(args.rem[i], ["choice?"])
         if DEBUG:
@@ -124,7 +129,7 @@ def main(argv=None):  # IGNORE:C0111
                     reg_session.before, reg_session.after))
 
     if rval == 2:
-        print ("Content Tool Aborted:\n%s%s" % 
+        print ("ERROR: CONTENT TOOL ABORTED!:\n%s%s" % 
                (reg_session.before,reg_session.after))
         exit(1)
 
