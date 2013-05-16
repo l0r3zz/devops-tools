@@ -117,10 +117,16 @@ def main(argv=None):  # IGNORE:C0111
                     reg_session.before, reg_session.after))
         
     # Hit the "go" button
-    rval = reg_session.docmd("1", ["choice?"],timeout=CONTENT_TO)
+    rval = reg_session.docmd("1", ["choice?", "Exiting with code"]
+                             ,timeout=CONTENT_TO)
     if DEBUG:
         print ("Rval= %d; before: %s\nafter: %s" % (rval,
                     reg_session.before, reg_session.after))
+
+    if rval == 2:
+        print ("Content Tool Aborted:\n%s%s" % 
+               (reg_session.before,reg_session.after))
+        exit(1)
 
     print ("%s%s" % (reg_session.before, reg_session.after))
     
