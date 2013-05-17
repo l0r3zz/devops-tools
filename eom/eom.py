@@ -221,7 +221,7 @@ class EOMdbgen(jiralab.Job):
                '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
             dbgen_to = args.DBGEN_TO - 10
             dbgen_build_cmd = (
-                'time dbgentest -u %s -e %s -r %s %s %s --timeout=%d %s'
+                'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
                 ' |tee /dev/tty'
                 ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' %
                 (user, envid, args.release, 
