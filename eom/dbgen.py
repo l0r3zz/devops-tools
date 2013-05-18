@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.987
+__version__ = 0.989
 __date__ = '2012-11-15'
-__updated__ = '2013-05-14'
+__updated__ = '2013-05-16'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -30,11 +30,18 @@ def main(argv=None):  # IGNORE:C0111
     TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
     AUTOPROV_TO = 4000
     
-    delphix_prefix_dict = {
+    env_de_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
                            "srwd00dbs016" : "$<delphix_db_prefix_16>",
                            "srwd00dbs019" : "$<delphix_db_prefix_19>",
                            }
+    
+    env_dq_prefix_dict = {
+                           "srwd00dbs008" : "$<delphix_dbq_prefix>",
+                           "srwd00dbs016" : "$<delphix_dbq_prefix_16>",
+                           "srwd00dbs019" : "$<delphix_dbq_prefix_19>",
+                           }
+
     delphix_host_dict = {
                             "srwd00dbs008" : "$<delphix_host01>",
                             "srwd00dbs016" : "$<delphix_host02>",
@@ -164,7 +171,7 @@ def main(argv=None):  # IGNORE:C0111
         print("Running the auto-provision script")
         use_siebel = ("Y" if args.withsiebel else "")
 
-        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision-v2.1 %s %s Ecomm %s %s"
+        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision %s %s Ecomm %s %s"
             % (envnum, args.release, envbank,  use_siebel))
         rval = reg_session.docmd(auto_provision_cmd,
                         ["ALL DONE!!!", "Error"], timeout=args.timeout)
@@ -192,9 +199,9 @@ def main(argv=None):  # IGNORE:C0111
                 service_name = sn_search_space.group("sn")
                 print("\nDBNAME: %s" % service_name)
 
-                old_service_name = old_db_search_space.group("odb")
-                print("\nDBNAME: %s" % service_name)
-                print("OLD DBNAME: %s" % old_service_name)
+#                old_service_name = old_db_search_space.group("odb")
+#                print("\nDBNAME: %s" % service_name)
+#                print("OLD DBNAME: %s" % old_service_name)
 
                 print("Dropping back to relmgt")
                 rval = reg_session.docmd("exit",
@@ -259,10 +266,17 @@ def main(argv=None):  # IGNORE:C0111
                 # create a bunch of update commands to update the token table
                 # but first guard them from null values
                 if old_tt_prefix and old_tt_host and dbhost:
+
+                    # We need to use a different tt variable for the srwq environments
+                    if envbank == "Q":
+                        sn_prefix = env_dq_prefix_dict[dbhost]
+                    else:
+                        sn_prefix = env_de_prefix_dict[dbhost]
+                        
                     tt_update_cmds = [
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_prefix, delphix_prefix_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_prefix, sn_prefix),
                                       "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_host, delphix_host_dict[dbhost]),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_prefix, delphix_prefix_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_prefix, sn_prefix),
                                       "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_host, delphix_host_dict[dbhost]),
                                       ]
                     print("Updating the token tables with new values")
@@ -307,3 +321,4 @@ def main(argv=None):  # IGNORE:C0111
 
 if __name__ == "__main__":
     main()
+
