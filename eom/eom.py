@@ -157,7 +157,7 @@ class EOMreimage(jiralab.Job):
             if rval == PEXTO:
                 log.warn("eom.rimgto: Re-image operation timed out")
                 execute(ses,"jcmnt -u %s -i %s re-image operation time-out"
-                        % (user,ppj))
+                        % (user,ppj), debug, log)
                 return
     
             log.info("eom.sleep:(%s) Re-image complete, sleeping 5 minutes"
