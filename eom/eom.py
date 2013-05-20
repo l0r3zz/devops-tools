@@ -28,9 +28,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.093
+__version__ = 1.095
 __date__ = '2012-11-20'
-__updated__ = '2013-05-14'
+__updated__ = '2013-05-19'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
