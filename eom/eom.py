@@ -28,9 +28,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.095
+__version__ = 1.096
 __date__ = '2012-11-20'
-__updated__ = '2013-05-19'
+__updated__ = '2013-05-24'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -931,7 +931,7 @@ class Eom(object):
             bl = args.build_label
             # Now fet a data structure containing the current reg info based
             # On the suppiled build label
-            build_label_cmd = ( "build-id-info %s" % bl)  
+            build_label_cmd = ( "export P4USER=readonly ; build-id-info %s" % bl)  
             rval = execute(ses,build_label_cmd, DEBUG, log, result_set=["\{*\}",
                                                   ses.session.PROMPT])
             if rval == PEXOK :
