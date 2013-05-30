@@ -26,11 +26,12 @@ import getpass
 import inspect
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
-
+from argparse import REMAINDER
+from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.096
+__version__ = 1.097
 __date__ = '2012-11-20'
-__updated__ = '2013-05-24'
+__updated__ = '2013-05-30'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -377,11 +378,16 @@ class eom_startup(object):
                         help="turn on DEBUG additional Ds increase verbosity")
         p_info_grp.add_argument('-v', '--version', action='version',
                             version=self.program_version_message)
+        parser.add_argument('rem',
+            nargs=REMAINDER, help=SUPPRESS)
         # Process arguments
         if len(sys.argv) == 1:
             parser.print_help()
             exit(1)
         self.args = parser.parse_args()
+        if self.args.rem:
+            parser.print_help()
+            exit()
 
         #######################################################################
         # Check for various valid options configurations here

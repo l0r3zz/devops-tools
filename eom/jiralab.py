@@ -21,9 +21,9 @@ import threading
 
 
 __all__ = []
-__version__ = 0.87
+__version__ = 0.88
 __date__ = '2012-11-04'
-__updated__ = '2013-05-08'
+__updated__ = '2013-05-30'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -45,10 +45,9 @@ class Reg():
         # so that we don't have to continuously track it
         jira_dict = {
                      "rb1306"     : "ecomm_13.6",
+                     "rb1307"     : "ecomm_13.7",
                      "ecomm_13.6" : "ecomm_13.6",
                      "rb_ecomm_13_6" : "ecomm_13.6",
-                     "ecomm_13.6.1" : "ecomm_13.6.1",
-                     "rb_ecomm_13_6_1" : "ecomm_13.6.1",
                      "ecomm_13.7" : "ecomm_13.7",
                      "rb_ecomm_13_7" : "ecomm_13.7",
                       }
