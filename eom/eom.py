@@ -622,6 +622,7 @@ class Eom(object):
                 log.error(
                         "eom.noticket: Invalid or no ticket specified for restart")
                 sys.exit(2)
+            self.proproj_result_dict = proproj_result_dict # fix crash after restart
             log.info("eom.rststruct: Restarting with structure: %s" %
                      json.dumps(proproj_result_dict))
 
