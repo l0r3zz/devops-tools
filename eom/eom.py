@@ -592,6 +592,7 @@ class Eom(object):
         jira_release = self.jira_release
         ses = self.ses
         stage_entry(log)
+        self. use_siebel = ("--withsiebel" if args.withsiebel else "")
         
         if  args.restart_issue:
             restart_issue = args.restart_issue
@@ -632,7 +633,6 @@ class Eom(object):
         else:
             # Create a PROPROJ and DB ticket for the ENV
             log.info ("eom.cjira: Creating JIRA issues")
-            self. use_siebel = ("--withsiebel" if args.withsiebel else "")
             proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, 
                                             args.env, jira_release, 
                                             self.use_siebel)
