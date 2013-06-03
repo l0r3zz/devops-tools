@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.989
+__version__ = 0.991
 __date__ = '2012-11-15'
-__updated__ = '2013-05-16'
+__updated__ = '2013-06-03'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -109,8 +109,14 @@ def main(argv=None):  # IGNORE:C0111
             DEBUG = True
 
         envid = args.env.upper()
+        if not re.search("SRW[DQE][0-9]{2}",envid):
+            print("Error:Please check your supplied environment id")
+            exit(2)            
         envnum = envid[-2:]  # just the number
-        envbank =envid[3].upper() # get the letter indicating the QA/Dev bank
+        if not envnum.isdigit():
+            print("Error:Please check your supplied environment id")
+            exit(2)
+        envbank = envid[3].upper() # get the letter indicating the QA/Dev bank
         if envbank == 'E':
             print( "Sorry, dbgen does not yet support PE environments")
             exit(2)
@@ -199,10 +205,6 @@ def main(argv=None):  # IGNORE:C0111
                 service_name = sn_search_space.group("sn")
                 print("\nDBNAME: %s" % service_name)
 
-#                old_service_name = old_db_search_space.group("odb")
-#                print("\nDBNAME: %s" % service_name)
-#                print("OLD DBNAME: %s" % old_service_name)
-
                 print("Dropping back to relmgt")
                 rval = reg_session.docmd("exit",
                         [reg_session.session.PROMPT])
@@ -260,24 +262,32 @@ def main(argv=None):  # IGNORE:C0111
                 send_index = tt_env_based.index(stanza_end, sstart_index)
                 tt_stanza = tt_env_based[sstart_index:send_index]
                 # get the existing db values set for this stanza
-                old_tt_prefix = re.search('db_service_name[ ]+=[ ]+(?P<s1>\$<.+>)',tt_stanza).group('s1')
+                old_db_sspace = re.search('db_service_name[ ]+=[ ]+(?P<s1>\$<.+>)(?P<e1>[0-9]{2})',tt_stanza)
+                old_tt_prefix = old_db_sspace.group('s1')
+                old_tt_envnum = old_db_sspace.group('e1')
                 old_tt_host = re.search('db_server_01[ ]+=[ ]+(?P<s2>\$<.+>)', tt_stanza).group('s2')
 
                 # create a bunch of update commands to update the token table
                 # but first guard them from null values
-                if old_tt_prefix and old_tt_host and dbhost:
+                if old_tt_prefix and old_tt_host and dbhost and old_tt_envnum:
+                    
+                    old_tt_db_string = old_tt_prefix + old_tt_envnum    
+                    old_tt_host_string = old_tt_host + old_tt_envnum
 
                     # We need to use a different tt variable for the srwq environments
                     if envbank == "Q":
                         sn_prefix = env_dq_prefix_dict[dbhost]
                     else:
                         sn_prefix = env_de_prefix_dict[dbhost]
+        
+                    new_tt_db_string = sn_prefix + envnum
+                    new_tt_host_string = delphix_host_dict[dbhost] + envnum
                         
                     tt_update_cmds = [
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_prefix, sn_prefix),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_host, delphix_host_dict[dbhost]),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_prefix, sn_prefix),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_host, delphix_host_dict[dbhost]),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_db_string, new_tt_db_string),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_host_string, new_tt_host_string),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_db_string, new_tt_db_string),
+                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_host_string, new_tt_host_string),
                                       ]
                     print("Updating the token tables with new values")
                     for cmd in tt_update_cmds:
