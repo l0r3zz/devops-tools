@@ -29,15 +29,16 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.098
+__version__ = 1.0981
 __date__ = '2012-11-20'
-__updated__ = '2013-06-02'
+__updated__ = '2013-06-04'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
 DEBUG = 0
 PEXTO = 0      # Pexpect command timed-out
 PEXOK = 1      # Pexpect command returned OK
+PEXERR = 2     # Pexpect command found an error in the stream
 
 ###############################################################################
 #    Hardwired Timeout values that can be overridden by options
@@ -1064,10 +1065,13 @@ class Eom(object):
             log.info ("eom.ctntool: Running content tool: %s" % 
                       content_cmd)
     
-            rval = execute(ses, content_cmd, DEBUG, log, to=CTOOL_TO)
+            rval = execute(ses, content_cmd, DEBUG, log,
+                    result_set=[ses.session.PROMPT,"PRIORITY=ERROR"], to=CTOOL_TO)
             if rval == PEXTO:
                 execute(ses, 'jcmnt -u %s -i %s -t "Content Tool time-out after %s secs"' %\
-                (auth.user, pprj, CTOOL_TO), DEBUG, log) 
+                (auth.user, pprj, CTOOL_TO), DEBUG, log)
+            elif rval == PEXERR:
+                log.warn("eom.ctntoolerr: Content tool threw an error, continuing") 
         else:
             rval = None
         stage_exit(log)
