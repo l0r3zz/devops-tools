@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.991
+__version__ = 0.992
 __date__ = '2012-11-15'
-__updated__ = '2013-06-03'
+__updated__ = '2013-06-04'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -272,7 +272,7 @@ def main(argv=None):  # IGNORE:C0111
                 if old_tt_prefix and old_tt_host and dbhost and old_tt_envnum:
                     
                     old_tt_db_string = old_tt_prefix + old_tt_envnum    
-                    old_tt_host_string = old_tt_host + old_tt_envnum
+                    old_tt_host_string = old_tt_host
 
                     # We need to use a different tt variable for the srwq environments
                     if envbank == "Q":
@@ -281,7 +281,7 @@ def main(argv=None):  # IGNORE:C0111
                         sn_prefix = env_de_prefix_dict[dbhost]
         
                     new_tt_db_string = sn_prefix + envnum
-                    new_tt_host_string = delphix_host_dict[dbhost] + envnum
+                    new_tt_host_string = delphix_host_dict[dbhost]
                         
                     tt_update_cmds = [
                                       "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_db_string, new_tt_db_string),
