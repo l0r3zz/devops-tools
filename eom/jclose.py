@@ -28,9 +28,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.5
+__version__ = 0.6
 __date__ = '2013-04-05'
-__updated__ = '2013-05-01'
+__updated__ = '2013-06-07'
 
 
 def main(argv=None):  # IGNORE:C0111
@@ -116,7 +116,7 @@ def main(argv=None):  # IGNORE:C0111
             if (not args.text) or (not body_text):
                 comment_text = "resolved"
 
-        jira_options = {'server': 'https://jira.stubcorp.dev/',
+        jira_options = {'server': 'https://jira.stubcorp.com/',
                         'verify' : False,
                         }
         jira = JIRA(jira_options, basic_auth=(auth.user, auth.password))

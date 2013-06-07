@@ -29,9 +29,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.0981
+__version__ = 1.0982
 __date__ = '2012-11-20'
-__updated__ = '2013-06-04'
+__updated__ = '2013-06-06'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -51,7 +51,7 @@ DEPLOY_TO = 4800
 CONTENT_TO = 3600
 DEPLOY_WAIT = 600
 CONTENT_TO = 1200
-CTOOL_TO = 900
+CTOOL_TO = 1200
 TJOIN_TO = 60.0
 PREPOST_TO = 240
 SIEBEL_TO = 1800
@@ -661,7 +661,7 @@ class Eom(object):
                 exit(2)
     
         # Login to JIRA so we can manipulate tickets...
-        self.jira_options = jira_options = {'server': 'https://jira.stubcorp.dev/',
+        self.jira_options = jira_options = {'server': 'https://jira.stubcorp.com/',
                     'verify' : False,
                     }
         jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))

@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.77
+__version__ = 0.78
 __date__ = '2012-10-28'
-__updated__ = '2013-5-1'
+__updated__ = '2013-06-07'
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -92,7 +92,7 @@ def main(argv=None):  # IGNORE:C0111
 
         auth = jiralab.Auth(args)
         auth.getcred()
-        jira_options = {'server': 'https://jira.stubcorp.dev/',
+        jira_options = {'server': 'https://jira.stubcorp.com/',
                         'verify' : False,
                         }
         jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
