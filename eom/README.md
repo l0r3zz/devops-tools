@@ -30,7 +30,7 @@ solution to the DEV/QA needs of StubHub and thus particulars of that environment
 are coded into the logic of the programs.  In particular, the dev environments
 are named as: 
 * srwdXX           - a fully virtual Environment
-* srwgXX           - more virtual environments
+* srwqXX           - more virtual environments
 * srweXX           - performance environments, which have physical blades along with VMs
 
 Certain CONSTANTS point to specific targets in the StubHub DEV/QA environment
