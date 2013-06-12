@@ -92,21 +92,24 @@ def main(argv=None): # IGNORE:C0111
                         }
         jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
         if DEBUG: 
-            print( "Creating ticket for  %s " % args.text)
+            print( "Assigning ticket for  %s " % args.text)
 
         
         # Create the TOOLS ticket
-        tools_dict = {
-                        'project': {'key':'TOOLS'},
-                        'issuetype': {'name':'Task'},
-                        'assignee': {'name': args.assignee},
-                        'components': [{'name':'decommission'},{'name':'tokenization'}],
-                        'summary': args.test,
-                        'description': args.rem,
-                        }       
-        new_tools = jira.create_issue(fields=tools_dict)
-        
+#         tools_dict = {
+#                         'project': {'key':'TOOLS'},
+#                         'issuetype': {'name':'Task'},
+#                         'assignee': {'name': args.assignee},
+#                         'components': [{'name':'decommission'},{'name':'tokenization'}],
+#                         'summary': args.test,
+#                         'description': args.rem,
+#                         }       
+#         new_tools = jira.create_issue(fields=tools_dict)
+
+        project = 'project = "Provisoning Projects" AND component = decommission AND status != closed OR issuetype = "Env Request" AND status != closed AND issuetype != Sub-task and "Environment Name" is not NULL  ORDER BY cf[10170] ASC, key DESC'
+        issues = jira.search_issues(project)
         sys.exit()
+        
         
 
         
