@@ -21,9 +21,9 @@ import threading
 
 
 __all__ = []
-__version__ = 0.88
+__version__ = 0.89
 __date__ = '2012-11-04'
-__updated__ = '2013-05-30'
+__updated__ = '2013-06-17'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -44,12 +44,12 @@ class Reg():
         # FIX ME  just a quick hack, this should be done by a mapping function
         # so that we don't have to continuously track it
         jira_dict = {
-                     "rb1306"     : "ecomm_13.6",
                      "rb1307"     : "ecomm_13.7",
-                     "ecomm_13.6" : "ecomm_13.6",
-                     "rb_ecomm_13_6" : "ecomm_13.6",
                      "ecomm_13.7" : "ecomm_13.7",
                      "rb_ecomm_13_7" : "ecomm_13.7",
+                     "rb1308"     : "ecomm_13.8",
+                     "ecomm_13.8" : "ecomm_13.8",
+                     "rb_ecomm_13_8" : "ecomm_13.8",
                       }
 
         self.reghandle = reghandle

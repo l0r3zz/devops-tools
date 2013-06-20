@@ -29,9 +29,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.0982
+__version__ = 1.0984
 __date__ = '2012-11-20'
-__updated__ = '2013-06-06'
+__updated__ = '2013-06-20'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -358,6 +358,9 @@ class eom_startup(object):
         switch_grp.add_argument("--replace_tt", dest="full_replace",
                              default=None, nargs='?',const=True, metavar='no',
                     help="replace token table with release version")
+        switch_grp.add_argument("--override", dest="override",
+                             default=None, nargs='?',const=True, metavar='no',
+                    help="override env delivered lock-out mechanism")
 
         to_grp = parser.add_argument_group("Time out adjustments")
         to_grp.add_argument("--deploy_to", dest="DEPLOY_TO",
@@ -573,7 +576,16 @@ class Eom(object):
                   time.asctime(time.gmtime(time.time())))
     
         rval = execute(ses,"sudo -i -u relmgt",DEBUG,log)
-    
+        
+        log.info ("eom.lckout: Clecking for ENV lock-out")
+        if not args.override:
+            rval = execute(ses,"jenvp -u %s -e %s" % (auth.user,self.envid),
+                           DEBUG, log, result_set=["Pool",ses.session.PROMPT])
+            if rval != PEXOK:
+                log.error("eom.del: Environment is DELIVERED or unavailable")
+                exit(2)
+            else:
+                log.info("eom.eok: Environment is EOK")
         try:
             jreg = jiralab.Reg(args.release) # get reg build mapping for JIRA
             self.jira_release = jreg.jira_release
@@ -706,26 +718,15 @@ class Eom(object):
         ses = self.ses
         stage_entry(log)
         if args.full_replace:
-            update_tt_cmd_tpl = ("/nas/reg/bin/beta/eom-update-token-table -e %s -t %s --release-id %s --full-replacement")
-            update_tt_cmd_based = ( update_tt_cmd_tpl
-                % (envid_l,"token-table-env-based", args.release)) 
-            update_tt_cmd_properties = ( update_tt_cmd_tpl
-                % (envid_l,"token-table-env-stubhub-properties", args.release))
- 
-            rval = execute(ses, update_tt_cmd_based, DEBUG,
+            update_tt_cmd = ("eom-update-token-table "
+                                 "-e %s --release-id %s --full-replacement" %
+                                 (envid_l, args.release))
+            rval = execute(ses, update_tt_cmd, DEBUG,
                         log, result_set=[ses.session.PROMPT,"PRIORITY=ERROR"])
             if rval == PEXOK:
-                log.info("eom.ttrpl: SUCCESS %s" % update_tt_cmd_based)
+                log.info("eom.ttrpl: SUCCESS %s" % update_tt_cmd)
             else:
-                log.error("eom.ttfail: FAIL %s" % update_tt_cmd_based)
- 
-            rval = execute(ses, update_tt_cmd_properties, DEBUG, log,
-                        result_set=[ses.session.PROMPT,"PRIORITY=ERROR"])
-            if rval == PEXOK:
-                log.info("eom.ttrpl: SUCCESS %s" % update_tt_cmd_properties)
-            else:
-                log.error("eom.ttfail: FAIL %s" % update_tt_cmd_properties) 
-                       
+                log.error("eom.ttfail: FAIL %s" % update_tt_cmd)
         stage_exit(log)
     @assignSequence(400)
     def reimaging_stage(self):

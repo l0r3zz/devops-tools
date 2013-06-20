@@ -17,9 +17,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.992
+__version__ = 0.993
 __date__ = '2012-11-15'
-__updated__ = '2013-06-04'
+__updated__ = '2013-06-20'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -284,10 +284,8 @@ def main(argv=None):  # IGNORE:C0111
                     new_tt_host_string = delphix_host_dict[dbhost]
                         
                     tt_update_cmds = [
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_db_string, new_tt_db_string),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-based -v" % (envid.lower(), old_tt_host_string, new_tt_host_string),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_db_string, new_tt_db_string),
-                                      "update-token-table -e %s -s '%s' -r '%s' -t token-table-env-stubhub-properties -v" % (envid.lower(), old_tt_host_string, new_tt_host_string),
+                                      "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_db_string, new_tt_db_string),
+                                      "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_host_string, new_tt_host_string),
                                       ]
                     print("Updating the token tables with new values")
                     for cmd in tt_update_cmds:
