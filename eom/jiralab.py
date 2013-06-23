@@ -12,6 +12,7 @@ import getpass
 import aes 
 import sys
 import os
+import re
 import pexpect
 import pxssh
 import logging
@@ -21,9 +22,9 @@ import threading
 
 
 __all__ = []
-__version__ = 0.89
+__version__ = 0.9
 __date__ = '2012-11-04'
-__updated__ = '2013-06-17'
+__updated__ = '2013-06-22'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -43,20 +44,30 @@ class Reg():
     def __init__(self, reghandle):
         # FIX ME  just a quick hack, this should be done by a mapping function
         # so that we don't have to continuously track it
-        jira_dict = {
-                     "rb1307"     : "ecomm_13.7",
-                     "ecomm_13.7" : "ecomm_13.7",
-                     "rb_ecomm_13_7" : "ecomm_13.7",
-                     "rb1308"     : "ecomm_13.8",
-                     "ecomm_13.8" : "ecomm_13.8",
-                     "rb_ecomm_13_8" : "ecomm_13.8",
-                      }
 
-        self.reghandle = reghandle
-        if reghandle in jira_dict:
-            self.jira_release = jira_dict[reghandle]
+        regHvec = [
+                    "rb(?P<maj>[1-9][0-9])(?P<min>[0-9]{2})\.(?P<fix>[1-9])",
+                    "rb(?P<maj>[1-9][0-9])(?P<min>[0-9]{2})",
+                    "ecomm_(?P<maj>[1-9][0-9])\.(?P<min>[0-9]+)\.(?P<fix>[1-9])",
+                    "ecomm_(?P<maj>[1-9][0-9])\.(?P<min>[0-9]+)",
+                    "rb_ecomm_(?P<maj>[1-9][0-9])_(?P<min>[0-9]+)_(?P<fix>[1-9])",
+                    "rb_ecomm_(?P<maj>[1-9][0-9])_(?P<min>[0-9]+)",
+                    ]
+        for s in regHvec :
+            srchobj = re.search(s,reghandle)
+            if srchobj :
+                majstr = srchobj.group("maj")
+                minstr = str(int(srchobj.group("min")))
+                try:
+                    fixstr = str(int(srchobj.group("fix")))
+                except IndexError:
+                    self.reghandle = "ecomm_%s.%s" % ( majstr,minstr)
+                    return                   
+                self.reghandle = "ecomm_%s.%s.%s" % ( majstr,minstr,fixstr)
+                return
         else:
-            raise JIRALAB_CLI_ValueError("No release named %s" % reghandle)
+            self.reghandle = None
+            raise JIRALAB_CLI_ValueError("No release named %s" % reghandle)           
 
 class Job(threading.Thread):
     '''
