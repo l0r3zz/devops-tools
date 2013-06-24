@@ -28,9 +28,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.6
+__version__ = 1.1
 __date__ = '2013-04-05'
-__updated__ = '2013-06-07'
+__updated__ = '2013-06-24'
 
 
 def main(argv=None):  # IGNORE:C0111
