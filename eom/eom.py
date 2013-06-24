@@ -357,7 +357,7 @@ class eom_startup(object):
                     help="assert to build a Siebel database along with Delphix")
         switch_grp.add_argument("--init_tokentable", dest="full_replace",
                              default=None, nargs='?',const=True, metavar='no',
-                    help="replace token table with release version")
+                    help="initialize token table with release version")
         switch_grp.add_argument("--override", dest="override",
                              default=None, nargs='?',const=True, metavar='no',
                     help="override env delivered lock-out mechanism")
