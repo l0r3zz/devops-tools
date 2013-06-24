@@ -29,9 +29,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.0984
+__version__ = 1.099
 __date__ = '2012-11-20'
-__updated__ = '2013-06-20'
+__updated__ = '2013-06-24'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -355,7 +355,7 @@ class eom_startup(object):
         switch_grp.add_argument("--withsiebel", dest="withsiebel",
                              default=None, nargs='?',const=True, metavar='no',
                     help="assert to build a Siebel database along with Delphix")
-        switch_grp.add_argument("--replace_tt", dest="full_replace",
+        switch_grp.add_argument("--init_tokentable", dest="full_replace",
                              default=None, nargs='?',const=True, metavar='no',
                     help="replace token table with release version")
         switch_grp.add_argument("--override", dest="override",
