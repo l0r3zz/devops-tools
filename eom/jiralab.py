@@ -22,9 +22,9 @@ import threading
 
 
 __all__ = []
-__version__ = 0.9
+__version__ = 0.91
 __date__ = '2012-11-04'
-__updated__ = '2013-06-22'
+__updated__ = '2013-06-23'
 
 AES_BLOCKSIZE = 128
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -61,9 +61,9 @@ class Reg():
                 try:
                     fixstr = str(int(srchobj.group("fix")))
                 except IndexError:
-                    self.reghandle = "ecomm_%s.%s" % ( majstr,minstr)
+                    self.jira_release = "ecomm_%s.%s" % ( majstr,minstr)
                     return                   
-                self.reghandle = "ecomm_%s.%s.%s" % ( majstr,minstr,fixstr)
+                self.jira_release = "ecomm_%s.%s.%s" % ( majstr,minstr,fixstr)
                 return
         else:
             self.reghandle = None
