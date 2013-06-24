@@ -29,7 +29,7 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.099
+__version__ = 1.1
 __date__ = '2012-11-20'
 __updated__ = '2013-06-24'
 
@@ -1144,7 +1144,11 @@ class Eom(object):
                     "eom.notpro: ENV REQ:%s cannot be set to"
                     " Verification state" % args.envreq)
     
-        if args.close_tickets and args.enval_success and args.deploy_success:
+        if ( args.close_tickets 
+             and args.enval_success 
+             and args.deploy_success 
+             and args.envreq) :
+
             db_issue = self.proproj_result_dict["dbtask"]
             pp_issue = self.proproj_result_dict["proproj"]
             if db_issue != "unknown":
