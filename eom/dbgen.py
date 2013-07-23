@@ -12,14 +12,16 @@ import sys
 import os
 import re
 import jiralab
+import mylog
+import logging
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.11
+__version__ = 1.12
 __date__ = '2012-11-15'
-__updated__ = '2013-07-17'
+__updated__ = '2013-07-22'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -29,6 +31,7 @@ def main(argv=None):  # IGNORE:C0111
     QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
     TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
     AUTOPROV_TO = 4000
+    CMD_TO = 120
     
     env_de_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
@@ -105,8 +108,20 @@ def main(argv=None):  # IGNORE:C0111
             parser.print_help()
             exit(exit_status)
 
+    
+        log = log = mylog.logg('dbgen', llevel='INFO',
+                gmt=True, cnsl=True, sh=sys.stdout)
+        #set the formatter so that it adds the envid
+        lfstr = ('%(asctime)s %(levelname)s: %(name)s:'
+                 '[%(process)d] {0}:: %(message)s'.format(args.env))
+        formatter = logging.Formatter(lfstr,
+            datefmt='%Y-%m-%d %H:%M:%S +0000')
+        for h in log.handlers:
+            h.setFormatter(formatter)
+    
         if args.debug:
             DEBUG = True
+            log.setLevel("DEBUG")
 
         envid = args.env.upper()
         if not re.search("SRW[DQE][0-9]{2}",envid):
@@ -125,74 +140,76 @@ def main(argv=None):  # IGNORE:C0111
         auth.getcred()
 
         # Login to the reg server
-        print("Logging into %s" % REGSERVER)
+        log.info("Logging into %s" % REGSERVER)
         reg_session = jiralab.CliHelper(REGSERVER)
-        reg_session.login(auth.user, auth.password, prompt="\$[ ]")
+        reg_session.login(auth.user, auth.password, prompt="\$[ ]",
+                          timeout=CMD_TO)
         if DEBUG:
-            print("before: %s\nafter: %s" % (reg_session.before,
+            log.debug("before: %s\nafter: %s" % (reg_session.before,
                         reg_session.after))
 
-        print ("Becoming relmgt")
-        rval = reg_session.docmd("sudo -i -u relmgt", [reg_session.session.PROMPT])
+        log.info ("Becoming relmgt")
+        rval = reg_session.docmd("sudo -i -u relmgt", [reg_session.session.PROMPT],
+                                 timeout=CMD_TO)
         if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+            log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
 
         #login to the db server
-        print("Logging into DB Server : srwd00dbs008")
+        log.info("Logging into DB Server : srwd00dbs008")
         rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev",
                         ["yes", reg_session.session.PROMPT],
-                        timeout=60)
+                        timeout=CMD_TO)
         if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+            log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
         if rval == 1:  # need to add ssh key
             rval = reg_session.docmd("yes",
                         [reg_session.session.PROMPT], consumeprompt=False)
             if DEBUG:
-                print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
             if rval != 1:  # something else printed
-                print("Could not log into srwd00dbs008. Exiting")
+                log.error("Could not log into srwd00dbs008. Exiting")
                 exit(2)
         elif rval == 2:  # go right in
             if DEBUG:
-                print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
         else:  # BAD
             if DEBUG:
-                print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
-            print("Something bad happened, exiting")
+            log.error("Something bad happened, exiting")
             exit(2)
 
         # become the oracle user
-        print("Becoming oracle user")
+        log.info("Becoming oracle user")
         rval = reg_session.docmd("sudo su - oracle", ["oracle>"],
                         consumeprompt=False)
         if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+            log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
 
-        print("Running the auto-provision script")
+        log.info("Running the auto-provision script")
         use_siebel = ("Y" if args.withsiebel else "")
 
         auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision.3.1 %s %s Ecomm %s %s"
             % (envnum, args.release, envbank,  use_siebel))
-        print ("cmd:%s" % auto_provision_cmd)
+        log.info("cmd:%s" % auto_provision_cmd)
         rval = reg_session.docmd(auto_provision_cmd,
                         ["ALL DONE!!!", "Error"], timeout=args.timeout)
         if DEBUG:
-            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+            log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
 
         if rval != 1:
-            print ("Error occurred: %s%s\n" % (reg_session.before,
+            log.error("Error occurred: %s%s\n" % (reg_session.before,
                         reg_session.after))
             exit(2)
 
         else:
-            print("%s%s\nSuccess.\n" % (reg_session.before,
+            log.info("%s%s\nSuccess.\n" % (reg_session.before,
                         reg_session.after))
 
             old_db_search_space = re.search(
@@ -204,19 +221,19 @@ def main(argv=None):  # IGNORE:C0111
 
             if sn_search_space:  # make sure we found something
                 service_name = sn_search_space.group("sn")
-                print("\nDBNAME: %s" % service_name)
+                log.info("\nDBNAME: %s" % service_name)
 
-                print("Dropping back to relmgt")
+                log.info("Dropping back to relmgt")
                 rval = reg_session.docmd("exit",
                         [reg_session.session.PROMPT])
                 if DEBUG:
-                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                    log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                                 reg_session.before, reg_session.after))
-                print("Dropping back to %s" % REGSERVER)
+                log.info("Dropping back to %s" % REGSERVER)
                 rval = reg_session.docmd("exit",
                                 [reg_session.session.PROMPT])
                 if DEBUG:
-                    print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                    log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                                 reg_session.before, reg_session.after))
 
                 '''
@@ -235,24 +252,24 @@ def main(argv=None):  # IGNORE:C0111
                         dbhost = tns_ss.group("hn")
                         break
                 if not dbtnsdef:
-                    print( "error: could not find service name in the global tnsnames file!")
-                    print("Exiting with errors")
+                    log.error( "error: could not find service name in the global tnsnames file!")
+                    log.error("Exiting with errors")
                     exit(2)
 
                 tnsorafile = open(QA_TNSNAMES, "r")
                 for line in tnsorafile:
                     if service_name.upper() in line.upper():
-                        print("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
+                        log.info("%s is already in %s, nothing to do" % (service_name, QA_TNSNAMES))
                         tnsorafile.close()
                         break
                 else:
-                    print("Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
+                    log.info("Adding : %s to %s" % (dbtnsdef, QA_TNSNAMES))
                     tnsupdate_cmd = ("echo '%s' | sudo tee -a %s" %
                         (dbtnsdef, QA_TNSNAMES))
                     rval = reg_session.docmd(tnsupdate_cmd,
                                     [reg_session.session.PROMPT], timeout=30)
                     if DEBUG:
-                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                        log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                                     reg_session.before, reg_session.after))
 
                 # extract the environment stanza from the env_based token table file.
@@ -288,29 +305,29 @@ def main(argv=None):  # IGNORE:C0111
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_db_string, new_tt_db_string),
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_host_string, new_tt_host_string),
                                       ]
-                    print("Updating the token tables with new values")
+                    log.info("Updating the token tables with new values")
                     for cmd in tt_update_cmds:
-                        print("Applying Command: %s" % cmd)
+                        log.info("Applying Command: %s" % cmd)
                         rval = reg_session.docmd(cmd,
                                         [reg_session.session.PROMPT], timeout=300)
                         if DEBUG:
-                            print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                            log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                                         reg_session.before, reg_session.after))
                 else:
-                    print( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
+                    log.warn( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
                            (old_tt_prefix, old_tt_host, dbhost))
                     
                 if args.postpatch:
                     # apply autopatchs if present
                     dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
-                    print("Running DB post patching scripts")
+                    log.info("Running DB post patching scripts")
                     rval = reg_session.docmd(dbpatch_cmd,
                                     [reg_session.session.PROMPT], timeout=600)
-                    print("%s%s\n" % (reg_session.before, reg_session.after))
+                    log.info("%s%s\n" % (reg_session.before, reg_session.after))
                     if DEBUG:
-                        print ("Rval= %d; before: %s\nafter: %s" % (rval,
+                        log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                                     reg_session.before, reg_session.after))
-                    print("Patching complete")
+                    log.debug("Patching complete")
 
             print("Exiting.")
             exit(0)
