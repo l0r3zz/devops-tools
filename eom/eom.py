@@ -29,9 +29,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.1
+__version__ = 1.101
 __date__ = '2012-11-20'
-__updated__ = '2013-06-24'
+__updated__ = '2013-08-08'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -44,7 +44,7 @@ PEXERR = 2     # Pexpect command found an error in the stream
 #    Hardwired Timeout values that can be overridden by options
 ###############################################################################
 REIMAGE_TO = 3600
-DBGEN_TO = 3600
+DBGEN_TO = 4000
 VERIFY_TO = 720
 CMD_TO = 120
 DEPLOY_TO = 4800
@@ -54,7 +54,7 @@ CONTENT_TO = 1200
 CTOOL_TO = 1200
 TJOIN_TO = 60.0
 PREPOST_TO = 240
-SIEBEL_TO = 1800
+SIEBEL_TO = 1200
 
 ###############################################################################
 #    Workhorse functions
@@ -221,7 +221,11 @@ class EOMdbgen(jiralab.Job):
     
             pp_path = ("" if args.nopostpatch else\
                '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
-            dbgen_to = args.DBGEN_TO - 10
+            # provisioning with siebel takes longer
+            if self.use_siebel:
+                dbgen_to = args.DBGEN_TO + SIEBEL_TO
+            else:
+                dbgen_to = args.DBGEN_TO
             dbgen_build_cmd = (
                 'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
                 ' |tee /dev/tty'
@@ -230,7 +234,7 @@ class EOMdbgen(jiralab.Job):
                  pp_path, self.use_siebel, dbgen_to, dbgendb,
                  user, dbt))
     
-            rval = execute(ses, dbgen_build_cmd, debug, log, to=args.DBGEN_TO)
+            rval = execute(ses, dbgen_build_cmd, debug, log, to=(dbgen_to + 10))
             if rval == PEXTO:
                 log.warn(
                     "eom.dbcreate.to:(%s) dbgen did not complete within %d sec"
