@@ -13,13 +13,15 @@ Mylog module
 Subclasses standard python logging module and adds some convenience to it's use
 Like being able to set GMT timestamps
 """
+__version__ = 1.12
+
 import sys
 import time
 import logging
 
 
 def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False,
-         cnsl=None, sh=None):
+         cnsl=None, sh=None, syslog=None):
     r"""
     Constructor for logging module
     string:label     set the name of the logging provider
@@ -31,6 +33,7 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False,
                      and reflect it in the logs
     bool:cnsl        set to True if you want to log to console
     int:sh           file descriptor for log stream defaults to sys.stderr
+    string:syslog    log to this syslog server
 
     returns:         a singleton object
     ************************* doctest *************************************
@@ -78,6 +81,12 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False,
             ch = logging.StreamHandler()
         ch.setFormatter(formatter)
         log.addHandler(ch)
+
+    if syslog is not None:
+        slh = logging.SyslogHandler(syslog)
+        slh.ssetFormatter(formatter)
+        log.addHandler(slh)
+        
     return log
 
 

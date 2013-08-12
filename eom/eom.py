@@ -315,6 +315,8 @@ class eom_startup(object):
                             help="Deploy full|properties|java|restart|no"
                             "can be used more than once "
                             "ex. -d java -d properties")
+        parser.add_argument("--syslog", dest="syslog",
+                            default=None, help="Specify a syslog server")
         parser.add_argument('--confirm', action='store_true',
                             dest="confirm", default=None,
                             help="print out actions before executing the job ")
@@ -526,10 +528,10 @@ class Eom(object):
         try:
             if args.logfile:
                 self.log = log = mylog.logg('env-o-matic', llevel='INFO', 
-                        gmt=True, lfile=args.logfile, cnsl=True)
+                        gmt=True, lfile=args.logfile, cnsl=True, syslog=args.syslog)
             else:
                 self.log = log = mylog.logg('env-o-matic', llevel='INFO',
-                        gmt=True, cnsl=True, sh=sys.stdout)
+                        gmt=True, cnsl=True, sh=sys.stdout, syslog=args.syslog)
         except UnboundLocalError:
             print("Can't open Log file, check path\n")
             sys.exit(1)
