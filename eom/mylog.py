@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+#!/nas/reg/local/bin/python
+# encoding: utf-8
 #       http://www.apache.org/licenses/LICENSE-2.0
 #
 #   Unless required by applicable law or agreed to in writing, software
@@ -18,6 +19,7 @@ __version__ = 1.12
 import sys
 import time
 import logging
+import logging.handlers
 
 
 def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False,
@@ -83,10 +85,10 @@ def logg(label, lfile=None, llevel='WARN', fmt=None, gmt=False,
         log.addHandler(ch)
 
     if syslog is not None:
-        slh = logging.SyslogHandler(syslog)
-        slh.ssetFormatter(formatter)
+        slh = logging.handlers.SysLogHandler(syslog)
+        slh.setFormatter(formatter)
         log.addHandler(slh)
-        
+
     return log
 
 
@@ -117,3 +119,5 @@ def main():
 if __name__ == "__main__":
     main()
     sys.exit(0)
+
+

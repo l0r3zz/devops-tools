@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/nas/reg/local/bin/python
 # encoding: utf-8
 '''
 eom (env-o-matic) - Basic automation to build-out a virtual environment
@@ -20,6 +20,7 @@ import time
 from datetime import date
 import mylog
 import logging
+import socket
 import yaml
 import Queue
 import getpass
@@ -29,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.101
+__version__ = 1.104
 __date__ = '2012-11-20'
-__updated__ = '2013-08-08'
+__updated__ = '2013-08-13'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -66,7 +67,7 @@ def assignSequence(seq):
     we can schedule the execution of the various stages.  If you don't use this
     decorator the method will not be scheduled. Not e there is no need to
     schedule __init__, it is the Eom constructor and will be the first routine
-    to be executed on start-up.   Also any "private" methods should not be 
+    to be executed on start-up.   Also any "private" methods should not be
     sddigned a sequence number
     '''
     def do_assignment(to_func):
@@ -102,10 +103,10 @@ def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
 def main():
     '''
     This is the main routine.
-    Note that the methods in the Eom class that are decorated with 
+    Note that the methods in the Eom class that are decorated with
     @assignSequence are methods that will be called and executed, in sequence,
-    based on the sequence number that is assigned to them. The methods are 
-    gathered via the dir() and then only the methods that have the "seq" 
+    based on the sequence number that is assigned to them. The methods are
+    gathered via the dir() and then only the methods that have the "seq"
     attribute are sorted and executed in sequence
     '''
     try:  # Catch keyboard interrupts (^C)
@@ -120,7 +121,7 @@ def main():
                     )
         for func in functions:
             func()
-    
+
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         sys.exit(0)
@@ -129,8 +130,8 @@ def main():
 ###############################################################################
 class EOMreimage(jiralab.Job):
     '''
-    This class is a container for the re-imaging task, it inherits from 
-    jiralab.Job so it can be scheduled as a thread, the overlayed run() 
+    This class is a container for the re-imaging task, it inherits from
+    jiralab.Job so it can be scheduled as a thread, the overlayed run()
     method does the actual work as the super class has created a ssh session
     on a reg server to be used
     '''
@@ -146,7 +147,7 @@ class EOMreimage(jiralab.Job):
             debug = self.debug
             if q :
                 q.get()
-    
+
             envid = self.args.env.upper()   # insure UPPERCASE env name
             envid_l = self.args.env.lower() # insure lowercase env name
             # Start re-imaging
@@ -161,20 +162,20 @@ class EOMreimage(jiralab.Job):
                 execute(ses,"jcmnt -u %s -i %s re-image operation time-out"
                         % (user,ppj), debug, log)
                 return
-    
+
             log.info("eom.sleep:(%s) Re-image complete, sleeping 5 minutes"
                           % name)
             time.sleep(300)
-    
+
             log.info("eom.rimgval: Verifying re-imaging of roles in %s" % envid)
-    
+
             reimage_validate_string = ('verify-reimage %s '
             '|jcmnt -f -u %s -i %s -t'
             ' "check this list for re-imaging status"'% (envid_l, user, ppj))
-            rval = execute(ses, 
-                           reimage_validate_string, debug, log, 
+            rval = execute(ses,
+                           reimage_validate_string, debug, log,
                            to=args.VERIFY_TO)
-    
+
             log.info("eom.reimg.done:(%s) Reimaging done @ %s UTC" %
                           (name, time.asctime(time.gmtime(time.time()))))
 
@@ -186,11 +187,11 @@ class EOMreimage(jiralab.Job):
                 q.task_done()
         return
 
-                    
+
 class EOMdbgen(jiralab.Job):
     '''
-    This class is a container for the database generation task, it inherits from 
-    jiralab.Job so it can be scheduled as a thread, the overlayed run() 
+    This class is a container for the database generation task, it inherits from
+    jiralab.Job so it can be scheduled as a thread, the overlayed run()
     method does the actual work as the super class has created a ssh session
     on a reg server to be used
     '''
@@ -208,17 +209,17 @@ class EOMdbgen(jiralab.Job):
             if q :
                 q.get()
             envid = self.args.env.upper()       # insure UPPERCASE env name
-    
+
             log.info(
                     "eom.dbcreate.start:(%s) Building Database start @ %s UTC,"
                     % (name, time.asctime(time.gmtime(time.time()))))
-    
+
             if args.debug > 1:
                 dbgendb = "-D"
             else:
                 dbgendb = ""
-    
-    
+
+
             pp_path = ("" if args.nopostpatch else\
                '--postpatch="/nas/reg/bin/env_setup_patch/scripts/dbgenpatch"')
             # provisioning with siebel takes longer
@@ -230,10 +231,10 @@ class EOMdbgen(jiralab.Job):
                 'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
                 ' |tee /dev/tty'
                 ' |jcmnt -f -u %s -i %s -t "Automatic DB Generation"' %
-                (user, envid, args.release, 
+                (user, envid, args.release,
                  pp_path, self.use_siebel, dbgen_to, dbgendb,
                  user, dbt))
-    
+
             rval = execute(ses, dbgen_build_cmd, debug, log, to=(dbgen_to + 10))
             if rval == PEXTO:
                 log.warn(
@@ -253,7 +254,7 @@ class EOMdbgen(jiralab.Job):
             if q:
                 q.task_done()
 
-                            
+
 class eom_startup(object):
     '''
     This class handles all of the argument parsing and eom_init config file
@@ -316,7 +317,8 @@ class eom_startup(object):
                             "can be used more than once "
                             "ex. -d java -d properties")
         parser.add_argument("--syslog", dest="syslog",
-                            default=None, help="Specify a syslog server")
+                            default=None, 
+                            help="Specify a syslog server, '/dev/log' or 'host:514'")
         parser.add_argument('--confirm', action='store_true',
                             dest="confirm", default=None,
                             help="print out actions before executing the job ")
@@ -349,7 +351,7 @@ class eom_startup(object):
         switch_grp.add_argument('--skipreimage', nargs='?',const=True,
                             dest="skipreimage", default=None, metavar='no',
                             help="assert to skip the re-image operation")
-        switch_grp.add_argument('--skipdbgen',  nargs='?',const=True, 
+        switch_grp.add_argument('--skipdbgen',  nargs='?',const=True,
                             dest="skipdbgen", default=None, metavar='no',
                             help="assert to skip the db creation operation")
         switch_grp.add_argument("--noprepatch", dest="noprepatch",
@@ -372,19 +374,19 @@ class eom_startup(object):
         to_grp.add_argument("--deploy_to", dest="DEPLOY_TO",
                             default=DEPLOY_TO, type=int,
                             help="set the timeout for deploy step in sec.")
-        to_grp.add_argument("--reimage_to", dest="REIMAGE_TO", 
+        to_grp.add_argument("--reimage_to", dest="REIMAGE_TO",
                             default=REIMAGE_TO, type=int,
                             help="set the timeout for reimage operation in sec.")
-        to_grp.add_argument("--content_to", dest="CONTENT_TO", 
+        to_grp.add_argument("--content_to", dest="CONTENT_TO",
                             default=CONTENT_TO, type=int,
                             help="set the timeout for content refresh in sec.")
-        to_grp.add_argument("--dbgen_to", dest="DBGEN_TO", 
+        to_grp.add_argument("--dbgen_to", dest="DBGEN_TO",
                             default=DBGEN_TO, type=int,
                             help="set the timeout for database creation in sec.")
-        to_grp.add_argument("--verify_to", dest="VERIFY_TO", 
+        to_grp.add_argument("--verify_to", dest="VERIFY_TO",
                             default=VERIFY_TO, type=int,
                             help="set the timeout for verification ops in sec.")
-        
+
         p_info_grp = parser.add_argument_group('Informational')
         p_info_grp.add_argument('-D', '--debug', dest="debug", action='count',
                                 default=0,
@@ -409,11 +411,11 @@ class eom_startup(object):
 
         # Search path for the .eom_ini file, first look in cwd, if not found
         # there look in the home directory of the user specified in the --user
-        # option, if the user option is not specified, try the home directory 
+        # option, if the user option is not specified, try the home directory
         # of the user running the program.
         eom_dir_path = [
                         "./.eom",
-                        "~%s/.eom" % ( self.args.user 
+                        "~%s/.eom" % ( self.args.user
                                       if self.args.user else getpass.getuser()),
                         "~%s/.eom" % getpass.getuser(),
                         ]
@@ -427,7 +429,7 @@ class eom_startup(object):
                     break
                 else:
                     continue
-            break   # We were successful creating a directory so break from the 
+            break   # We were successful creating a directory so break from the
                     # for loop and don't execute the else attached
         else:
             print("eom.noinidir: Can't find or open an"
@@ -472,7 +474,7 @@ class eom_startup(object):
                     if hasattr(exc, 'problem_mark'):
                         mark = exc.problem_mark
                         print( "Error in .eom_ini file:"
-                               " %s, Error position: (%s:%s)" 
+                               " %s, Error position: (%s:%s)"
                                % (exc, mark.line+1, mark.column+1))
                 if self.args.eom_profile:
                     profile = self.args.eom_profile
@@ -494,7 +496,7 @@ class eom_startup(object):
                             setattr(self.args, key, False)
         else:
             print("eom.noini: No .eom_ini found or cannot access %s" % inifile)
-        return 
+        return
 
 
 ###############################################################################
@@ -509,33 +511,46 @@ class Eom(object):
         # running the program from __main__
         if argv:
             sys.argv.extend(argv)
-            
+
         start_ctx = eom_startup()
         args = self.args = start_ctx.args
-        
+
         # Authenticate user name and password
         self.auth = auth = jiralab.Auth(args)
         auth.getcred()
-    
+
         self.envid = envid = args.env.upper()
         self.envid_l = envid_l = args.env.lower()
         self.envnum = envid[-2:]            #just the number
         self.stage_q = Queue.Queue()        # use this queue for thread seq
-        
+
         #######################################################################
         #                  Set up and start Logging
-        #######################################################################    
+        #######################################################################
+        if ':' in args.syslog:
+            sp =  "(?P<hst>.+):(?P<prt>[0-9]+)"
+            ss = re.search(sp,args.syslog)
+            if ss:
+                syslog_obj =  ( ss.group("hst"), int(ss.group("prt")))
+            else:
+                syslog_obj = args.syslog
+        else:
+            syslog_obj = args.syslog
+            
         try:
             if args.logfile:
-                self.log = log = mylog.logg('env-o-matic', llevel='INFO', 
-                        gmt=True, lfile=args.logfile, cnsl=True, syslog=args.syslog)
+                self.log = log = mylog.logg('env-o-matic', llevel='INFO',
+                        gmt=True, lfile=args.logfile, cnsl=True, syslog=syslog_obj)
             else:
                 self.log = log = mylog.logg('env-o-matic', llevel='INFO',
-                        gmt=True, cnsl=True, sh=sys.stdout, syslog=args.syslog)
+                        gmt=True, cnsl=True, sh=sys.stdout, syslog=syslog_obj)
         except UnboundLocalError:
             print("Can't open Log file, check path\n")
             sys.exit(1)
-    
+        except socket.error:
+            print("Bad value passed to syslog call, %s" % args.syslog)
+            sys.exit(1)
+
         #set the formatter so that it adds the envid
         lfstr = ('%(asctime)s %(levelname)s: %(name)s:'
                  '[%(process)d] {0}:: %(message)s'.format(envid_l))
@@ -543,20 +558,20 @@ class Eom(object):
             datefmt='%Y-%m-%d %H:%M:%S +0000')
         for h in log.handlers:
             h.setFormatter(formatter)
-    
+
         if args.debug:
             DEBUG = True
             log.setLevel("DEBUG")
         else:
             DEBUG = False
-    
-    
+
+
         #######################################################################
         #                   Hello World!
-        #######################################################################    
-        log.info('eom.start: %s :: %s' % (start_ctx.program_log_id, args))    
+        #######################################################################
+        log.info('eom.start: %s :: %s' % (start_ctx.program_log_id, args))
         # Get the login credentials from the user or from the vault
-    
+
     @assignSequence(100)
     def login_stage(self):
         # Login to the reg server
@@ -580,9 +595,9 @@ class Eom(object):
         # Become the relmgt user, all tools are run as this user
         log.info ("eom.relmgt: Becoming relmgt @ %s UTC" %\
                   time.asctime(time.gmtime(time.time())))
-    
+
         rval = execute(ses,"sudo -i -u relmgt",DEBUG,log)
-        
+
         log.info ("eom.lckout: Clecking for ENV lock-out")
         if not args.override:
             rval = execute(ses,"jenvp -u %s -e %s" % (auth.user,self.envid),
@@ -615,7 +630,7 @@ class Eom(object):
         ses = self.ses
         stage_entry(log)
         self. use_siebel = ("--withsiebel" if args.withsiebel else "")
-        
+
         if  args.restart_issue:
             restart_issue = args.restart_issue
             # FIXME: we need code here to find the linked issue keys to fill
@@ -634,13 +649,13 @@ class Eom(object):
                         "proproj" : "unknown",
                         "envreq"  : restart_issue,
                         }
-                
+
             if args.envreq:
                 proproj_result_dict["envreq"] = args.envreq
                 self.pprj = pprj = proproj_result_dict["envreq"]
-            else:    
+            else:
                 self.pprj = pprj = proproj_result_dict["proproj"]
-    
+
             if pprj == "unknown":
                 log.error(
                         "eom.noticket: Invalid or no ticket specified for restart")
@@ -655,10 +670,10 @@ class Eom(object):
         else:
             # Create a PROPROJ and DB ticket for the ENV
             log.info ("eom.cjira: Creating JIRA issues")
-            proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user, 
-                                            args.env, jira_release, 
+            proproj_cmd =  "proproj -u %s -e %s -r %s %s " % (auth.user,
+                                            args.env, jira_release,
                                             self.use_siebel)
-    
+
             rval = execute(ses,proproj_cmd, DEBUG, log, result_set=["\{*\}",
                                                   ses.session.PROMPT])
             if rval == PEXOK :
@@ -677,19 +692,19 @@ class Eom(object):
                     "creation: %s%s \nExiting.\n" %
                     (ses.before, ses.after))
                 exit(2)
-    
+
         # Login to JIRA so we can manipulate tickets...
         self.jira_options = jira_options = {'server': 'https://jira.stubcorp.com/',
                     'verify' : False,
                     }
         jira = JIRA(jira_options,basic_auth= (auth.user,auth.password))
-        
+
         # If there is an ENV ticket, and this is not a restart,
         # link the proproj to it. And set the ENVREQ Status to Provisioning
         if args.envreq and not args.restart_issue:
             log.info("eom.tlink: Linking propoj:%s to ENV request:%s" %\
                      (pprj, args.envreq))
-    
+
             jira.create_issue_link(type="Dependency",
                                     inwardIssue=args.envreq,
                                     outwardIssue=pprj)
@@ -700,7 +715,7 @@ class Eom(object):
                     jira.transition_issue(env_issue, int( t['id']), fields={})
                     env_issue.update(customfield_10761=(
                                                     date.today().isoformat()))
-                    env_issue.update(fields={'customfield_10170': {'value' : envid}}) 
+                    env_issue.update(fields={'customfield_10170': {'value' : envid}})
                     log.info(
                         "eom.prvsts: ENVREQ:%s set to Provisioning state" %
                         args.envreq)
@@ -709,7 +724,7 @@ class Eom(object):
                 log.warn(
                     "eom.notpro: ENV REQ:%s cannot be set to provision state" %
                      args.envreq)
-      
+
         rval=1
         stage_exit(log)
         return rval
@@ -746,7 +761,7 @@ class Eom(object):
         pprj = self.pprj
         stage_entry(log)
 
-        
+
         if args.skipreimage:
             log.info("eom.noreimg: Skipping the re-image of %s" % envid)
             stage_exit(log)
@@ -755,7 +770,7 @@ class Eom(object):
             log.info("eom.reimgenv: Reimaging with an ENV issue"
                      " not yet supported. Skipping...")
             args.skipreimage = True
-            stage_exit(log) 
+            stage_exit(log)
             return None
         else:
             # Start re-imaging in a thread
@@ -804,7 +819,7 @@ class Eom(object):
             self.stage_q.put(dbgen_task)
             dbgen_task.daemon = True
             dbgen_task.start()
-            self.dbgen_task = dbgen_task   
+            self.dbgen_task = dbgen_task
             rval = 1
             stage_exit(log)
             return rval
@@ -830,7 +845,7 @@ class Eom(object):
                      " stage to complete")
             self.stage_q.join()
             log.info("eom.jobdone: jobs are done, merging execution")
-    
+
         #######################################################################
         # We should be done with Provisioning, run the env-validate suit
         #######################################################################
@@ -855,18 +870,18 @@ class Eom(object):
             '| tee /dev/tty'
             ' | jcmnt -f -u %s -i %s -t "Automatic env-validation"') % \
             (envnum, auth.user, pprj)
-    
+
         rval = execute(ses, env_validate_string, DEBUG, log, to=args.VERIFY_TO)
-    
+
         #######################################################################
         # Check the results of env-validate to see if we can proceed
         #######################################################################
-        if rval == PEXTO:   
+        if rval == PEXTO:
         # env-validate timed out, write failure to log and ticket
             log.error("eom.envalto: env-validation"
                       " timed out after %d seconds, exiting." % args.VERIFY_TO)
             env_valfail_string = ('jcmnt -f -u %s -i %s'
-                            ' -t "env-validate timed out after %d seconds."' % 
+                            ' -t "env-validate timed out after %d seconds."' %
                             (auth.user, pprj, args.VERIFY_TO))
             rval = execute(ses, env_valfail_string, DEBUG, log)
             sys.exit(1)
@@ -880,7 +895,7 @@ class Eom(object):
         if not re.search(rgx_envPASS,ses.before):
             # validation didn't pass, see if we want to ignore it
             if args.ignorewarnings and (
-                not re.search(rgx_envsudoFAIL, ses.before) and 
+                not re.search(rgx_envsudoFAIL, ses.before) and
                 not re.search(rgx_envsshFAIL, ses.before)  and
                 not re.search(rgx_envdbFAIL, ses.before)
 
@@ -913,7 +928,7 @@ class Eom(object):
             envpatch_cmd = ("/nas/reg/bin/env_setup_patch/scripts/envpatch %s"
                     '| jcmnt -f -u %s -i %s -t "Automatic predeploy script"') %\
                 (envid_l, auth.user, pprj)
-            log.info ("eom.predeploy: Running predeploy script: %s" % 
+            log.info ("eom.predeploy: Running predeploy script: %s" %
                       envpatch_cmd)
             rval = execute(ses, envpatch_cmd, DEBUG, log, to=PREPOST_TO)
         else:
@@ -931,7 +946,7 @@ class Eom(object):
         pprj = self.pprj
         stage_entry(log)
         #######################################################################
-        # get deploy options and run eom-rabbit-deploy 
+        # get deploy options and run eom-rabbit-deploy
         #######################################################################
         # We set args.deploy_success initially to True incase we are running with
         # deploy set to no, that way the latter stagers will still execute, however
@@ -943,7 +958,7 @@ class Eom(object):
             stage_exit(log)
             return None
         else:
-            args.deploy_success = True  
+            args.deploy_success = True
             # If there is an ENV ticket, and this is not a restart,
             # Set the ENV ticket to App Deployment
             if args.envreq and not args.restart_issue:
@@ -966,17 +981,17 @@ class Eom(object):
                     log.warn(
                         "eom.notpro: ENV REQ:%s cannot be set to"
                         " App Deployment state" % args.envreq)
-    
+
             cr = "--content-refresh" if args.content_refresh else ""
-            deploy_timeout = (args.DEPLOY_TO + args.CONTENT_TO 
+            deploy_timeout = (args.DEPLOY_TO + args.CONTENT_TO
                               if args.content_refresh else args.DEPLOY_TO)
 
-            # get the release ID and build label from the eom arguments 
+            # get the release ID and build label from the eom arguments
             r = args.release
             bl = args.build_label
             # Now fet a data structure containing the current reg info based
             # On the suppiled build label
-            build_label_cmd = ( "export P4USER=readonly ; build-id-info %s" % bl)  
+            build_label_cmd = ( "export P4USER=readonly ; build-id-info %s" % bl)
             rval = execute(ses,build_label_cmd, DEBUG, log, result_set=["\{*\}",
                                                   ses.session.PROMPT])
             if rval == PEXOK :
@@ -994,25 +1009,19 @@ class Eom(object):
             else:
                 log.error("eom.bidfail: build-id-info failed, can't continue")
                 sys.exit(2)
-                
+
             deploy_opts = " ".join(["--" + x  for x in args.deploy])
             deply_issue = args.envreq if args.envreq else pprj
-            
+
             eom_rabbit_deploy_cmd = (
             "eom-rabbit-deploy --env %s --release %s --build-label %s %s %s %s"
             '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
             (envid_l, r, build_label, deploy_opts, build_tree_opt,
              cr, auth.user, deply_issue, bl_result_dict["build_tree_id"])
-#
-#            eom_rabbit_deploy_cmd = (
-#            "eom-rabbit-deploy --env %s --release %s --build-label %s %s %s"
-#            '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
-#            (envid_l, r, bl,deploy_opts,cr,auth.user, 
-#             deply_issue,bl)
-    
+
             if args.envreq:
                 pass
-            log.info("eom.appstrt: Starting App deploy : %s" % 
+            log.info("eom.appstrt: Starting App deploy : %s" %
                      eom_rabbit_deploy_cmd)
             rval = execute(ses, eom_rabbit_deploy_cmd, DEBUG,
                            log, to=deploy_timeout)
@@ -1024,21 +1033,21 @@ class Eom(object):
                           " timed out after %d seconds, exiting."
                           % deploy_timeout)
                 env_appfail_string = ('jcmnt -f -u %s -i %s'
-                            ' -t "App Deploy timed out after %d seconds."' % 
+                            ' -t "App Deploy timed out after %d seconds."' %
                                 (auth.user, pprj, args.VERIFY_TO))
                 rval = execute(ses, env_appfail_string, DEBUG,
                                log, to=args.VERIFY_TO)
                 sys.exit(1)
-                
+
             dply_result = ses.before.split('\n')
-    
+
             for line in dply_result:
                 if 'RABBIT Deployment' in line:
                     if 'SUCCESSFUL' in line:
                         args.deploy_success = True
                         log.info("eom.appdeplyok: %s deployment SUCCESS" % bl)
                         log.info(
-                            "eom.appdeplywait: Sleeping %d seconds after deploy" % 
+                            "eom.appdeplywait: Sleeping %d seconds after deploy" %
                             DEPLOY_WAIT)
                         time.sleep(DEPLOY_WAIT)
                     elif 'FAILED' in line:
@@ -1059,7 +1068,7 @@ class Eom(object):
         log = self.log
         pprj = self.pprj
         stage_entry(log)
-    
+
         #######################################################################
         # Run the content tool
         #######################################################################
@@ -1069,16 +1078,16 @@ class Eom(object):
             content_cmd = ("/nas/reg/bin/jiralab/jcontent -u %s -e %s 3 3 %s_content"
                     '| jcmnt -f -u %s -i %s -t "Apply Content Tool"') %\
                 (auth.user, envid_l, args.release, auth.user, pprj)
-            log.info ("eom.ctntool: Running content tool: %s" % 
+            log.info ("eom.ctntool: Running content tool: %s" %
                       content_cmd)
-    
+
             rval = execute(ses, content_cmd, DEBUG, log,
                     result_set=[ses.session.PROMPT,"PRIORITY=ERROR"], to=CTOOL_TO)
             if rval == PEXTO:
                 execute(ses, 'jcmnt -u %s -i %s -t "Content Tool time-out after %s secs"' %\
                 (auth.user, pprj, CTOOL_TO), DEBUG, log)
             elif rval == PEXERR:
-                log.warn("eom.ctntoolerr: Content tool threw an error, continuing") 
+                log.warn("eom.ctntoolerr: Content tool threw an error, continuing")
         else:
             rval = None
         stage_exit(log)
@@ -1098,16 +1107,16 @@ class Eom(object):
         pprj = self.pprj
         stage_entry(log)
         #######################################################################
-        #        Perform big_IP verification: 
+        #        Perform big_IP verification:
         #######################################################################
         if args.validate_bigip:
-    
+
             if args.envreq:
                 pprj = args.envreq
             valbigip_cmd = ("/nas/reg/bin/validate_bigip -e %s"
                     '| jcmnt -f -u %s -i %s -t "Big IP validation"') %\
                 (envid_l, auth.user, pprj)
-            log.info ("eom.valbigip: Running BigIP validation: %s" % 
+            log.info ("eom.valbigip: Running BigIP validation: %s" %
                       valbigip_cmd)
             rval = execute(ses, valbigip_cmd, DEBUG, log)
         else:
@@ -1129,7 +1138,7 @@ class Eom(object):
         #######################################################################
         #                         EXECUTION COMPLETE
         #######################################################################
-        
+
         if args.envreq and args.deploy_success:
             log.info("eom.appstate: Setting %s Verification state"
                      % args.envreq)
@@ -1149,10 +1158,10 @@ class Eom(object):
                 log.warn(
                     "eom.notpro: ENV REQ:%s cannot be set to"
                     " Verification state" % args.envreq)
-    
-        if ( args.close_tickets 
-             and args.enval_success 
-             and args.deploy_success 
+
+        if ( args.close_tickets
+             and args.enval_success
+             and args.deploy_success
              and args.envreq) :
 
             db_issue = self.proproj_result_dict["dbtask"]
@@ -1161,7 +1170,7 @@ class Eom(object):
                 jclose_cmd = "jclose -u %s %s %s" % (auth.user, db_issue, pp_issue )
             else:
                 jclose_cmd = "jclose -u %s %s" % (auth.user, pp_issue )
-    
+
             log.info("eom.close: Closing build tickets: %s" % jclose_cmd)
             execute(ses, jclose_cmd, DEBUG, log)
         log.info("eom.done: Execution Complete @ %s UTC. Exiting.\n" %\
@@ -1171,9 +1180,11 @@ class Eom(object):
         return rval
 
 ###############################################################################
-#                        program entry point 
-###############################################################################    
+#                        program entry point
+###############################################################################
 
 if __name__ == "__main__":
-    
+
     main()
+
+
