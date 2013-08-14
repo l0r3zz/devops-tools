@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.104
+__version__ = 1.105
 __date__ = '2012-11-20'
-__updated__ = '2013-08-13'
+__updated__ = '2013-08-14'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -527,13 +527,12 @@ class Eom(object):
         #######################################################################
         #                  Set up and start Logging
         #######################################################################
-        if ':' in args.syslog:
-            sp =  "(?P<hst>.+):(?P<prt>[0-9]+)"
-            ss = re.search(sp,args.syslog)
-            if ss:
-                syslog_obj =  ( ss.group("hst"), int(ss.group("prt")))
-            else:
-                syslog_obj = args.syslog
+        if args.syslog is not None:
+            if ':' in args.syslog:
+                sp =  "(?P<hst>.+):(?P<prt>[0-9]+)"
+                ss = re.search(sp,args.syslog)
+                if ss:
+                    syslog_obj =  ( ss.group("hst"), int(ss.group("prt")))
         else:
             syslog_obj = args.syslog
             
