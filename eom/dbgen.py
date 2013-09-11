@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.12
+__version__ = 1.13
 __date__ = '2012-11-15'
-__updated__ = '2013-07-22'
+__updated__ = '2013-09-10'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -194,7 +194,7 @@ def main(argv=None):  # IGNORE:C0111
         log.info("Running the auto-provision script")
         use_siebel = ("Y" if args.withsiebel else "")
 
-        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision.3.1 %s %s Ecomm %s %s"
+        auto_provision_cmd = ("/nas/reg/bin/delphix-auto-provision.3.2 %s %s Ecomm %s %s"
             % (envnum, args.release, envbank,  use_siebel))
         log.info("cmd:%s" % auto_provision_cmd)
         rval = reg_session.docmd(auto_provision_cmd,
