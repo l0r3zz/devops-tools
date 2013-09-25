@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.106
+__version__ = 1.107
 __date__ = '2012-11-20'
-__updated__ = '2013-08-26'
+__updated__ = '2013-09-25'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -50,7 +50,7 @@ VERIFY_TO = 720
 CMD_TO = 120
 DEPLOY_TO = 4800
 CONTENT_TO = 3600
-DEPLOY_WAIT = 600
+DEPLOY_WAIT = 900
 CONTENT_TO = 1200
 CTOOL_TO = 4000
 TJOIN_TO = 60.0
@@ -345,6 +345,9 @@ class eom_startup(object):
         switch_grp.add_argument('--validate_bigip', nargs='?', const=True,
                             dest="validate_bigip", default=None, metavar='no',
                             help="assert to validate BigIP after deploy")
+        switch_grp.add_argument('--validate_forsmoke', nargs='?', const=True,
+                            dest="validate_forsmoke", default=None, metavar='no',
+                            help="assert to validate readiness for smoke test")
         switch_grp.add_argument('--close_tickets', nargs='?',const=True,
                             dest="close_tickets", default=None, metavar='no',
                             help="assert to close DB & PROPROJ tickets")
@@ -1118,6 +1121,18 @@ class Eom(object):
             log.info ("eom.valbigip: Running BigIP validation: %s" %
                       valbigip_cmd)
             rval = execute(ses, valbigip_cmd, DEBUG, log)
+        else:
+            rval = None
+        if args.validate_forsmoke:
+
+            if args.envreq:
+                pprj = args.envreq
+            valsmoke_cmd = ("/nas/reg/bin/env_setup_patch/scripts/post-chk-env -e %s"
+                    '| jcmnt -f -u %s -i %s -t "Smoke Test Validation"') %\
+                (envid_l, auth.user, pprj)
+            log.info ("eom.valsmoke: Running Smoke Test validation: %s" %
+                      valsmoke_cmd)
+            rval = execute(ses, valsmoke_cmd, DEBUG, log)
         else:
             rval = None
         stage_exit(log)
