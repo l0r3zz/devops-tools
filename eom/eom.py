@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.107
+__version__ = 1.109
 __date__ = '2012-11-20'
-__updated__ = '2013-09-25'
+__updated__ = '2013-09-27'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -634,7 +634,7 @@ class Eom(object):
         self. use_siebel = ("--withsiebel" if args.withsiebel else "")
 
         if  args.restart_issue:
-            restart_issue = args.restart_issue
+            restart_issue = args.restart_issue.upper()
             # FIXME: we need code here to find the linked issue keys to fill
             # in the correct dbtask and potentially the correct proproj
             if 'PROPROJ' in restart_issue:
@@ -1128,11 +1128,11 @@ class Eom(object):
             if args.envreq:
                 pprj = args.envreq
             valsmoke_cmd = ("/nas/reg/bin/env_setup_patch/scripts/post-chk-env -e %s"
-                    '| jcmnt -f -u %s -i %s -t "Smoke Test Validation"') %\
+                    ' 2>&1 | jcmnt -f -u %s -i %s -t "Smoke Test Validation"') %\
                 (envid_l, auth.user, pprj)
             log.info ("eom.valsmoke: Running Smoke Test validation: %s" %
                       valsmoke_cmd)
-            rval = execute(ses, valsmoke_cmd, DEBUG, log)
+            rval = execute(ses, valsmoke_cmd, DEBUG, log, to=VERIFY_TO)
         else:
             rval = None
         stage_exit(log)
