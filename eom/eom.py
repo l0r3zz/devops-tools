@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.109
+__version__ = 1.112
 __date__ = '2012-11-20'
-__updated__ = '2013-09-27'
+__updated__ = '2013-09-30'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -377,6 +377,9 @@ class eom_startup(object):
         to_grp.add_argument("--deploy_to", dest="DEPLOY_TO",
                             default=DEPLOY_TO, type=int,
                             help="set the timeout for deploy step in sec.")
+        to_grp.add_argument("--cmd_to", dest="CMD_TO",
+                            default=CMD_TO, type=int,
+                            help="set the timeout for command execution return")
         to_grp.add_argument("--reimage_to", dest="REIMAGE_TO",
                             default=REIMAGE_TO, type=int,
                             help="set the timeout for reimage operation in sec.")
@@ -526,6 +529,11 @@ class Eom(object):
         self.envid_l = envid_l = args.env.lower()
         self.envnum = envid[-2:]            #just the number
         self.stage_q = Queue.Queue()        # use this queue for thread seq
+
+        # A little ugly, but the alternative is changing a bunch of code which could
+        # introduce more subtle errors
+        global CMD_TO
+        CMD_TO = args.CMD_TO                # set global command timeout from arg vector
 
         #######################################################################
         #                  Set up and start Logging
@@ -991,7 +999,9 @@ class Eom(object):
             # get the release ID and build label from the eom arguments
             r = args.release
             bl = args.build_label
-            # Now fet a data structure containing the current reg info based
+            # set the timeout for eom-rabbit-deploy to track eom timeout -2 sec
+            erdto = " --timeout %s " % ( CMD_TO - 2) 
+            # Now fetch a data structure containing the current reg info based
             # On the suppiled build label
             build_label_cmd = ( "export P4USER=readonly ; build-id-info %s" % bl)
             rval = execute(ses,build_label_cmd, DEBUG, log, result_set=["\{*\}",
@@ -1007,7 +1017,7 @@ class Eom(object):
                 build_label = bl_result_dict["build_label"]
                 build_tree = bl_result_dict["build_tree_iteration"]
 
-                build_tree_opt = "--tree %s" % build_tree if build_tree else ""
+                build_tree_opt = " --tree %s " % build_tree if build_tree else ""
             else:
                 log.error("eom.bidfail: build-id-info failed, can't continue")
                 sys.exit(2)
@@ -1016,10 +1026,10 @@ class Eom(object):
             deply_issue = args.envreq if args.envreq else pprj
 
             eom_rabbit_deploy_cmd = (
-            "eom-rabbit-deploy --env %s --release %s --build-label %s %s %s %s"
+            "eom-rabbit-deploy --env %s --release %s --build-label %s %s %s %s %s"
             '|tee /dev/tty | jcmnt -f -u %s -i %s -t "Deploy %s"')%\
             (envid_l, r, build_label, deploy_opts, build_tree_opt,
-             cr, auth.user, deply_issue, bl_result_dict["build_tree_id"])
+             cr, erdto, auth.user, deply_issue, bl_result_dict["build_tree_id"])
 
             if args.envreq:
                 pass
