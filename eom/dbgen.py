@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.13
+__version__ = 1.14
 __date__ = '2012-11-15'
-__updated__ = '2013-09-10'
+__updated__ = '2013-10-23'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -35,12 +35,14 @@ def main(argv=None):  # IGNORE:C0111
     
     env_de_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
+                           "srwd00dbs012" : "$<delphix_db_prefix_12>",
                            "srwd00dbs016" : "$<delphix_db_prefix_16>",
                            "srwd00dbs019" : "$<delphix_db_prefix_19>",
                            }
     
     env_dq_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_dbq_prefix>",
+                           "srwd00dbs012" : "$<delphix_dbq_prefix_12>",
                            "srwd00dbs016" : "$<delphix_dbq_prefix_16>",
                            "srwd00dbs019" : "$<delphix_dbq_prefix_19>",
                            }
@@ -49,6 +51,7 @@ def main(argv=None):  # IGNORE:C0111
                             "srwd00dbs008" : "$<delphix_host01>",
                             "srwd00dbs016" : "$<delphix_host02>",
                             "srwd00dbs019" : "$<delphix_host03>",
+                            "srwd00dbs012" : "$<delphix_host04>",
                          }
     if argv is None:
         argv = sys.argv
