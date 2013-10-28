@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.14
+__version__ = 1.15
 __date__ = '2012-11-15'
-__updated__ = '2013-10-23'
+__updated__ = '2013-10-24'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -238,7 +238,19 @@ def main(argv=None):  # IGNORE:C0111
                 if DEBUG:
                     log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                                 reg_session.before, reg_session.after))
-
+                    
+                # DB creation was successful    
+                if args.postpatch:
+                    # apply autopatchs if present
+                    dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
+                    log.info("Running DB post patching scripts")
+                    rval = reg_session.docmd(dbpatch_cmd,
+                                    [reg_session.session.PROMPT], timeout=600)
+                    log.info("%s%s\n" % (reg_session.before, reg_session.after))
+                    if DEBUG:
+                        log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+                    log.debug("Patching complete")
                 '''
                 1) Search the global_tnsnames.ora file for service_name, if not found then ERROR
                 2) Save the single line Service Name definition.
@@ -288,6 +300,8 @@ def main(argv=None):  # IGNORE:C0111
                 old_tt_envnum = old_db_sspace.group('e1')
                 old_tt_host = re.search('db_server_01[ ]+=[ ]+(?P<s2>\$<.+>)', tt_stanza).group('s2')
 
+
+
                 # create a bunch of update commands to update the token table
                 # but first guard them from null values
                 if old_tt_prefix and old_tt_host and dbhost and old_tt_envnum:
@@ -320,18 +334,6 @@ def main(argv=None):  # IGNORE:C0111
                     log.warn( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
                            (old_tt_prefix, old_tt_host, dbhost))
                     
-                if args.postpatch:
-                    # apply autopatchs if present
-                    dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
-                    log.info("Running DB post patching scripts")
-                    rval = reg_session.docmd(dbpatch_cmd,
-                                    [reg_session.session.PROMPT], timeout=600)
-                    log.info("%s%s\n" % (reg_session.before, reg_session.after))
-                    if DEBUG:
-                        log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                    reg_session.before, reg_session.after))
-                    log.debug("Patching complete")
-
             print("Exiting.")
             exit(0)
 
