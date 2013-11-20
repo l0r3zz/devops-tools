@@ -314,7 +314,7 @@ class eom_startup(object):
         parser.add_argument("-d", "--deploy", dest="deploy",
                             action='append',
                             help="Deploy full|properties|java|restart|no"
-                            "can be used more than once "
+                            " can be used more than once "
                             "ex. -d java -d properties")
         parser.add_argument("--syslog", dest="syslog",
                             default=None, 
@@ -1103,7 +1103,7 @@ class Eom(object):
             elif rval == PEXERR:
                 log.warn("eom.ctntoolerr: Content tool threw an error, continuing")
         elif args.withbpm : 
-            bpm_cmd = ("/nas/reg/bin/bpm-deploy -e %s -p %s -x"
+            bpm_cmd = ("/nas/reg/bin/bpm-deploy -e %s -p %s -x 2>&1 "
                     '| jcmnt -f -u %s -i %s -t "BPM deploy"') %\
                 (envid_l, args.withbpm, auth.user, pprj)
             log.info ("eom.bpmdply: Running bpm deploy: %s" %
