@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/nas/reg/local/bin/python
 # encoding: utf-8
 '''
 dbgen -- Create Delphix and Siebel  based Databases
@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.15
-__date__ = '2012-11-15'
-__updated__ = '2013-10-24'
+__version__ = 1.16
+__date__ = '2012-11-20'
+__updated__ = '2013-11-19'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -32,14 +32,14 @@ def main(argv=None):  # IGNORE:C0111
     TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
     AUTOPROV_TO = 4000
     CMD_TO = 120
-    
+
     env_de_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
                            "srwd00dbs012" : "$<delphix_db_prefix_12>",
                            "srwd00dbs016" : "$<delphix_db_prefix_16>",
                            "srwd00dbs019" : "$<delphix_db_prefix_19>",
                            }
-    
+
     env_dq_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_dbq_prefix>",
                            "srwd00dbs012" : "$<delphix_dbq_prefix_12>",
@@ -81,7 +81,7 @@ def main(argv=None):  # IGNORE:C0111
         parser.add_argument("--postpatch", dest="postpatch", default=None,
                         help="path to post db create patch script")
         parser.add_argument("--withsiebel", dest="withsiebel", action='store_true',
-                         default=False, 
+                         default=False,
                          help="set to build a Siebel database along with Delphix")
         parser.add_argument("--timeout", dest="timeout",
                         default=AUTOPROV_TO, type=int,
@@ -111,7 +111,7 @@ def main(argv=None):  # IGNORE:C0111
             parser.print_help()
             exit(exit_status)
 
-    
+
         log = log = mylog.logg('dbgen', llevel='INFO',
                 gmt=True, cnsl=True, sh=sys.stdout)
         #set the formatter so that it adds the envid
@@ -121,7 +121,7 @@ def main(argv=None):  # IGNORE:C0111
             datefmt='%Y-%m-%d %H:%M:%S +0000')
         for h in log.handlers:
             h.setFormatter(formatter)
-    
+
         if args.debug:
             DEBUG = True
             log.setLevel("DEBUG")
@@ -129,7 +129,7 @@ def main(argv=None):  # IGNORE:C0111
         envid = args.env.upper()
         if not re.search("SRW[DQE][0-9]{2}",envid):
             print("Error:Please check your supplied environment id")
-            exit(2)            
+            exit(2)
         envnum = envid[-2:]  # just the number
         if not envnum.isdigit():
             print("Error:Please check your supplied environment id")
@@ -238,26 +238,15 @@ def main(argv=None):  # IGNORE:C0111
                 if DEBUG:
                     log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                                 reg_session.before, reg_session.after))
-                    
-                # DB creation was successful    
-                if args.postpatch:
-                    # apply autopatchs if present
-                    dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
-                    log.info("Running DB post patching scripts")
-                    rval = reg_session.docmd(dbpatch_cmd,
-                                    [reg_session.session.PROMPT], timeout=600)
-                    log.info("%s%s\n" % (reg_session.before, reg_session.after))
-                    if DEBUG:
-                        log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                    reg_session.before, reg_session.after))
-                    log.debug("Patching complete")
+
+                # DB creation was successful
                 '''
                 1) Search the global_tnsnames.ora file for service_name, if not found then ERROR
                 2) Save the single line Service Name definition.
                 3) Open /nas/home/oracle/OraHome/network/admin/tnsnames.ora
                 4) Search for service name, if found then exit, if not, append to file.
                 5) No need to delete the old service name, it might come in handy if the db is moved at a future date
-                6) Extract the HOST name from the definition, will need it to map to delphix_prefix and delphix_host variables for tokentable rewrite. 
+                6) Extract the HOST name from the definition, will need it to map to delphix_prefix and delphix_host variables for tokentable rewrite.
                 '''
                 for line in open(GLOBAL_TNSNAMES, 'r'):
                     dbtnsdef = None
@@ -287,6 +276,19 @@ def main(argv=None):  # IGNORE:C0111
                         log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                                     reg_session.before, reg_session.after))
 
+                # DB creation was successful, running dbgenpatch
+                if args.postpatch:
+                    # apply autopatchs if present
+                    dbpatch_cmd = "%s %s" % (args.postpatch, service_name)
+                    log.info("Running DB post patching scripts")
+                    rval = reg_session.docmd(dbpatch_cmd,
+                                    [reg_session.session.PROMPT], timeout=600)
+                    log.info("%s%s\n" % (reg_session.before, reg_session.after))
+                    if DEBUG:
+                        log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+                    log.debug("Patching complete")
+
                 # extract the environment stanza from the env_based token table file.
                 tt_env_based = open(TT_ENV_BASED_RO, "r").read()
                 stanza_start = "<%s>" % envid.lower()
@@ -305,8 +307,8 @@ def main(argv=None):  # IGNORE:C0111
                 # create a bunch of update commands to update the token table
                 # but first guard them from null values
                 if old_tt_prefix and old_tt_host and dbhost and old_tt_envnum:
-                    
-                    old_tt_db_string = old_tt_prefix + old_tt_envnum    
+
+                    old_tt_db_string = old_tt_prefix + old_tt_envnum
                     old_tt_host_string = old_tt_host
 
                     # We need to use a different tt variable for the srwq environments
@@ -314,10 +316,10 @@ def main(argv=None):  # IGNORE:C0111
                         sn_prefix = env_dq_prefix_dict[dbhost]
                     else:
                         sn_prefix = env_de_prefix_dict[dbhost]
-        
+
                     new_tt_db_string = sn_prefix + envnum
                     new_tt_host_string = delphix_host_dict[dbhost]
-                        
+
                     tt_update_cmds = [
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_db_string, new_tt_db_string),
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_host_string, new_tt_host_string),
@@ -333,7 +335,7 @@ def main(argv=None):  # IGNORE:C0111
                 else:
                     log.warn( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
                            (old_tt_prefix, old_tt_host, dbhost))
-                    
+
             print("Exiting.")
             exit(0)
 
