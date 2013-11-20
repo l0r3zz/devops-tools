@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.113
+__version__ = 1.114
 __date__ = '2012-11-20'
-__updated__ = '2013-10-24'
+__updated__ = '2013-11-19'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -52,6 +52,7 @@ DEPLOY_TO = 4800
 DEPLOY_WAIT = 900
 CONTENT_TO = 1200
 CTOOL_TO = 4000
+BPM_TO = 1200
 TJOIN_TO = 60.0
 PREPOST_TO = 240
 SIEBEL_TO = 1200
@@ -364,13 +365,15 @@ class eom_startup(object):
                             help="assert to DISABLE  DB creation patching")
         switch_grp.add_argument("--withsiebel", dest="withsiebel",
                              default=None, nargs='?',const=True, metavar='no',
-                    help="assert to build a Siebel database along with Delphix")
+                             help="assert to build a Siebel database along with Delphix")
+        switch_grp.add_argument("--withbpm", default=None, dest="withbpm",
+                             help="connect to a bpm instance")
         switch_grp.add_argument("--init_tokentable", dest="full_replace",
                              default=None, nargs='?',const=True, metavar='no',
-                    help="initialize token table with release version")
+                             help="initialize token table with release version")
         switch_grp.add_argument("--override", dest="override",
                              default=None, nargs='?',const=True, metavar='no',
-                    help="override env delivered lock-out mechanism")
+                             help="override env delivered lock-out mechanism")
 
         to_grp = parser.add_argument_group("Time out adjustments")
         to_grp.add_argument("--deploy_to", dest="DEPLOY_TO",
@@ -1099,8 +1102,22 @@ class Eom(object):
                 (auth.user, pprj, CTOOL_TO), DEBUG, log)
             elif rval == PEXERR:
                 log.warn("eom.ctntoolerr: Content tool threw an error, continuing")
+        elif args.withbpm : 
+            bpm_cmd = ("/nas/reg/bin/bpm-deploy -e %s -p %s -x"
+                    '| jcmnt -f -u %s -i %s -t "BPM deploy"') %\
+                (envid_l, args.withbpm, auth.user, pprj)
+            log.info ("eom.bpmdply: Running bpm deploy: %s" %
+                      bpm_cmd)
+
+            rval = execute(ses, bpm_cmd, DEBUG, log,
+                    result_set=[ses.session.PROMPT,"PRIORITY=ERROR"], to=BPM_TO)
+            if rval == PEXTO:
+                execute(ses, 'jcmnt -u %s -i %s -t "BPM deploy  time-out after %s secs"' %\
+                (auth.user, pprj, BPM_TO), DEBUG, log)
+            elif rval == PEXERR:
+                log.warn("eom.bpmdpyerr: bpm-deploy threw an error, continuing")
         else:
-            rval = None
+                rval = None
         stage_exit(log)
         return rval
 
