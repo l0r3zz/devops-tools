@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.16
+__version__ = 1.17
 __date__ = '2012-11-20'
-__updated__ = '2013-11-19'
+__updated__ = '2013-11-22'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -221,10 +221,14 @@ def main(argv=None):  # IGNORE:C0111
             sn_search_space = re.search(
                                 'DBNAME\:[ ]+(?P<sn>D(08|19|16|12)[DQ]E[0-9]{2})',
                                         reg_session.before)
+            lp_search_space = re.search(
+                                'LISTENER_PORT\:[ ]+(?P<lp>15[0-9]{2})',
+                                        reg_session.before)
 
             if sn_search_space:  # make sure we found something
                 service_name = sn_search_space.group("sn")
-                log.info("\nDBNAME: %s" % service_name)
+                listener_port = lp_search_space.group("lp")
+                log.info("\nDBNAME: %s LISTENER_PORT: %s" % (service_name, listener_port))
 
                 log.info("Dropping back to relmgt")
                 rval = reg_session.docmd("exit",
@@ -301,6 +305,11 @@ def main(argv=None):  # IGNORE:C0111
                 old_tt_prefix = old_db_sspace.group('s1')
                 old_tt_envnum = old_db_sspace.group('e1')
                 old_tt_host = re.search('db_server_01[ ]+=[ ]+(?P<s2>\$<.+>)', tt_stanza).group('s2')
+                lport_sspace = re.search('db_listener_port=(?P<lp>15[0-9]{2})', tt_stanza).group('lp')
+                if lport_sspace:
+                    old_tt_lport = lport_sspace.group('lp')
+                else:
+                    old_tt_lport = ""
 
 
 
@@ -319,10 +328,12 @@ def main(argv=None):  # IGNORE:C0111
 
                     new_tt_db_string = sn_prefix + envnum
                     new_tt_host_string = delphix_host_dict[dbhost]
+                    new_tt_lport = listener_port
 
                     tt_update_cmds = [
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_db_string, new_tt_db_string),
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_host_string, new_tt_host_string),
+                                      "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_lport, new_tt_lport),
                                       ]
                     log.info("Updating the token tables with new values")
                     for cmd in tt_update_cmds:
