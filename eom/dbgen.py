@@ -305,7 +305,7 @@ def main(argv=None):  # IGNORE:C0111
                 old_tt_prefix = old_db_sspace.group('s1')
                 old_tt_envnum = old_db_sspace.group('e1')
                 old_tt_host = re.search('db_server_01[ ]+=[ ]+(?P<s2>\$<.+>)', tt_stanza).group('s2')
-                lport_sspace = re.search('db_listener_port=(?P<lp>15[0-9]{2})', tt_stanza).group('lp')
+                lport_sspace = re.search('db_listener_port[ ]+=[ ]+(?P<lp>15[0-9]{2})', tt_stanza)
                 if lport_sspace:
                     old_tt_lport = lport_sspace.group('lp')
                 else:
@@ -333,7 +333,7 @@ def main(argv=None):  # IGNORE:C0111
                     tt_update_cmds = [
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_db_string, new_tt_db_string),
                                       "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_host_string, new_tt_host_string),
-                                      "eom-update-token-table -e %s --release-id %s -s '%s' -r '%s' -v" % (envid.lower(), args.release, old_tt_lport, new_tt_lport),
+                                      "eom-update-token-table -e %s --release-id %s -s 'db_listener_port=%s' -r 'db_listener_port=%s' -v" % (envid.lower(), args.release, old_tt_lport, new_tt_lport),
                                       ]
                     log.info("Updating the token tables with new values")
                     for cmd in tt_update_cmds:
