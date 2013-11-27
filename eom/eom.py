@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.114
+__version__ = 1.115
 __date__ = '2012-11-20'
-__updated__ = '2013-11-19'
+__updated__ = '2013-11-27'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -534,8 +534,10 @@ class Eom(object):
 
         # A little ugly, but the alternative is changing a bunch of code which could
         # introduce more subtle errors
-        global CMD_TO
+        global CMD_TO 
+        global REIMAGE_TO
         CMD_TO = args.CMD_TO                # set global command timeout from arg vector
+        REIMAGE_TO = args.REIMAGE_TO
 
         #######################################################################
         #                  Set up and start Logging
