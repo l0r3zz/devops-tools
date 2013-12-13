@@ -16,7 +16,7 @@ import socket
 from optparse import OptionParser
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.4
 __date__ = '2012-12-11'
 __updated__ = '2013-12-13'
 
@@ -39,9 +39,9 @@ for symbol in q.readlines():
 gmtime = time.gmtime()
 iso_time = time.strftime("%Y-%m-%dT%H:%M:%S", gmtime)
 fname_time = time.strftime(".%Y%m%dT%H%M%S", gmtime)
-fqdn = socket.gethostname()
+hostname = (socket.gethostname()).split(".")[0]
 
-fname = fqdn.split(".")[0] + fname_time
+fname = hostname + fname_time
 envidsp = re.search("(?P<envid>srw[dqe][0-9]{2})",fname)
 if not envidsp:
     print("This is not running on a DEV system")
@@ -61,6 +61,11 @@ if options.root_dir:
     if not os.path.exists(env_dir):
         os.makedirs(env_dir)
     recfd = open((env_dir + fname),"w")
+    try:
+        os.unlink(env_dir + hostname )
+    except OSError:
+        pass
+    os.symlink((env_dir + fname), (env_dir + hostname))  
     sys.stdout = recfd
     
 print("{"),
