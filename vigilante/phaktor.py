@@ -10,6 +10,7 @@ phaktor - write facter facts to a FS database
 '''
 import os
 import re
+import sys
 import time
 import socket
 from optparse import OptionParser
@@ -38,7 +39,14 @@ for symbol in q.readlines():
 gmtime = time.gmtime()
 iso_time = time.strftime("%Y-%m-%dT%H:%M:%S", gmtime)
 fname_time = time.strftime(".%Y%m%dT%H%M%S", gmtime)
-fname = socket.gethostname() + fname_time
+fqdn = socket.gethostname()
+
+fname = fqdn.split(".")[0] + fname_time
+envidsp = re.search("(?P<envid>srw[dqe][0-9]{2})",fname)
+if not envidsp:
+    print("This is not running on a DEV system")
+    sys.exit()
+envid = envidsp.group("envid")
 
 p = os.popen("facter","r")
 
@@ -47,7 +55,18 @@ for line in p.readlines():
     fsp = re.search("(?P<key>.+)=>(?P<value>.+)",line.rstrip())
     if (line.split())[0] in facts:
         event[fsp.group("key").rstrip()] = fsp.group("value").rstrip()
+        
+if options.root_dir:
+    env_dir = options.root_dir + "/" + envid + "/"
+    if not os.path.exists(env_dir):
+        os.makedirs(env_dir)
+    recfd = open((env_dir + fname),"w")
+    sys.stdout = recfd
+    
 print("{"),
 for key, value in event.iteritems():
     print( '"%s" : "%s",' % (key, value)),
 print("}")
+
+sys.stdout = sys.__stdout__
+sys.exit()
