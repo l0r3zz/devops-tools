@@ -16,17 +16,25 @@ import socket
 from optparse import OptionParser
 
 __all__ = []
-__version__ = 0.5
+__version__ = 0.6
 __date__ = '2012-12-11'
-__updated__ = '2013-12-15'
+__updated__ = '2013-12-16'
+program_name = os.path.basename(sys.argv[0])
+program_version = "v%s" % __version__
+program_build_date = str(__updated__)
+program_version_message = '%s %s (%s)' % (program_name, program_version,
+                                                 program_build_date)
+program_shortdesc ="phaktor - write facter facts to a FS database"
 
-parser = OptionParser()
+parser = OptionParser(version=program_version_message)
 parser.add_option("-c", "--config", dest="config_file", default="facts.ftr",
                   help="file containing keys to save", metavar="FILE")
 parser.add_option("-r","--root", dest="root_dir", default=None,
                   help="root directory to store events")
 parser.add_option("-d","--depth", dest="depth", default=3, type="int",
                   help="number of events to keep in history")
+
+
 (options, args) = parser.parse_args()
 
 q = open(options.config_file)
