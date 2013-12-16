@@ -16,16 +16,17 @@ import socket
 from optparse import OptionParser
 
 __all__ = []
-__version__ = 0.4
+__version__ = 0.5
 __date__ = '2012-12-11'
-__updated__ = '2013-12-13'
+__updated__ = '2013-12-15'
 
 parser = OptionParser()
 parser.add_option("-c", "--config", dest="config_file", default="facts.ftr",
                   help="file containing keys to save", metavar="FILE")
 parser.add_option("-r","--root", dest="root_dir", default=None,
                   help="root directory to store events")
-
+parser.add_option("-d","--depth", dest="depth", default=3, type="int",
+                  help="number of events to keep in history")
 (options, args) = parser.parse_args()
 
 q = open(options.config_file)
@@ -57,7 +58,7 @@ for line in p.readlines():
         event[fsp.group("key").rstrip()] = fsp.group("value").rstrip()
         
 if options.root_dir:
-    env_dir = options.root_dir + "/" + envid + "/"
+    env_dir = os.path.abspath( options.root_dir + "/" + envid ) + "/"
     if not os.path.exists(env_dir):
         os.makedirs(env_dir)
     recfd = open((env_dir + fname),"w")
@@ -65,7 +66,12 @@ if options.root_dir:
         os.unlink(env_dir + hostname )
     except OSError:
         pass
-    os.symlink((env_dir + fname), (env_dir + hostname))  
+    os.symlink((env_dir + fname), env_dir + hostname)
+    dirlist = sorted(os.listdir(env_dir),reverse=True)[:-1]
+    if len(dirlist) > options.depth :
+        for remove_file in dirlist[options.depth: ]:
+            os.remove(env_dir + remove_file)
+
     sys.stdout = recfd
     
 print("{"),
