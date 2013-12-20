@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.19
+__version__ = 1.20
 __date__ = '2012-11-20'
-__updated__ = '2013-12-09'
+__updated__ = '2013-12-20'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -254,7 +254,7 @@ def main(argv=None):  # IGNORE:C0111
                 '''
                 for line in open(GLOBAL_TNSNAMES, 'r'):
                     dbtnsdef = None
-                    tns_ss = re.search('^%s.+HOST=(?P<hn>.+)\.stubcorp\.dev' % service_name, line)
+                    tns_ss = re.search('^%s=.+HOST=(?P<hn>.+)\.stubcorp\.dev' % service_name, line)
                     if tns_ss:
                         dbtnsdef = line
                         dbhost = tns_ss.group("hn")
