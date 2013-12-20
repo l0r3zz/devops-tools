@@ -28,9 +28,9 @@ import socket
 from optparse import OptionParser
 
 __all__ = []
-__version__ = 0.7
+__version__ = 0.8
 __date__ = '2012-12-11'
-__updated__ = '2013-12-16'
+__updated__ = '2013-12-20'
 program_name = os.path.basename(sys.argv[0])
 program_version = "v%s" % __version__
 program_build_date = str(__updated__)
@@ -87,11 +87,14 @@ if options.root_dir:
     if not os.path.exists(env_dir):
         try:
             os.makedirs(env_dir)
-            recfd = open((env_dir + fname),"w")
+
         except :
             print ("Can't make directory %s" % env_dir)
             sys.exit()
-            
+    try:
+        recfd = open((env_dir + fname),"w")
+    except IOError:
+        print("Can't open %s " % (env_dir + fname))
 
     try:
         os.unlink(env_dir + hostname )
