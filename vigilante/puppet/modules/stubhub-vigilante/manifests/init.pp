@@ -4,6 +4,12 @@ class stubhub-vigilante {
     group => root,
     mode => 644,
   }
+  
+ # schedule { 'audit' :
+ #    period => daily,
+ #   range => "$startwindow - $endwindow",
+ # }
+  
 
   file { '/nas/reg/log/jiralab/vigilante/facts.ftr':
     ensure => file,
@@ -17,9 +23,10 @@ class stubhub-vigilante {
   
   exec { "phaktor":
     command => "phaktor -c /nas/reg/log/jiralab/vigilante/facts.ftr -r /nas/reg/log/jiralab/vigilante/auditor ",
-    path    => "/nas/reg/bin/jiralab/",
+    path    => "/nas/reg/bin/jiralab/:/bin/:/usr/bin/",
     logoutput => true,
 
   }
 
 }
+include stubhub-vigilante
