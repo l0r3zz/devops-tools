@@ -18,10 +18,10 @@ class stubhub-vigilante {
 
   file { '/nas/reg/log/jiralab/vigilante/auditor':
     ensure => directory,
-    #source => 'puppet:///modules/stubhub-vigilante/files/facts.ftr',
   }
   
   exec { "phaktor":
+    #schedule => 'audit',
     command => "phaktor -c /nas/reg/log/jiralab/vigilante/facts.ftr -r /nas/reg/log/jiralab/vigilante/auditor ",
     path    => "/nas/reg/bin/jiralab/:/bin/:/usr/bin/",
     logoutput => true,
