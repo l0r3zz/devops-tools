@@ -10,6 +10,16 @@ class stubhub-vigilante {
  #   range => "$startwindow - $endwindow",
  # }
   
+ file { '/usr/local/bin/phaktor.py':
+    ensure => file,
+    mode => 755,
+    #source => 'puppet:///modules/stubhub-vigilante/files/phaktor.py',
+  }
+  
+  file { '/usr/local/bin/phaktor':
+    ensure => link,
+    target => '/usr/local/bin/phaktor.py',
+  }
 
   file { '/nas/reg/log/jiralab/vigilante/facts.ftr':
     ensure => file,
@@ -23,7 +33,7 @@ class stubhub-vigilante {
   exec { "phaktor":
     #schedule => 'audit',
     command => "phaktor -c /nas/reg/log/jiralab/vigilante/facts.ftr -r /nas/reg/log/jiralab/vigilante/auditor ",
-    path    => "/nas/reg/bin/jiralab/:/bin/:/usr/bin/",
+    path    => "/usr/local/bin:/nas/reg/bin/jiralab/:/bin/:/usr/bin/",
     logoutput => true,
 
   }
