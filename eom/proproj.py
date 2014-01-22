@@ -24,9 +24,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.78
+__version__ = 0.79
 __date__ = '2012-10-28'
-__updated__ = '2013-06-07'
+__updated__ = '2014-01-22'
 
 class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
@@ -77,6 +77,11 @@ def main(argv=None):  # IGNORE:C0111
 
         if not args.release:
             print("No release specified\n")
+            parser.print_help()
+            exit(1)
+
+        if not args.env:
+            print("No environment id  specified\n")
             parser.print_help()
             exit(1)
 
