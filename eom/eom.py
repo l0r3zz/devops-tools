@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.115
+__version__ = 1.116
 __date__ = '2012-11-20'
-__updated__ = '2013-11-27'
+__updated__ = '2014-01-22'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -49,7 +49,7 @@ DBGEN_TO = 4000
 VERIFY_TO = 720
 CMD_TO = 120
 DEPLOY_TO = 4800
-DEPLOY_WAIT = 900
+DEPLOY_WAIT = 1200
 CONTENT_TO = 1200
 CTOOL_TO = 4000
 BPM_TO = 1200
