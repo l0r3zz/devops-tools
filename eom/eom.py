@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.116
+__version__ = 1.117
 __date__ = '2012-11-20'
-__updated__ = '2014-01-22'
+__updated__ = '2014-01-24'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -55,6 +55,7 @@ CTOOL_TO = 4000
 BPM_TO = 1200
 TJOIN_TO = 60.0
 PREPOST_TO = 240
+BIGIP_TO = 600
 SIEBEL_TO = 1200
 
 ###############################################################################
@@ -145,6 +146,7 @@ class EOMreimage(jiralab.Job):
             ppj = self.pprd["proproj"]
             name = self.name
             debug = self.debug
+            reimage_to = int( args.REIMAGE_TO) # this value may be a string if set in the ini file
             if q :
                 q.get()
 
@@ -156,7 +158,7 @@ class EOMreimage(jiralab.Job):
             reimage_cmd = (('time provision -e %s reimage -v 2>&1'
             '|jcmnt -f -u %s -i %s -t "Re-Imaging Environment for code deploy"')
                 % ( envid_l, user, ppj))
-            rval = execute(ses, reimage_cmd, debug, log, to=args.REIMAGE_TO)
+            rval = execute(ses, reimage_cmd, debug, log, to=reimage_to)
             if rval == PEXTO:
                 log.warn("eom.rimgto: Re-image operation timed out")
                 execute(ses,"jcmnt -u %s -i %s re-image operation time-out"
@@ -502,6 +504,8 @@ class eom_startup(object):
                             setattr(self.args, key, value)
                         elif getattr(self.args, key) == "no":
                             setattr(self.args, key, False)
+                        else :
+                            setattr(self.args, key, value)
         else:
             print("eom.noini: No .eom_ini found or cannot access %s" % inifile)
         return
@@ -536,8 +540,8 @@ class Eom(object):
         # introduce more subtle errors
         global CMD_TO 
         global REIMAGE_TO
-        CMD_TO = args.CMD_TO                # set global command timeout from arg vector
-        REIMAGE_TO = args.REIMAGE_TO
+        CMD_TO = int(args.CMD_TO)                # set global command timeout from arg vector
+        REIMAGE_TO = int(args.REIMAGE_TO)
 
         #######################################################################
         #                  Set up and start Logging
@@ -1143,6 +1147,8 @@ class Eom(object):
 
             if args.envreq:
                 pprj = args.envreq
+            log.info ("eom.netsleep: Waiting %d seconds for pools to come up", BIGIP_TO )
+            time.sleep(BIGIP_TO)
             valbigip_cmd = ("/nas/reg/bin/validate_bigip -e %s"
                     '| jcmnt -f -u %s -i %s -t "Big IP validation"') %\
                 (envid_l, auth.user, pprj)
