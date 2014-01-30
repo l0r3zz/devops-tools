@@ -1,0 +1,378 @@
+Metadata-Version: 1.1
+Name: pypuppetdb
+Version: 0.1.1
+Summary: Library for working with the PuppetDB REST API.
+Home-page: https://github.com/nedap/pypuppetdb
+Author: Daniele Sluijters
+Author-email: daniele.sluijters+pypi@gmail.com
+License: Apache License 2.0
+Description: ##########
+        pypuppetdb
+        ##########
+        
+        .. image:: https://api.travis-ci.org/nedap/pypuppetdb.png
+           :target: https://travis-ci.org/nedap/pypuppetdb
+        
+        .. image:: https://coveralls.io/repos/nedap/pypuppetdb/badge.png
+           :target: https://coeralls.io/r/nedap/pypuppetdb
+        
+        .. image:: https://pypip.in/d/pypuppetdb/badge.png
+           :target: https://crate.io/packages/pypuppetdb
+        
+        .. image:: https://pypip.in/v/pypuppetdb/badge.png
+           :target: https://crate.io/packages/pypuppetdb
+        
+        pypuppetdtb is a library to work with PuppetDB's REST API. It is implemented
+        using the `requests`_ library.
+        
+        .. _requests: http://docs.python-requests.org/en/latest/
+        
+        This library is a thin wrapper around the REST API providing some convinience
+        functions and objects to request and hold data from PuppetDB.
+        
+        To use this library you will need:
+            * Python 2.6 or 2.7
+            * Python 3.3
+        
+        Installation
+        ============
+        
+        You can install this package from source or from PyPi.
+        
+        .. code-block:: bash
+        
+           $ pip install pypuppetdb
+        
+        .. code-block:: bash
+        
+           $ git clone https://github.com/nedap/pypuppetdb
+           $ python setup.py install
+        
+        If you wish to hack on it clone the repository but after that run:
+        
+        .. code-block:: bash
+        
+           $ pip install -r requirements.txt
+        
+        This will install all the runtime requirements of pypuppetdb and the
+        dependencies for the test suite and generation of documentation.
+        
+        Usage
+        =====
+        
+        Once you have pypuppetdb installed you can configure it to connect to PuppetDB
+        and take it from there.
+        
+        Connecting
+        ----------
+        
+        The first thing you need to do is to connect with PuppetDB:
+        
+        .. code-block:: python
+        
+           >>> from pypuppetdb import connect
+           >>> db = connect()
+        
+        Nodes
+        -----
+        
+        The following will return a generator object yielding Node objects for every
+        returned node from PuppetDB.
+        
+        .. code-block:: python
+        
+           >>> nodes = db.nodes()
+           >>> for node in nodes:
+           >>>   print(node)
+           host1
+           host2
+           ...
+        
+        To query a single node the singular `node()` can be used:
+        
+        .. code-block:: python
+        
+            >>> node = db.node('hostname')
+            >>> print(node)
+            hostname
+        
+        Node scope
+        ~~~~~~~~~~
+        
+        The Node objects are a bit more special in that they can query for facts and
+        resources themselves. Using those methods from a node object will automatically
+        add a query to the request scoping the request to the node.
+        
+        .. code-block:: python
+        
+           >>> node = db.node('hostname')
+           >>> print(node.fact('osfamily'))
+           osfamily/hostname
+        
+        Facts
+        -----
+        
+        .. code-block:: python
+        
+           >>> facts = db.facts('osfamily')
+           >>> for fact in facts:
+           >>>   print(fact)
+           osfamily/host1
+           osfamily/host2
+        
+        That queries PuppetDB for the 'osfamily' fact and will yield Fact objects,
+        one per node this fact is known for.
+        
+        Resources
+        ---------
+        
+        .. code-block:: python
+        
+           >>> resources = db.resources('file')
+        
+        Will return a generator object containing all file resources you're managing
+        across your infrastructure. This is probably a bad idea if you have a big
+        number of nodes as the response will be huge.
+        
+        Catalogs
+        ---------
+        
+        .. code-block:: python
+        
+           >>> catalog = db.catalog('hostname')
+           >>> for res in catalog.get_resources():
+           >>>     print(res)
+        
+        Will return a Catalog object with the latest Catalog of the definded host. This
+        catalog contains the defined Resources and Edges.
+        
+        Getting Help
+        ============
+        This project is still very new so it's not inconceivable you'll run into
+        issues.
+        
+        For bug reports you can file an `issue`_. If you need help with something
+        feel free to hit up `@daenney`_ by e-mail or find him on IRC. He can usually
+        be found on `IRCnet`_ and `Freenode`_ and idles in #puppet.
+        
+        There's now also the #puppetboard channel on `Freenode`_ where we hang out
+        and answer questions related to pypuppetdb and Puppetboard.
+        
+        .. _issue: https://github.com/nedap/pypuppetdb/issues
+        .. _@daenney: https://github.com/daenney
+        .. _IRCnet: http://www.ircnet.org
+        .. _Freenode: http://freenode.net
+        
+        Documentation
+        =============
+        API documentation is automatically generated from the docstrings using
+        Sphinx's autodoc feature. 
+        
+        Documentation will automatically be rebuilt on every push thanks to the
+        Read The Docs webhook. You can `find it here`_.
+        
+        .. _find it here: https://pypuppetdb.readthedocs.org/en/latest/
+        
+        You can build the documentation manually by doing:
+        
+        .. code-block:: bash
+        
+           $ cd docs
+           $ make html
+        
+        Doing so will only work if you have Sphinx installed, which you can acheive
+        through:
+        
+        .. code-block:: bash
+        
+           $ pip install -r requirements.txt
+        
+        Contributing
+        ============
+        
+        We welcome contributions to this library. However, there are a few ground
+        rules contributors should be aware of.
+        
+        License
+        -------
+        This project is licensed under the Apache v2.0 License. As such, your
+        contributions, once accepted, are automatically covered by this license.
+        
+        Commit messages
+        ---------------
+        Write decent commit messages. Don't use swear words and refrain from
+        uninformative commit messages as 'fixed typo'.
+        
+        The preferred format of a commit message:
+        
+        ::
+        
+            docs/quickstart: Fixed a typo in the Nodes section.
+        
+            If needed, elaborate further on this commit. Feel free to write a
+            complete blog post here if that helps us understand what this is
+            all about.
+        
+            Fixes #4 and resolves #2.
+        
+        If you'd like a more elaborate guide on how to write and format your commit
+        messages have a look at this post by `Tim Pope`_.
+        
+        .. _Tim Pope: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+        
+        Tests
+        -----
+        Commits are expected to contain tests or updates to tests if they add to or
+        modify the current behaviour.
+        
+        The test suite is powered by `pytest`_ and requires `pytest`_, `pytest-pep8`_,
+        `httpretty`_ and `pytest-httpretty`_ which will be installed for you if you
+        run:
+        
+        .. code-block:: bash
+        
+           $ pip install -r requirements.txt
+        
+        .. _pytest: http://pytest.org/latest/
+        .. _pytest-pep8: https://pypi.python.org/pypi/pytest-pep8
+        .. _httpretty: https://pypi.python.org/pypi/httpretty/
+        .. _pytest-httpretty: https://github.com/papaeye/pytest-httpretty
+        
+        To run the unit tests (the ones that don't require a live PuppetDB):
+        
+        .. code-block:: bash
+           
+           $ py.test -v -m unit
+        
+        If the tests pass, you're golden. If not we'll have to figure out why and
+        fix that. Feel free to ask for help on this.
+        
+        #########
+        Changelog
+        #########
+        
+        0.1.1
+        =====
+        
+        * Fix the license in our ``setup.py``. The license shouldn't be longer than
+          200 characters. We were including the full license tripping up tools like
+          bdist_rpm.
+        
+        0.1.0
+        =====
+        Significant changes have been made in this release. The complete v3 API is
+        now supported except for query pagination.
+        
+        Most changes are backwards compatible except for a change in the SSL
+        configuration. The previous behaviour was buggy and slightly misleading in
+        the names the options took:
+        
+        * ``ssl`` has been renamed to ``ssl_verify`` and now defaults to ``True``.
+        * Automatically use HTTPS if ``ssl_key`` and ``ssl_cert`` are provided.
+        
+        For additional instructions about getting SSL to work see the Quickstart
+        in the documentation.
+        
+        Deprecation
+        ------------
+        Support for API v2 will be dropped in the 0.2.x release series.
+        
+        New features
+        ------------
+        
+        The following features are **only** supported for **API v3**.
+        
+        The ``node()`` and ``nodes()`` function have gained the following options:
+        
+          * ``with_status=False``
+          * ``unreported=2``
+        
+        When ``with_status`` is set to ``True`` an additional query will be made using
+        the ``events-count`` endpoint scoped to the latest report. This will result in
+        an additional ``events`` and ``status`` keys on the node object. ``status``
+        will be either of ``changed``, ``unchanged`` or ``failed`` depending on if
+        ``events`` contains ``successes`` or ``failures`` or none.
+        
+        By default ``unreported`` is set to ``2``. This is only in effect when
+        ``with_status`` is set to ``True``. It means that if a node hasn't checked in
+        for two hours it will get a ``status`` of ``unreported`` instead.
+        
+        New endpoints:
+        
+          * ``events-count``: ``events_count()``
+          * ``aggregate-event-counts``: ``aggregate_event_counts()``
+          * ``server-time``: ``server_time()``
+          * ``version``: ``current_version()``
+          * ``catalog``: ``catalog()``
+        
+        New types:
+        
+          * ``pypuppetdb.types.Catalog``
+          * ``pypuppetdb.types.Edge``
+        
+        Changes to types:
+        
+          * ``pypuppetdb.types.Node`` now has:
+            * ``status`` defaulting to ``None``
+            * ``events`` defaulting to ``None``
+            * ``unreported_time`` defaulting to ``None``
+        
+        0.0.4
+        =====
+        
+        Due to a fairly serious bug 0.0.3 was pulled from PyPi minutes after release.
+        
+        When a bug was fixed to be able to query for all facts we accidentally
+        introduced a different bug that caused the ``facts()`` call on a node to
+        query for all facts because we were resetting the query.
+        
+        * Fix a bug where ``node.facts()`` was causing us to query all facts because
+          the query to scope our request was being reset.
+        
+        0.0.3
+        =====
+        
+        With the introduction of PuppetDB 1.5 a new API version, v3, was also
+        introduced. In that same release the old ``/experimental`` endpoints
+        were removed, meaning that as of PuppetDB 1.5 with the v2 API you can
+        no longer get access to reports or events.
+        
+        In light of this the support for the experimental endpoints has been
+        completely removed from pypuppetdb. As of this release you can only get
+        to reports and/or events through v3 of the API.
+        
+        This release includes preliminary support for the v3 API. Everything that
+        could be done with v2 plus the experimental endpoints is now possible on
+        v3. However, more advanced funtionality has not yet been implemented. That
+        will be the focus of the next release.
+        
+        * Removed dependency on pytz.
+        * Fixed the behaviour of ``facts()`` and ``resources()``. We can now
+          correctly query for all facts or resources.
+        * Fixed an issue with catalog timestampless nodes.
+        * Pass along the ``timeout`` option to ``connect()``.
+        * Added preliminary PuppetDB API v3 support.
+        * Removed support for the experimental endpoints.
+        * The ``connect()`` method defaults to API v3 now.
+        
+        0.0.2
+        =====
+        * Fix a bug in ``setup.py`` preventing successful installation.
+        
+        0.0.1
+        =====
+        Initial release. Implements most of the v2 API.
+        
+Keywords: puppet puppetdb
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: POSIX
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Topic :: Software Development :: Libraries
