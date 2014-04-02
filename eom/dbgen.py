@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.21
+__version__ = 1.22
 __date__ = '2012-11-20'
-__updated__ = '2014-02-05'
+__updated__ = '2014-04-01'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
@@ -224,24 +224,33 @@ def main(argv=None):  # IGNORE:C0111
             lp_search_space = re.search(
                                 'LISTENER_PORT\:[ ]+(?P<lp>15[0-9]{2})',
                                         reg_session.before)
+           
+           
+            log.info("Dropping back to relmgt")
+            rval = reg_session.docmd("exit",
+                    [reg_session.session.PROMPT])
+            if DEBUG:
+                log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
+                            reg_session.before, reg_session.after))
+            log.info("Dropping back to %s" % REGSERVER)
+            rval = reg_session.docmd("exit",
+                            [reg_session.session.PROMPT])
+            if DEBUG:
+                log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
+                            reg_session.before, reg_session.after))
 
-            if sn_search_space:  # make sure we found something
+
+            if not (sn_search_space and service_name and listener_port) :  # make sure we found something
+                sss = "sn_search_space" if not sn_search_space else None
+                ssn = "service_name" if not service_name else None
+                lnp = "listener_port" if not listener_port else None
+                log.error( "dbgen.misatt: missing attribute in provisioning output: %s %s %s"
+                          % ( sss, ssn,lnp))
+            else:
                 service_name = sn_search_space.group("sn")
                 listener_port = lp_search_space.group("lp")
                 log.info("\nDBNAME: %s LISTENER_PORT: %s" % (service_name, listener_port))
 
-                log.info("Dropping back to relmgt")
-                rval = reg_session.docmd("exit",
-                        [reg_session.session.PROMPT])
-                if DEBUG:
-                    log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
-                                reg_session.before, reg_session.after))
-                log.info("Dropping back to %s" % REGSERVER)
-                rval = reg_session.docmd("exit",
-                                [reg_session.session.PROMPT])
-                if DEBUG:
-                    log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
-                                reg_session.before, reg_session.after))
 
                 # DB creation was successful
                 '''
@@ -347,6 +356,9 @@ def main(argv=None):  # IGNORE:C0111
                     log.warn( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
                            (old_tt_prefix, old_tt_host, dbhost))
 
+            if args.withsiebel:
+                pass
+           
             print("Exiting.")
             exit(0)
 
@@ -365,5 +377,3 @@ def main(argv=None):  # IGNORE:C0111
 
 if __name__ == "__main__":
     main()
-
-

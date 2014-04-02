@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.117
+__version__ = 1.118
 __date__ = '2012-11-20'
-__updated__ = '2014-01-24'
+__updated__ = '2014-04-01'
 
 REGSERVER = "srwd00reg010.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -56,7 +56,7 @@ BPM_TO = 1200
 TJOIN_TO = 60.0
 PREPOST_TO = 240
 BIGIP_TO = 600
-SIEBEL_TO = 1200
+SIEBEL_TO = 2400
 
 ###############################################################################
 #    Workhorse functions
@@ -319,7 +319,7 @@ class eom_startup(object):
                             " can be used more than once "
                             "ex. -d java -d properties")
         parser.add_argument("--syslog", dest="syslog",
-                            default=None, 
+                            default=None,
                             help="Specify a syslog server, '/dev/log' or 'host:514'")
         parser.add_argument('--confirm', action='store_true',
                             dest="confirm", default=None,
@@ -538,7 +538,7 @@ class Eom(object):
 
         # A little ugly, but the alternative is changing a bunch of code which could
         # introduce more subtle errors
-        global CMD_TO 
+        global CMD_TO
         global REIMAGE_TO
         CMD_TO = int(args.CMD_TO)                # set global command timeout from arg vector
         REIMAGE_TO = int(args.REIMAGE_TO)
@@ -554,7 +554,7 @@ class Eom(object):
                     syslog_obj =  ( ss.group("hst"), int(ss.group("prt")))
         else:
             syslog_obj = args.syslog
-            
+           
         try:
             if args.logfile:
                 self.log = log = mylog.logg('env-o-matic', llevel='INFO',
@@ -1008,7 +1008,7 @@ class Eom(object):
             r = args.release
             bl = args.build_label
             # set the timeout for eom-rabbit-deploy to track eom timeout -2 sec
-            erdto = " --timeout %s " % ( CMD_TO - 2) 
+            erdto = " --timeout %s " % ( CMD_TO - 2)
             # Now fetch a data structure containing the current reg info based
             # On the suppiled build label
             build_label_cmd = ( "export P4USER=readonly ; build-id-info %s" % bl)
@@ -1108,7 +1108,7 @@ class Eom(object):
                 (auth.user, pprj, CTOOL_TO), DEBUG, log)
             elif rval == PEXERR:
                 log.warn("eom.ctntoolerr: Content tool threw an error, continuing")
-        elif args.withbpm : 
+        elif args.withbpm :
             bpm_cmd = ("/nas/reg/bin/bpm-deploy -e %s -p %s -x 2>&1 "
                     '| jcmnt -f -u %s -i %s -t "BPM deploy"') %\
                 (envid_l, args.withbpm, auth.user, pprj)
@@ -1234,5 +1234,3 @@ class Eom(object):
 if __name__ == "__main__":
 
     main()
-
-
