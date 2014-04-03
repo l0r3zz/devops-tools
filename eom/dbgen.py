@@ -32,6 +32,7 @@ def main(argv=None):  # IGNORE:C0111
     TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
     AUTOPROV_TO = 4000
     CMD_TO = 120
+    SIEBEL_DEP_TO = 2400
 
     env_de_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_db_prefix>",
@@ -240,12 +241,12 @@ def main(argv=None):  # IGNORE:C0111
                             reg_session.before, reg_session.after))
 
 
-            if not (sn_search_space and service_name and listener_port) :  # make sure we found something
+            if not (sn_search_space and lp_search_space) :  # make sure we found something
                 sss = "sn_search_space" if not sn_search_space else None
-                ssn = "service_name" if not service_name else None
-                lnp = "listener_port" if not listener_port else None
-                log.error( "dbgen.misatt: missing attribute in provisioning output: %s %s %s"
-                          % ( sss, ssn,lnp))
+                lnp = "service_name" if not lp_search_space else None
+
+                log.error( "dbgen.misatt: missing attribute in provisioning output: %s %s"
+                          % ( sss,lnp))
             else:
                 service_name = sn_search_space.group("sn")
                 listener_port = lp_search_space.group("lp")
@@ -355,10 +356,23 @@ def main(argv=None):  # IGNORE:C0111
                 else:
                     log.warn( "Tokenization operation failed. Old Prefix: %s ,Old Host: %s, dbhost: %s" %
                            (old_tt_prefix, old_tt_host, dbhost))
+                    print("Exiting")
+                    exit(1)
 
-            if args.withsiebel:
-                pass
-           
+                if args.withsiebel:
+                    log.info("Dropping back to %s" % auth.user )
+                    rval = reg_session.docmd("exit",
+                            [reg_session.session.PROMPT])
+                    if DEBUG:
+                        log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+                    siebel_conf_cmd = ( "deploy-siebel -e %s -d %s -n %s  -x -k"
+                                        % ( args.env, dbhost, service_name))
+                    rval = reg_session.docmd(cmd,[reg_session.session.PROMPT], timeout=SIEBEL_DEP_TO)
+                    if DEBUG:
+                        log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
+                                    reg_session.before, reg_session.after))
+               
             print("Exiting.")
             exit(0)
 
