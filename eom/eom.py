@@ -1092,6 +1092,7 @@ class Eom(object):
         #######################################################################
         # Run the content tool
         #######################################################################
+        # FIXME: this is a bug waiting to happen if we started to use the content_tool again.
         if  args.content_tool and (args.deploy_success or args.deploy[0] == 'no'):
             if args.envreq:
                 pprj = args.envreq

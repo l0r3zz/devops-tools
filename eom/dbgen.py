@@ -19,14 +19,15 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.22
+__version__ = 1.25
 __date__ = '2012-11-20'
-__updated__ = '2014-04-01'
+__updated__ = '2014-04-12'
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
     DEBUG = 0
     REGSERVER = "srwd00reg010.stubcorp.dev"
+    SIEBEL_DEPLOY_SERVER = "srwd00reg015.stubcorp.dev"
     GLOBAL_TNSNAMES = "/nas/home/oracle/DevOps/global_tnsnames/tnsnames.ora"
     QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
     TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
@@ -38,12 +39,14 @@ def main(argv=None):  # IGNORE:C0111
                            "srwd00dbs008" : "$<delphix_db_prefix>",
                            "srwd00dbs012" : "$<delphix_db_prefix_12>",
                            "srwd00dbs016" : "$<delphix_db_prefix_16>",
+                           "srwd00dbs015" : "$<delphix_db_prefix_15>",
                            "srwd00dbs019" : "$<delphix_db_prefix_19>",
                            }
 
     env_dq_prefix_dict = {
                            "srwd00dbs008" : "$<delphix_dbq_prefix>",
                            "srwd00dbs012" : "$<delphix_dbq_prefix_12>",
+                           "srwd00dbs015" : "$<delphix_dbq_prefix_15>",
                            "srwd00dbs016" : "$<delphix_dbq_prefix_16>",
                            "srwd00dbs019" : "$<delphix_dbq_prefix_19>",
                            }
@@ -53,6 +56,7 @@ def main(argv=None):  # IGNORE:C0111
                             "srwd00dbs016" : "$<delphix_host02>",
                             "srwd00dbs019" : "$<delphix_host03>",
                             "srwd00dbs012" : "$<delphix_host04>",
+                            "srwd00dbs015" : "$<delphix_host15>",
                          }
     if argv is None:
         argv = sys.argv
@@ -160,8 +164,8 @@ def main(argv=None):  # IGNORE:C0111
                         reg_session.before, reg_session.after))
 
         #login to the db server
-        log.info("Logging into DB Server : srwd00dbs008")
-        rval = reg_session.docmd("ssh srwd00dbs008.stubcorp.dev",
+        log.info("Logging into DB Server : srwd00dbs015")
+        rval = reg_session.docmd("ssh srwd00dbs015.stubcorp.dev",
                         ["yes", reg_session.session.PROMPT],
                         timeout=CMD_TO)
         if DEBUG:
@@ -174,7 +178,7 @@ def main(argv=None):  # IGNORE:C0111
                 log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
                         reg_session.before, reg_session.after))
             if rval != 1:  # something else printed
-                log.error("Could not log into srwd00dbs008. Exiting")
+                log.error("Could not log into srwd00dbs015. Exiting")
                 exit(2)
         elif rval == 2:  # go right in
             if DEBUG:
@@ -217,10 +221,10 @@ def main(argv=None):  # IGNORE:C0111
                         reg_session.after))
 
             old_db_search_space = re.search(
-                                'Found Database[ ]+(?P<odb>D(08|19|16|12)[DQ]E[0-9]{2})'
+                                'Found Database[ ]+(?P<odb>D(08|19|16|12|15)[DQ]E[0-9]{2})'
                                         , reg_session.before)
             sn_search_space = re.search(
-                                'DBNAME\:[ ]+(?P<sn>D(08|19|16|12)[DQ]E[0-9]{2})',
+                                'DBNAME\:[ ]+(?P<sn>D(08|19|16|12|15)[DQ]E[0-9]{2})',
                                         reg_session.before)
             lp_search_space = re.search(
                                 'LISTENER_PORT\:[ ]+(?P<lp>15[0-9]{2})',
@@ -360,18 +364,29 @@ def main(argv=None):  # IGNORE:C0111
                     exit(1)
 
                 if args.withsiebel:
-                    log.info("Dropping back to %s" % auth.user )
-                    rval = reg_session.docmd("exit",
-                            [reg_session.session.PROMPT])
+                    # Login to the reg server
+                    log.info("Logging into %s" % SIEBEL_DEPLOY_SERVER)
+                    siebel_session = jiralab.CliHelper(SIEBEL_DEPLOY_SERVER)
+                    siebel_session.login(auth.user, auth.password, prompt="\$[ ]",
+                                      timeout=CMD_TO)
                     if DEBUG:
-                        log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
-                                    reg_session.before, reg_session.after))
+                        log.debug("before: %s\nafter: %s" % (siebel_session.before,
+                                   siebel_session.after))
+                    log.info ("Becoming relmgt")
+                    rval = siebel_session.docmd("sudo -i -u relmgt", [siebel_session.session.PROMPT],
+                                             timeout=CMD_TO)
+                    if DEBUG:
+                        log.debug ("Rval= %d; before: %s\nafter: %s" % (rval,
+                                   siebel_session.before,siebel_session.after))
+
+                    siebel_service_name = service_name[0:4] + "S" + service_name[5:]
                     siebel_conf_cmd = ( "deploy-siebel -e %s -d %s -n %s  -x -k"
-                                        % ( args.env, dbhost, service_name))
-                    rval = reg_session.docmd(cmd,[reg_session.session.PROMPT], timeout=SIEBEL_DEP_TO)
+                                                    % ( args.env, dbhost, siebel_service_name))
+                    log.info("Cmd: %s" % siebel_conf_cmd)
+                    rval =siebel_session.docmd(siebel_conf_cmd,[siebel_session.session.PROMPT], timeout=SIEBEL_DEP_TO)
                     if DEBUG:
                         log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
-                                    reg_session.before, reg_session.after))
+                                   siebel_session.before,siebel_session.after))
                
             print("Exiting.")
             exit(0)
