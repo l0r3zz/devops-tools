@@ -30,7 +30,7 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.119
+__version__ = 1.120
 __date__ = '2012-11-20'
 __updated__ = '2014-04-16'
 
@@ -55,7 +55,7 @@ CTOOL_TO = 4000
 BPM_TO = 2400
 TJOIN_TO = 60.0
 PREPOST_TO = 240
-BIGIP_TO = 600
+BIGIP_TO = 900
 SIEBEL_TO = 2400
 
 ###############################################################################

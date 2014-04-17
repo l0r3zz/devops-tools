@@ -23,41 +23,42 @@ __version__ = 1.25
 __date__ = '2012-11-20'
 __updated__ = '2014-04-12'
 
+DEBUG = 0
+REGSERVER = "srwd00reg010.stubcorp.dev"
+SIEBEL_DEPLOY_SERVER = "srwd00reg015.stubcorp.dev"
+GLOBAL_TNSNAMES = "/nas/home/oracle/DevOps/global_tnsnames/tnsnames.ora"
+QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
+TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
+AUTOPROV_TO = 4000
+CMD_TO = 120
+SIEBEL_DEP_TO = 2400
+
+env_de_prefix_dict = {
+                       "srwd00dbs008" : "$<delphix_db_prefix>",
+                       "srwd00dbs012" : "$<delphix_db_prefix_12>",
+                       "srwd00dbs016" : "$<delphix_db_prefix_16>",
+                       "srwd00dbs015" : "$<delphix_db_prefix_15>",
+                       "srwd00dbs019" : "$<delphix_db_prefix_19>",
+                       }
+
+env_dq_prefix_dict = {
+                       "srwd00dbs008" : "$<delphix_dbq_prefix>",
+                       "srwd00dbs012" : "$<delphix_dbq_prefix_12>",
+                       "srwd00dbs015" : "$<delphix_dbq_prefix_15>",
+                       "srwd00dbs016" : "$<delphix_dbq_prefix_16>",
+                       "srwd00dbs019" : "$<delphix_dbq_prefix_19>",
+                       }
+
+delphix_host_dict = {
+                        "srwd00dbs008" : "$<delphix_host01>",
+                        "srwd00dbs016" : "$<delphix_host02>",
+                        "srwd00dbs019" : "$<delphix_host03>",
+                        "srwd00dbs012" : "$<delphix_host04>",
+                        "srwd00dbs015" : "$<delphix_host15>",
+                     }
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
-    DEBUG = 0
-    REGSERVER = "srwd00reg010.stubcorp.dev"
-    SIEBEL_DEPLOY_SERVER = "srwd00reg015.stubcorp.dev"
-    GLOBAL_TNSNAMES = "/nas/home/oracle/DevOps/global_tnsnames/tnsnames.ora"
-    QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
-    TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
-    AUTOPROV_TO = 4000
-    CMD_TO = 120
-    SIEBEL_DEP_TO = 2400
 
-    env_de_prefix_dict = {
-                           "srwd00dbs008" : "$<delphix_db_prefix>",
-                           "srwd00dbs012" : "$<delphix_db_prefix_12>",
-                           "srwd00dbs016" : "$<delphix_db_prefix_16>",
-                           "srwd00dbs015" : "$<delphix_db_prefix_15>",
-                           "srwd00dbs019" : "$<delphix_db_prefix_19>",
-                           }
-
-    env_dq_prefix_dict = {
-                           "srwd00dbs008" : "$<delphix_dbq_prefix>",
-                           "srwd00dbs012" : "$<delphix_dbq_prefix_12>",
-                           "srwd00dbs015" : "$<delphix_dbq_prefix_15>",
-                           "srwd00dbs016" : "$<delphix_dbq_prefix_16>",
-                           "srwd00dbs019" : "$<delphix_dbq_prefix_19>",
-                           }
-
-    delphix_host_dict = {
-                            "srwd00dbs008" : "$<delphix_host01>",
-                            "srwd00dbs016" : "$<delphix_host02>",
-                            "srwd00dbs019" : "$<delphix_host03>",
-                            "srwd00dbs012" : "$<delphix_host04>",
-                            "srwd00dbs015" : "$<delphix_host15>",
-                         }
     if argv is None:
         argv = sys.argv
     else:
