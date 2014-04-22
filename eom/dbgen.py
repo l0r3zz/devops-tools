@@ -385,6 +385,9 @@ def main(argv=None):  # IGNORE:C0111
                                                     % ( args.env, dbhost, siebel_service_name))
                     log.info("Cmd: %s" % siebel_conf_cmd)
                     rval =siebel_session.docmd(siebel_conf_cmd,[siebel_session.session.PROMPT], timeout=SIEBEL_DEP_TO)
+                    if rval == 1:
+                        log.info("%s%s\nSiebel Config Success.\n" % (siebel_session.before,
+                            siebel_session.after))
                     if DEBUG:
                         log.debug("Rval= %d; before: %s\nafter: %s" % (rval,
                                    siebel_session.before,siebel_session.after))
