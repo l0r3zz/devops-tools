@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.25
+__version__ = 1.27
 __date__ = '2012-11-20'
-__updated__ = '2014-04-12'
+__updated__ = '2014-04-29'
 
 DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
