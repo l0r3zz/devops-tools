@@ -5,38 +5,31 @@ class stubhub-vigilante {
     mode => 644,
   }
   
- # schedule { 'audit' :
- #    period => daily,
- #   range => "$startwindow - $endwindow",
- # }
   
  file { '/usr/local/bin/phaktor.py':
     ensure => file,
     mode => 755,
-    source => 'puppet://$puppetserver/modules/stubhub-vigilante/phaktor.py',
+    source => 'puppet:///modules/stubhub-vigilante/phaktor.py',
   }
   
   file { '/usr/local/bin/phaktor':
     ensure => link,
     target => '/usr/local/bin/phaktor.py',
-    # needed? require => File['/usr/local/bin/phaktor.py'],
   }
 
   file { '/nas/reg/log/jiralab/vigilante/facts.ftr':
     ensure => file,
-    source => 'puppet://$puppetserver/modules/stubhub-vigilante/facts.ftr',
+    source => 'puppet:///modules/stubhub-vigilante/facts.ftr',
   }
 
   file { '/nas/reg/log/jiralab/vigilante/auditor':
     ensure => directory,
   }
   
-  exec { "phaktor":
-    #schedule => 'audit',
-    command => "phaktor -c /nas/reg/log/jiralab/vigilante/facts.ftr -r /nas/reg/log/jiralab/vigilante/auditor ",
-    path    => "/usr/local/bin:/nas/reg/bin/jiralab/:/bin/:/usr/bin/",
-    logoutput => true,
-    # needed? require => File['/nas/reg/log/jiralab/vigilante/auditor'],
+  cron { "phaktor":
+	user  => root,
+	minute => [ fqdn_rand(30),fqdn_rand(30) + 30 ],
+    command => "phaktor -c /nas/reg/log/jiralab/vigilante/facts.ftr -r /nas/reg/log/jiralab/vigilante/auditor ",  
     require => File[ '/nas/reg/log/jiralab/vigilante/facts.ftr'],
 
   }
