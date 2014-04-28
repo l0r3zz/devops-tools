@@ -13,7 +13,7 @@ class stubhub-vigilante {
  file { '/usr/local/bin/phaktor.py':
     ensure => file,
     mode => 755,
-    source => 'puppet:///modules/stubhub-vigilante/files/phaktor.py',
+    source => 'puppet://$puppetserver/modules/stubhub-vigilante/phaktor.py',
   }
   
   file { '/usr/local/bin/phaktor':
@@ -24,7 +24,7 @@ class stubhub-vigilante {
 
   file { '/nas/reg/log/jiralab/vigilante/facts.ftr':
     ensure => file,
-    source => 'puppet:///modules/stubhub-vigilante/files/facts.ftr',
+    source => 'puppet://$puppetserver/modules/stubhub-vigilante/facts.ftr',
   }
 
   file { '/nas/reg/log/jiralab/vigilante/auditor':
