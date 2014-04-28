@@ -21,6 +21,7 @@ phaktor - write facter facts to a FS database
              of 20.
 '''
 import os
+import errno
 import re
 import sys
 import time
@@ -60,18 +61,19 @@ event = {}
 
 for symbol in q.readlines():
     facts[ symbol.rstrip()] = 1
-    
+
 gmtime = time.gmtime()
 iso_time = time.strftime("%Y-%m-%dT%H:%M:%S", gmtime)
 fname_time = time.strftime(".%Y%m%dT%H%M%S", gmtime)
 hostname = (socket.gethostname()).split(".")[0]
 
 fname = hostname + fname_time
-envidsp = re.search("(?P<envid>srw[dqe][0-9]{2})",fname)
+envidsp = re.search("(?P<envid>srw[dqe][0-9]{2})(?P<roleid>[a-z]{3}[0-9]{3})",fname)
 if not envidsp:
     print("This is not running on a DEV system")
     sys.exit()
 envid = envidsp.group("envid")
+roleid = envidsp.group("roleid")
 
 
 p = os.popen("facter","r")
@@ -83,12 +85,12 @@ for line in p.readlines():
         event[fsp.group("key").rstrip()] = fsp.group("value").rstrip()
         
 if options.root_dir:
-    env_dir = os.path.abspath( options.root_dir + "/" + envid ) + "/"
+    env_dir = os.path.abspath( options.root_dir + "/" + envid + "/" + hostname ) + "/"
     if not os.path.exists(env_dir):
         try:
             os.makedirs(env_dir)
 
-        except :
+        except OSError:
             print ("Can't make directory %s" % env_dir)
             sys.exit()
     try:
@@ -97,10 +99,10 @@ if options.root_dir:
         print("Can't open %s " % (env_dir + fname))
 
     try:
-        os.unlink(env_dir + hostname )
+        os.unlink(env_dir + "current" )
     except OSError:
         pass
-    os.symlink((env_dir + fname), env_dir + hostname)
+    os.symlink((env_dir + fname), env_dir + "current")
     dirlist = sorted(os.listdir(env_dir),reverse=True)[:-1]
     
     if options.depth < 1:
