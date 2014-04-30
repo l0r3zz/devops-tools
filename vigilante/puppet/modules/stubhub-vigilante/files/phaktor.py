@@ -29,9 +29,9 @@ import socket
 from optparse import OptionParser
 
 __all__ = []
-__version__ = 0.8
-__date__ = '2012-12-11'
-__updated__ = '2013-12-20'
+__version__ = 0.9
+__date__ = '2013-12-11'
+__updated__ = '2014-04-30'
 program_name = os.path.basename(sys.argv[0])
 program_version = "v%s" % __version__
 program_build_date = str(__updated__)
