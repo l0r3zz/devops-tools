@@ -1,21 +1,62 @@
-class stubhub-vigilante (
+# == Class: vigilante
+#
+# This class implements various functions for the vigilante package, environment auditing
+# Monitoring and Workflow control
+# === Parameters
+#
+# Document parameters details here, including default value.
+#
+#  [*phaktordepth*]
+#    The number of previous phaktor runs that are saved on disk, above this number, older
+#    entries are truncated. Defaults to '10'
+#
+#  [*phaktor_exe*]
+#    Path to the phaktor python source program, Defaults to'/usr/local/bin/phaktor.py'
+#
+#  [*phaktor_cfg*]
+#    Path to where the phaktor config file should be placed.
+#    Defaults to '/nas/reg/log/jiralab/vigilante/facts.ftr'
+#
+#  [*phaktor_dir*]
+#    The root dir of where all of the auditing data is stored on the NAS.
+#    Defaults to '/nas/reg/log/jiralab/vigilante/auditor'
+#
+#  [*phaktor_sched_minute]*
+#    Minute on the hour that phaktor should run, defaults to fqdn_rand(60)
+#
+#  [*phaktor_sched_hour*]
+#    Array that contains the hours that phaktor is run, note that we use
+#    fqdn_rand() to "fuzz" the actual run time to spread out the disk write activity.
+#    Defaults to [ fqdn_rand(4), 6+fqdn_rand(5), 12+fqdn_rand(5), 18+fqdn_rand(5) ]
+#
+# === Authors
+#
+# Author Name <geowhite@stubhub.com>
+#
+# === Copyright
+#
+# Copyright 2014 StubHub, unless otherwise noted.
+#
+
+class vigilante (
     $phaktordepth = '10',
     $phaktor_exe = '/usr/local/bin/phaktor.py',
     $phaktor_cfg = '/nas/reg/log/jiralab/vigilante/facts.ftr',
     $phaktor_dir = '/nas/reg/log/jiralab/vigilante/auditor',
+    $phaktor_sched_minute = 'fqdn_rand(60)',
     $phaktor_sched_hour = [ fqdn_rand(4), 6+fqdn_rand(5), 12+fqdn_rand(5), 18+fqdn_rand(5) ],
 ){
 
   File {
-    owner => root,
-    group => root,
-    mode  => 0644,
+    owner => 'root',
+    group => 'root',
+    mode  => '0644',
     }
 
   file { $phaktor_exe :
     ensure => file,
     mode   => '0755',
-    source => 'puppet:///modules/stubhub-vigilante/bin/phaktor.py',
+    source => 'puppet:///modules/vigilante/bin/phaktor.py',
   }
 
   file { '/usr/local/bin/phaktor':
@@ -25,7 +66,7 @@ class stubhub-vigilante (
 
   file { $phaktor_cfg :
     ensure => file,
-    source => 'puppet:///modules/stubhub-vigilante/etc/facts.ftr',
+    source => 'puppet:///modules/vigilante/etc/facts.ftr',
   }
 
   file { $phaktor_dir :
@@ -34,13 +75,14 @@ class stubhub-vigilante (
 
 
   cron { 'phaktor':
-    user    => root,
-    minute  => fqdn_rand(60),
+    user    => 'root',
+    minute  => $phaktor_sched_minute,
     hour    => $phaktor_sched_hour,
     command => "phaktor -c ${phaktor_cfg} -r ${phaktor_dir} -d ${phaktordepth}",
-    require => File[ $phaktor_cfg, $phaktor_cfg ],
+    require => File[ $phaktor_cfg, $phaktor_exe ],
 
   }
 
 }
-include stubhub-vigilante
+
+
