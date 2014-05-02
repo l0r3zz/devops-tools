@@ -1,17 +1,20 @@
 # == Class: vigilante
 #
-# This class implements various functions for the vigilante package, environment auditing
-# Monitoring and Workflow control
+# This class implements various functions for the vigilante package.
+# The package performs environment auditing, monitoring and workflow control
+#
 # === Parameters
 #
 # Document parameters details here, including default value.
 #
 #  [*phaktordepth*]
-#    The number of previous phaktor runs that are saved on disk, above this number, older
-#    entries are truncated. Defaults to '10'
+#    The number of previous phaktor runs that are saved on disk,
+#    above this number, older entries are truncated.
+#    Defaults to '10'
 #
 #  [*phaktor_exe*]
-#    Path to the phaktor python source program, Defaults to'/usr/local/bin/phaktor.py'
+#    Path to the phaktor python source program.
+#    Defaults to'/usr/local/bin/phaktor.py'
 #
 #  [*phaktor_cfg*]
 #    Path to where the phaktor config file should be placed.
@@ -26,8 +29,9 @@
 #
 #  [*phaktor_sched_hour*]
 #    Array that contains the hours that phaktor is run, note that we use
-#    fqdn_rand() to "fuzz" the actual run time to spread out the disk write activity.
-#    Defaults to [ fqdn_rand(4), 6+fqdn_rand(5), 12+fqdn_rand(5), 18+fqdn_rand(5) ]
+#    fqdn_rand() to "fuzz" the actual run time to spread out the
+#    disk write activity. Defaults to
+#     [ fqdn_rand(4), 6+fqdn_rand(5), 12+fqdn_rand(5), 18+fqdn_rand(5) ]
 #
 # === Authors
 #
@@ -84,5 +88,3 @@ class vigilante (
   }
 
 }
-
-
