@@ -82,7 +82,7 @@ class vigilante (
   }
 
   file { $phaktor_dir :
-    ensure => directory,
+    ensure => 'directory',
   }
 
 
@@ -92,7 +92,6 @@ class vigilante (
     hour    => $phaktor_sched_hour,
     command => "${phaktor_bindir}/phaktor -c ${phaktor_cfg} -r ${phaktor_dir} -d ${phaktordepth}",
     require => File[$phaktor_cfg, "${phaktor_bindir}/phaktor.py", $phaktor_dir ]
-
   }
 
 }
