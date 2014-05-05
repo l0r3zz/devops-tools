@@ -12,9 +12,9 @@
 #    above this number, older entries are truncated.
 #    Defaults to '10'
 #
-#  [*phaktor_exe*]
+#  [*phaktor_bindir*]
 #    Path to the phaktor python source program.
-#    Defaults to'/usr/local/bin/phaktor.py'
+#    Defaults to'/usr/local/bin'
 #
 #  [*phaktor_cfg*]
 #    Path to where the phaktor config file should be placed.
@@ -33,6 +33,14 @@
 #    disk write activity. Defaults to
 #     [ fqdn_rand(4), 6+fqdn_rand(5), 12+fqdn_rand(5), 18+fqdn_rand(5) ]
 #
+# === Examples
+#
+#  class { vigilante:
+#    phaktordepth         => '15',
+#    phaktor_sched_minute => '23',
+#  }
+#
+
 # === Authors
 #
 # Author Name <geowhite@stubhub.com>
@@ -44,10 +52,10 @@
 
 class vigilante (
     $phaktordepth = '10',
-    $phaktor_exe = '/usr/local/bin/phaktor.py',
+    $phaktor_bindir = '/usr/local/bin',
     $phaktor_cfg = '/nas/reg/log/jiralab/vigilante/facts.ftr',
     $phaktor_dir = '/nas/reg/log/jiralab/vigilante/auditor',
-    $phaktor_sched_minute = 'fqdn_rand(60)',
+    $phaktor_sched_minute = fqdn_rand(60),
     $phaktor_sched_hour = [ fqdn_rand(4), 6+fqdn_rand(5), 12+fqdn_rand(5), 18+fqdn_rand(5) ],
 ){
 
@@ -57,19 +65,19 @@ class vigilante (
     mode  => '0644',
     }
 
-  file { $phaktor_exe :
-    ensure => file,
+  file { "${phaktor_bindir}/phaktor.py" :
+    ensure => 'file',
     mode   => '0755',
     source => 'puppet:///modules/vigilante/bin/phaktor.py',
   }
 
-  file { '/usr/local/bin/phaktor':
-    ensure => link,
-    target => $phaktor_exe,
+  file { "${phaktor_bindir}/phaktor":
+    ensure => 'link',
+    target => "${phaktor_bindir}/phaktor.py",
   }
 
   file { $phaktor_cfg :
-    ensure => file,
+    ensure => 'file',
     source => 'puppet:///modules/vigilante/etc/facts.ftr',
   }
 
@@ -82,8 +90,8 @@ class vigilante (
     user    => 'root',
     minute  => $phaktor_sched_minute,
     hour    => $phaktor_sched_hour,
-    command => "phaktor -c ${phaktor_cfg} -r ${phaktor_dir} -d ${phaktordepth}",
-    require => File[ $phaktor_cfg, $phaktor_exe ],
+    command => "${phaktor_bindir}/phaktor -c ${phaktor_cfg} -r ${phaktor_dir} -d ${phaktordepth}",
+    require => File[$phaktor_cfg, "${phaktor_bindir}/phaktor.py", $phaktor_dir ]
 
   }
 
