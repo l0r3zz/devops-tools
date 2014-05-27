@@ -1,0 +1,26 @@
+#YAML
+# Template for generic roles
+---
+default:
+architecture           : " x86_64"
+domain                 : true
+fqdn                   : true
+hostname               : true
+interfaces             : " eth0,imaging,lo"
+ipaddress              : true
+ipaddress_lo           : " 127.0.0.1"
+is_virtual             : " true"
+kernelrelease          : " 2.6.18-308.4.1.el5"
+memoryfree             : true
+memorysize             : " 3.86 GB"
+operatingsystem        : " CentOS"
+operatingsystemrelease : " 5.8"
+physicalprocessorcount : " 2"
+processorcount         : " 2"
+swapfree               : true
+swapsize               : " 1.97 GB"
+uniqueid               : true
+uptime_days            : true
+uptime_hours           : true
+uptime_seconds         : true
+virtual                : " vmware"
