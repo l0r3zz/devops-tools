@@ -26,6 +26,7 @@ import re
 import sys
 import time
 import socket
+from yaml import load
 from optparse import OptionParser
 
 __all__ = []
@@ -40,7 +41,7 @@ program_version_message = '%s %s (%s)' % (program_name, program_version,
 program_shortdesc ="phaktor - write facter facts to a FS database"
 
 parser = OptionParser(version=program_version_message)
-parser.add_option("-c", "--config", dest="config_file", default="facts.ftr",
+parser.add_option("-c", "--config", dest="config_file", default="generic.yaml",
                   help="file containing keys to save", metavar="FILE")
 parser.add_option("-r","--root", dest="root_dir", default=None,
                   help="root directory to store events")
@@ -51,16 +52,13 @@ parser.add_option("-d","--depth", dest="depth", default=3, type="int",
 (options, args) = parser.parse_args()
 
 try:
-    q = open(options.config_file)
+    q = open(options.config_file, "r")
 except IOError:
     print(" %s  : file not found or cannot open" % options.config_file)
     sys.exit()
     
-facts = {}
+facts = load( q )
 event = {}
-
-for symbol in q.readlines():
-    facts[ symbol.rstrip()] = 1
 
 gmtime = time.gmtime()
 iso_time = time.strftime("%Y-%m-%dT%H:%M:%S", gmtime)
@@ -81,7 +79,7 @@ p = os.popen("facter","r")
 event["iso_time"] = iso_time
 for line in p.readlines():
     fsp = re.search("(?P<key>.+)=>(?P<value>.+)",line.rstrip())
-    if (line.split())[0] in facts:
+    if (line.split())[0] in facts["body"]:
         event[fsp.group("key").rstrip()] = fsp.group("value").rstrip()
         
 if options.root_dir:
