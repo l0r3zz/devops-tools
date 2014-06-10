@@ -56,10 +56,9 @@ def main(argv=None):  # IGNORE:C0111
             default=None, help="template to use for auditing")
         parser.add_argument("-r", "--role", dest="role",
             default=None, help="fqdn of the role  to be used ")
-        switch.add_argument("-l", "--list", nargs='?',const=True,
-                            dest="list", default=None, metavar='no',
-                            help="list the template or collection data ")
-        parser.add_argument('-v', '--version', action='vershelp="list the template or collection data "ion',
+        parser.add_argument('-l', '--list', action='store_true', help="list the template or collection data ",
+            dest="list" )
+        parser.add_argument('-v', '--version', action='version', help="print the version ",
             version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug",
             action='store_true', help="turn on DEBUG switch")
@@ -73,3 +72,17 @@ def main(argv=None):  # IGNORE:C0111
 
         if args.debug:
             DEBUG = True
+    except KeyboardInterrupt:
+        ### handle keyboard interrupt ###
+        return 0
+#    except Exception, e:
+#        if DEBUG :
+#            raise(e)
+#        indent = len(program_name) * " "
+#        sys.stderr.write(program_name + ": " + str(e) + "\n")
+#        sys.stderr.write(indent + "  for help use --help\n")
+#        return 2
+
+
+if __name__ == "__main__":
+    main()
