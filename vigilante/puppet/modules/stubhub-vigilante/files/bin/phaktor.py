@@ -114,8 +114,12 @@ if options.root_dir:
     sys.stdout = recfd
     
 print("{"),
+first_item = 1
 for key, value in event.iteritems():
-    print( '"%s" : "%s",' % (key, value)),
+    if ( not first_item ):
+        print(","),
+    print( '"%s" : "%s"' % (key, value)),
+    first_item = 0
 print("}")
 
 sys.stdout = sys.__stdout__
