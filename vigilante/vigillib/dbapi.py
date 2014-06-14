@@ -1,6 +1,7 @@
 import uuid
 
 class DBUnimplementedError(Exception) : pass
+class DBIDnotpresentError(Exception) : pass
 
 class DbBaseAPI(object):
     """This is a Base or Abstract class and is not meant to be instantiated
@@ -38,13 +39,16 @@ class DbBaseAPI(object):
         self.threads[uuid_val] = dbname
         return dbid
     
-    def insert(self,dbid):
+    def insert(self,dbid, insert_dict):
+        raise NotImplementedError
+
+    def find_one(self, dbid,  query_dict):
+        raise NotImplementedError
+        
+    def find(self, dbid,  query_dict):
         raise NotImplementedError
     
-    def find(self, dbid,  query):
-        raise NotImplementedError
-    
-    def match(self,template,data):
+    def match(self,template_dict,data_dict):
         raise NotImplementedError 
     
     
@@ -62,6 +66,20 @@ class VigDBFS(DbBaseAPI):
         else :
             raise DBUnimplementedError
     
-    
+    def find_one(self, dbid,  query_dict):
+        if dbid not in self.threads :
+            raise DBIDnotpresentError
+        dbtype = self.threads[dbid]
+        return_dict = {}
+        if dbtype == "collector":
+            name = query_dict["fqdn"]
+            if "iso8601" not in query_dict:
+                timestamp = "current"
+            else:
+                timestamp = query_dict["iso8601"]
+        elif dbtype == "template_library":
+            pass
+        return return_dict
+        
     
     
