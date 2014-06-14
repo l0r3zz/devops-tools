@@ -1,4 +1,7 @@
 import uuid
+import re
+import json
+import os.path
 
 class DBUnimplementedError(Exception) : pass
 class DBIDnotpresentError(Exception) : pass
@@ -77,6 +80,13 @@ class VigDBFS(DbBaseAPI):
                 timestamp = "current"
             else:
                 timestamp = query_dict["iso8601"]
+            m = re.match( r"([^\.]+)\.([^\.]+)\.com", name )
+            hostname = m.group( 1 )
+            envid = m.group( 2 )
+            if timestamp == "current":
+                result_path = "%s/%s/%s/current" % ( self.auditroot_path, envid, hostname)
+                if ( os.path.isfile( result_path ) ):
+                    return_dict = json.load( open( result_path ).read() )
         elif dbtype == "template_library":
             pass
         return return_dict
