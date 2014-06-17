@@ -51,9 +51,9 @@
 #
 
 class vigilante (
-    $phaktordepth = '10',
+    $phaktordepth = '100',
     $phaktor_bindir = '/usr/local/bin',
-    $phaktor_cfg = '/nas/reg/log/jiralab/vigilante/facts.ftr',
+    $phaktor_cfg = '/nas/reg/log/jiralab/vigilante/generic.yaml',
     $phaktor_dir = '/nas/reg/log/jiralab/vigilante/auditor',
     $phaktor_sched_minute = fqdn_rand(60),
     $phaktor_sched_hour = [ fqdn_rand(4), 6+fqdn_rand(5), 12+fqdn_rand(5), 18+fqdn_rand(5) ],
@@ -72,13 +72,21 @@ class vigilante (
   }
 
   file { "${phaktor_bindir}/phaktor":
-    ensure => 'link',
-    target => "${phaktor_bindir}/phaktor.py",
+    ensure  => 'link',
+    target  => "${phaktor_bindir}/phaktor.py",
+    require => File["${phaktor_bindir}/phaktor.py", "${phaktor_bindir}/yaml"],
+  }
+
+  file { "${phaktor_bindir}/yaml":
+    ensure   => directory,
+    path     => "${phaktor_bindir}/yaml",
+    source   => 'puppet:///modules/vigilante/bin/yaml',
+    recurse  => true,
   }
 
   file { $phaktor_cfg :
     ensure => 'file',
-    source => 'puppet:///modules/vigilante/etc/facts.ftr',
+    source => 'puppet:///modules/vigilante/etc/generic.yaml',
   }
 
   file { $phaktor_dir :
@@ -91,7 +99,7 @@ class vigilante (
     minute  => $phaktor_sched_minute,
     hour    => $phaktor_sched_hour,
     command => "${phaktor_bindir}/phaktor -c ${phaktor_cfg} -r ${phaktor_dir} -d ${phaktordepth}",
-    require => File[$phaktor_cfg, "${phaktor_bindir}/phaktor.py", $phaktor_dir ]
+    require => File[$phaktor_cfg, "${phaktor_bindir}/phaktor", $phaktor_dir ]
   }
 
 }

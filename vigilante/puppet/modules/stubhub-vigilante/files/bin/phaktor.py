@@ -30,7 +30,7 @@ from yaml import load
 from optparse import OptionParser
 
 __all__ = []
-__version__ = 0.9
+__version__ = 0.10
 __date__ = '2013-12-11'
 __updated__ = '2014-04-30'
 program_name = os.path.basename(sys.argv[0])

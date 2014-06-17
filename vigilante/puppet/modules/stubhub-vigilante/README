@@ -21,5 +21,8 @@ Please log tickets and issues at our Projects site (https://wiki.stubcorp.dev/di
 
 Version History
 -------
+0.0.2
+Use yaml library and reading templates from yaml
+
 0.0.1
 Initial version
