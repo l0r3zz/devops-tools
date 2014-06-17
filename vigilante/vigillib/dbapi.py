@@ -3,6 +3,7 @@ import re
 import json
 import os.path
 from os import listdir
+from datetime import datetime, timedelta
 
 class DBUnimplementedError(Exception) : pass
 class DBIDnotpresentError(Exception) : pass
@@ -97,7 +98,7 @@ class VigDBFS(DbBaseAPI):
             pass
         return return_dict
 
-    def find(self, dbid,  query_dict):
+    def find(self, dbid, query_dict):
         if dbid not in self.threads :
             raise DBIDnotpresentError
         dbtype = self.threads[dbid]
@@ -110,17 +111,39 @@ class VigDBFS(DbBaseAPI):
             envid = query_dict["domain"]
             m = re.match( r"(^[A-z]+[0-9]{2})", envid)
             return_dict[ 'envid' ] = envid
-            if timestamp == "current":
-                result_set_path = "%s/%s" % ( self.auditroot_path, envid )
-                env_role_paths = [ role_path for role_path in listdir( result_set_path ) if os.path.isdir( os.path.join( result_set_path, role_path ) ) ]
-                for role_path in env_role_paths:
-                    current_file = os.path.join( result_set_path, role_path, "current")
-                    if ( os.path.isfile( current_file ) ):
-                        return_dict[ role_path ] = json.loads( open( current_file ).read() )
+            result_set_path = "%s/%s" % ( self.auditroot_path, envid )
+            env_role_paths = [ role_path for role_path in listdir( result_set_path ) if os.path.isdir( os.path.join( result_set_path, role_path ) ) ]
+            for role_path in env_role_paths:
+                file_dict = self._find_file_in_time( os.path.join( result_set_path, role_path ), timestamp )
+                role_facter_in_time_range = []
+                for file_key, file_value in file_dict.iteritems():
+                    if ( os.path.isfile( file_value ) ):
+                        role_facter_in_time_range.append( { file_key: json.loads( open( file_value ).read() ) } )
+                return_dict[ role_path ] = role_facter_in_time_range
         elif dbtype == "template_library":
             pass
         return return_dict
 
+    # Find the files in the directory based on timestamp
+    def _find_file_in_time(self, role_dir_path, timestamp):
+        if timestamp == "current":
+            return { "current" : os.path.join( role_dir_path, "current" ) }
+        elif "starttime" in timestamp and "endtime" in timestamp:
+            RANGE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+            FILE_TIME_FORMAT = '%Y%m%dT%H%M%S'
+            range_start_time = datetime.strptime( timestamp[ "starttime"], RANGE_TIME_FORMAT )
+            range_end_time = datetime.strptime( timestamp[ "endtime"], RANGE_TIME_FORMAT )
+            historical_file_paths = [ hist_file for hist_file in listdir( role_dir_path ) ]
+            file_dict = {}
+            for hist_file in historical_file_paths:
+                if not hist_file == "current":
+                    m = re.match( r"[^\.]+\.([^\.]+)", hist_file )
+                    file_timestamp = m.group( 1 )
+                    file_time = datetime.strptime( file_timestamp, FILE_TIME_FORMAT )
+                    if ( ( file_time - range_start_time ) > timedelta( seconds = 0 )
+                            and ( range_end_time - file_time ) > timedelta( seconds = 0 ) ):
+                        file_dict[ file_timestamp ] = os.path.join( role_dir_path, hist_file )
+            return file_dict
 
 # This is the interface that you should use in your code
 class VigDB(VigDBFS):
@@ -131,7 +154,9 @@ class VigDB(VigDBFS):
 if __name__ == "__main__" :
     s= VigDB()
     collector =  s.login()
-    rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
-    print "Result Set : ", rs
+    # rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
+    # print "Result Set : ", rs
     rs = s.find(collector, {"domain" : "srwd83",} )
+    print "Result Set : ", rs
+    rs = s.find(collector, {"domain" : "srwd83", "iso8601" : { "starttime" : "2014-06-17T00:03:01Z", "endtime" : "2014-06-18T18:24:01Z" } } )
     print "Result Set : ", rs
