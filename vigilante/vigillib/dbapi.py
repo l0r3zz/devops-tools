@@ -56,6 +56,10 @@ class DbBaseAPI(object):
     
     
 class VigDBFS(DbBaseAPI):
+    """ This is the current implementation that store data in the file system.
+    Don't call this implementation dependent class, use the generic wrapper instead.
+    
+    """
     
     def __init__(self,auditroot='/nas/reg/log/jiralab/vigilante/auditor'
                  , tlroot='/nas/reg/log/jiralab/vigilante/template_library'):
@@ -91,8 +95,14 @@ class VigDBFS(DbBaseAPI):
         elif dbtype == "template_library":
             pass
         return return_dict
-        
+    
+# This is the interface that you should use in your code
+class VigDB(VigDBFS):
+    def __init__(self):
+        Super(VigDB,self).__init__()
+
+
 if __name__ == "__main__" :
-    s= VigDBFS()
+    s= VigDB()
     collector =  s.login()
-    rs = s.find_one(collector, {"fqdn" : "sctv00pup001.cybertribe.com",})
+    rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
