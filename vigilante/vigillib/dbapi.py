@@ -87,7 +87,7 @@ class VigDBFS(DbBaseAPI):
             if timestamp == "current":
                 result_path = "%s/%s/%s/current" % ( self.auditroot_path, envid, hostname)
                 if ( os.path.isfile( result_path ) ):
-                    return_dict = json.load( open( result_path ).read() )
+                    return_dict = json.loads( open( result_path ).read() )
         elif dbtype == "template_library":
             pass
         return return_dict
