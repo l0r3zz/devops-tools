@@ -39,7 +39,7 @@ class DbBaseAPI(object):
     
     def login(self, dbname):
         dbid = uuid.uuid1()
-        self.threads[uuid_val] = dbname
+        self.threads[dbid] = dbname
         return dbid
     
     def insert(self,dbid, insert_dict):
@@ -60,7 +60,7 @@ class VigDBFS(DbBaseAPI):
     def __init__(self,auditroot='/nas/reg/log/jiralab/vigilante/auditor'
                  , tlroot='/nas/reg/log/jiralab/vigilante/template_library'):
         self.auditroot_path = auditroot
-        self.templib_path = tlrootl
+        self.templib_path = tlroot
         super(VigDBFS,self).__init__()
 
     def login(self,space="collector"):
@@ -82,14 +82,17 @@ class VigDBFS(DbBaseAPI):
                 timestamp = query_dict["iso8601"]
             m = re.match( r"([^\.]+)\.([^\.]+)\.com", name )
             hostname = m.group( 1 )
-            envid = m.group( 2 )
+            m = re.match( r"(^[A-z]+[0-9]{2})", hostname)
+            envid = m.group(1)
             if timestamp == "current":
                 result_path = "%s/%s/%s/current" % ( self.auditroot_path, envid, hostname)
                 if ( os.path.isfile( result_path ) ):
-                    return_dict = json.load( open( result_path ).read() )
+                    return_dict = json.loads( open( result_path ).read() )
         elif dbtype == "template_library":
             pass
         return return_dict
         
-    
-    
+if __name__ == "__main__" :
+    s= VigDBFS()
+    collector =  s.login()
+    rs = s.find_one(collector, {"fqdn" : "sctv00pup001.cybertribe.com",})
