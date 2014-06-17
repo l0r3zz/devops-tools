@@ -2,6 +2,7 @@ import uuid
 import re
 import json
 import os.path
+from os import listdir
 
 class DBUnimplementedError(Exception) : pass
 class DBIDnotpresentError(Exception) : pass
@@ -95,7 +96,32 @@ class VigDBFS(DbBaseAPI):
         elif dbtype == "template_library":
             pass
         return return_dict
-    
+
+    def find(self, dbid,  query_dict):
+        if dbid not in self.threads :
+            raise DBIDnotpresentError
+        dbtype = self.threads[dbid]
+        return_dict = {}
+        if dbtype == "collector":
+            if "iso8601" not in query_dict:
+                timestamp = "current"
+            else:
+                timestamp = query_dict["iso8601"]
+            envid = query_dict["domain"]
+            m = re.match( r"(^[A-z]+[0-9]{2})", envid)
+            return_dict[ 'envid' ] = envid
+            if timestamp == "current":
+                result_set_path = "%s/%s" % ( self.auditroot_path, envid )
+                env_role_paths = [ role_path for role_path in listdir( result_set_path ) if os.path.isdir( os.path.join( result_set_path, role_path ) ) ]
+                for role_path in env_role_paths:
+                    current_file = os.path.join( result_set_path, role_path, "current")
+                    if ( os.path.isfile( current_file ) ):
+                        return_dict[ role_path ] = json.loads( open( current_file ).read() )
+        elif dbtype == "template_library":
+            pass
+        return return_dict
+
+
 # This is the interface that you should use in your code
 class VigDB(VigDBFS):
     def __init__(self):
@@ -106,4 +132,6 @@ if __name__ == "__main__" :
     s= VigDB()
     collector =  s.login()
     rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
+    print "Result Set : ", rs
+    rs = s.find(collector, {"domain" : "srwd83",} )
     print "Result Set : ", rs
