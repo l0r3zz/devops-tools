@@ -15,7 +15,8 @@
 meta :
 
     super                  : None
-    type                   : "Generic"
+    type                   : "role"
+    name                   : "generic"
 
 body :
 

@@ -1,7 +1,9 @@
 import uuid
 import re
 import json
+import yaml
 import os.path
+import sys
 from os import listdir
 from datetime import datetime, timedelta
 
@@ -70,6 +72,10 @@ class VigDBFS(DbBaseAPI):
         super(VigDBFS,self).__init__()
 
     def login(self,space="collector"):
+        """ There are currently two possible databases, the "collector" database which holds raw data
+        gathered from the Environments, and the "template_library" which contains JSON templates that
+        are used in matching operations 
+        """
         if space in ("collector", "template_library"):
             return super(VigDBFS,self).login(space)
         else :
@@ -95,7 +101,10 @@ class VigDBFS(DbBaseAPI):
                 if ( os.path.isfile( result_path ) ):
                     return_dict = json.loads( open( result_path ).read() )
         elif dbtype == "template_library":
-            pass
+            name = query_dict["name"]
+            result_path = "%s/%s.yaml" % (self.templib_path, name)
+            if ( os.path.isfile( result_path ) ):
+                    return_dict = yaml.load(open( result_path ).read() )
         return return_dict
 
     def find(self, dbid, query_dict):
@@ -121,7 +130,10 @@ class VigDBFS(DbBaseAPI):
                         role_facter_in_time_range.append( { file_key: json.loads( open( file_value ).read() ) } )
                 return_dict[ role_path ] = role_facter_in_time_range
         elif dbtype == "template_library":
-            pass
+            tl_list = os.listdir(self.templib_path)
+            for file in tl_list :
+                result_path = "%s/%s" % (self.templib_path, file)
+                return_dict[os.path.splitext(file)[0]] = yaml.load(open( result_path ).read() )
         return return_dict
 
     # Find the files in the directory based on timestamp
@@ -157,6 +169,14 @@ if __name__ == "__main__" :
     # rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
     # print "Result Set : ", rs
     rs = s.find(collector, {"domain" : "srwd83",} )
-    print "Result Set : ", rs
+    print "Result Set : ", json.dumps( rs)
     rs = s.find(collector, {"domain" : "srwd83", "iso8601" : { "starttime" : "2014-06-17T00:03:01Z", "endtime" : "2014-06-18T18:24:01Z" } } )
-    print "Result Set : ", rs
+    print "Result Set : ", json.dumps( rs)
+    templates = s.login("template_library")
+    rs = s.find_one(templates, {"name" : "generic"})
+    print "Result Set : ", json.dumps( rs)
+    rs = s.find(templates, {})
+    print "Result Set : ", json.dumps( rs)
+    sys.exit()
+    
+    
