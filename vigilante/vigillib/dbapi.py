@@ -59,10 +59,10 @@ class DbBaseAPI(object):
     def match(self,template_dict,data_dict):
         raise NotImplementedError
     
-    def _update(d, u):
+    def _update(self,d, u):
         for k, v in u.iteritems():
             if isinstance(v, collections.Mapping):
-                r = update(d.get(k, {}), v)
+                r = self._update(d.get(k, {}), v)
                 d[k] = r
             else:
                 d[k] = u[k]
@@ -75,7 +75,7 @@ class DbBaseAPI(object):
         else:
             next_template = self.find_one(dbid,{"name" : super})
             merged_template = self._resolve_template(dbid, next_template)
-            return _update(merged_template, template_dict)
+            return self._update(merged_template, template_dict)
     
 class VigDBFS(DbBaseAPI):
     """ This is the current implementation that store data in the file system.
@@ -191,10 +191,12 @@ if __name__ == "__main__" :
     rs = s.find(collector, {"domain" : "srwd83", "iso8601" : { "starttime" : "2014-06-17T00:03:01Z", "endtime" : "2014-06-18T18:24:01Z" } } )
     print "Result Set : ", json.dumps( rs)
     templates = s.login("template_library")
-    rs = s.find_one(templates, {"name" : "generic"})
     print "Result Set : ", json.dumps( rs)
     rs = s.find(templates, {})
+    rs = s.find_one(templates, {"name" : "generic"})
     print "Result Set : ", json.dumps( rs)
+    spectpl = s.find_one(templates, {"name" : "special"})
+    rs = s._resolve_template(templates,spectpl)
     sys.exit()
     
     
