@@ -56,8 +56,16 @@ class DbBaseAPI(object):
         raise NotImplementedError
     
     def match(self,template_dict,data_dict):
-        raise NotImplementedError 
-    
+        raise NotImplementedError
+     
+    def _resolve_template(self,dbid,template_dict):
+        super = template_dict["meta"]["super"]
+        if not super or (super is "none") or (super is "None"):
+            return template_dict
+        else:
+            next_template = self.find_one(dbid,{"name" : super})
+            merged_template = self._resolve_template(dbid, next_template)
+            return merged_template.update(template_dict)
     
 class VigDBFS(DbBaseAPI):
     """ This is the current implementation that store data in the file system.
