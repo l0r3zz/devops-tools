@@ -24,5 +24,6 @@ def collector_env_current( request, version, envid ):
     rs = s.find(collector, {"domain" : envid,})
     return HttpResponse( json.dumps( rs ), content_type='application/json' )
 
-def collector_env_time( request, version, envid ):
-    pass
+def collector_env_time( request, version, starttime, endtime, envid ):
+    rs = s.find(collector, {"domain" : envid, "iso8601" : { "starttime" : starttime, "endtime" : endtime } } )
+    return HttpResponse( json.dumps( rs ), content_type='application/json' )

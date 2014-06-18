@@ -154,7 +154,7 @@ class VigDBFS(DbBaseAPI):
                     file_time = datetime.strptime( file_timestamp, FILE_TIME_FORMAT )
                     if ( ( file_time - range_start_time ) > timedelta( seconds = 0 )
                             and ( range_end_time - file_time ) > timedelta( seconds = 0 ) ):
-                        file_dict[ file_timestamp ] = os.path.join( role_dir_path, hist_file )
+                        file_dict[ file_time.strftime( RANGE_TIME_FORMAT ) ] = os.path.join( role_dir_path, hist_file )
             return file_dict
 
 # This is the interface that you should use in your code
