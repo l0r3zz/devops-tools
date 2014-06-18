@@ -4,6 +4,7 @@ import json
 import yaml
 import os.path
 import sys
+import collections
 from os import listdir
 from datetime import datetime, timedelta
 
@@ -57,15 +58,24 @@ class DbBaseAPI(object):
     
     def match(self,template_dict,data_dict):
         raise NotImplementedError
-     
+    
+    def _update(d, u):
+        for k, v in u.iteritems():
+            if isinstance(v, collections.Mapping):
+                r = update(d.get(k, {}), v)
+                d[k] = r
+            else:
+                d[k] = u[k]
+        return d
+
     def _resolve_template(self,dbid,template_dict):
         super = template_dict["meta"]["super"]
-        if not super or (super is "none") or (super is "None"):
+        if not super or (super == "none") or (super == "None"):
             return template_dict
         else:
             next_template = self.find_one(dbid,{"name" : super})
             merged_template = self._resolve_template(dbid, next_template)
-            return merged_template.update(template_dict)
+            return _update(merged_template, template_dict)
     
 class VigDBFS(DbBaseAPI):
     """ This is the current implementation that store data in the file system.
