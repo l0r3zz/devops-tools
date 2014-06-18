@@ -56,7 +56,18 @@ class DbBaseAPI(object):
     def find(self, dbid,  query_dict):
         raise NotImplementedError
     
-    def match(self,template_dict,data_dict):
+    def match(self, tdbid, template_dict, cdbid, data_dict):
+        """
+        Match strategy: If the template value of a key is "None",
+        then any data value is a match. If the template value is a 
+        scalar (not a list) then the value is interpreted as a string
+        and only an exact match is considered a match.  If the template
+        value is a list, then the first element of the list is an
+        operator and the following arguments are the operands. Roles
+        templates match their body keys to collector data on a 1-to-1
+        basis.  Env templates iterate through the keys in the body and
+        calls match on each role lookup found.
+        """
         raise NotImplementedError
     
     def _update(self,d, u):
