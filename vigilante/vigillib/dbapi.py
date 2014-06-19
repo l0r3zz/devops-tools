@@ -87,6 +87,7 @@ class DbBaseAPI(object):
             return result_dict
         elif template_dict['meta']['type']  == "env":
             pass
+            return result_dict
         else:
             raise NotImplementedError
 
