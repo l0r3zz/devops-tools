@@ -68,8 +68,16 @@ class DbBaseAPI(object):
         basis.  Env templates iterate through the keys in the body and
         calls match on each role lookup found.
         """
-        print template_dict
-        print data_dict
+        for template_key, template_value in template_dict['body'].iteritems():
+            if template_value == "None":
+                pass
+            elif type(template_value) is list:
+                pass
+            elif type(template_value) is str:
+                if ( template_value != data_dict[ template_key ] ):
+                    print "Unmatch: template value [%s], real value [%s]" % ( template_value, data_dict[ template_key ] )
+            else:
+                raise NotImplementedError
     
     def _update(self,d, u):
         for k, v in u.iteritems():
@@ -197,7 +205,7 @@ class VigDB(VigDBFS):
 if __name__ == "__main__" :
     s= VigDB()
     collector =  s.login()
-    # rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
+    rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
     # print "Result Set : ", rs
     # rs = s.find(collector, {"domain" : "srwd83",} )
     # print "Result Set : ", json.dumps( rs)
@@ -205,11 +213,11 @@ if __name__ == "__main__" :
     # print "Result Set : ", json.dumps( rs)
     templates = s.login("template_library")
     # print "Result Set : ", json.dumps( rs)
-    rs = s.find(templates, {})
-    print "Result Set : ", json.dumps( rs )
+    # rs = s.find(templates, {})
+    # print "Result Set : ", json.dumps( rs )
     # rs = s.find_one(templates, {"name" : "generic"})
     # print "Result Set : ", json.dumps( rs )
-    # spectpl = s.find_one(templates, {"name" : "special"})
+    spectpl = s.find_one(templates, {"name" : "special"})
     # print "Result Set : ", json.dumps( spectpl )
-    
+    s.match( templates, spectpl, collector, rs )
     
