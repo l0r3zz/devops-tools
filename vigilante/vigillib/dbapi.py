@@ -68,7 +68,8 @@ class DbBaseAPI(object):
         basis.  Env templates iterate through the keys in the body and
         calls match on each role lookup found.
         """
-        raise NotImplementedError
+        print template_dict
+        print data_dict
     
     def _update(self,d, u):
         for k, v in u.iteritems():
@@ -133,7 +134,8 @@ class VigDBFS(DbBaseAPI):
             name = query_dict["name"]
             result_path = "%s/%s.yaml" % (self.templib_path, name)
             if ( os.path.isfile( result_path ) ):
-                    return_dict = yaml.load(open( result_path ).read() )
+                return_dict = yaml.load(open( result_path ).read() )
+                return_dict = self._resolve_template( dbid, return_dict )
         return return_dict
 
     def find(self, dbid, query_dict):
@@ -162,7 +164,7 @@ class VigDBFS(DbBaseAPI):
             tl_list = os.listdir(self.templib_path)
             for file in tl_list :
                 result_path = "%s/%s" % (self.templib_path, file)
-                return_dict[os.path.splitext(file)[0]] = yaml.load(open( result_path ).read() )
+                return_dict[os.path.splitext(file)[0]] = self._resolve_template( dbid, yaml.load( open( result_path ).read() ) )
         return return_dict
 
     # Find the files in the directory based on timestamp
@@ -197,17 +199,17 @@ if __name__ == "__main__" :
     collector =  s.login()
     # rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
     # print "Result Set : ", rs
-    rs = s.find(collector, {"domain" : "srwd83",} )
-    print "Result Set : ", json.dumps( rs)
-    rs = s.find(collector, {"domain" : "srwd83", "iso8601" : { "starttime" : "2014-06-17T00:03:01Z", "endtime" : "2014-06-18T18:24:01Z" } } )
-    print "Result Set : ", json.dumps( rs)
+    # rs = s.find(collector, {"domain" : "srwd83",} )
+    # print "Result Set : ", json.dumps( rs)
+    # rs = s.find(collector, {"domain" : "srwd83", "iso8601" : { "starttime" : "2014-06-17T00:03:01Z", "endtime" : "2014-06-18T18:24:01Z" } } )
+    # print "Result Set : ", json.dumps( rs)
     templates = s.login("template_library")
-    print "Result Set : ", json.dumps( rs)
+    # print "Result Set : ", json.dumps( rs)
     rs = s.find(templates, {})
-    rs = s.find_one(templates, {"name" : "generic"})
-    print "Result Set : ", json.dumps( rs)
-    spectpl = s.find_one(templates, {"name" : "special"})
-    rs = s._resolve_template(templates,spectpl)
-    sys.exit()
+    print "Result Set : ", json.dumps( rs )
+    # rs = s.find_one(templates, {"name" : "generic"})
+    # print "Result Set : ", json.dumps( rs )
+    # spectpl = s.find_one(templates, {"name" : "special"})
+    # print "Result Set : ", json.dumps( spectpl )
     
     
