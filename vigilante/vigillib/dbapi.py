@@ -68,31 +68,55 @@ class DbBaseAPI(object):
         basis.  Env templates iterate through the keys in the body and
         calls match on each role lookup found.
         """
-        for template_key, template_value in template_dict['body'].iteritems():
-            if template_value == "None":
-                pass
-            elif type(template_value) is list:
-                self._match_operator( template_value, data_dict[ template_key ] )
-            elif type(template_value) is str:
-                if ( template_value != data_dict[ template_key ] ):
-                    print "Unmatch: template value [%s], real value [%s]" % ( template_value, data_dict[ template_key ] )
-            else:
-                raise NotImplementedError
+        
+        # Different processing for Roles and envs
+        result_dict = {}
+        if template_dict['meta']['type']  == "role":
+            for template_key, template_value in template_dict['body'].iteritems():
+                if template_value == "None":
+                    pass
+                elif type(template_value) is list:
+                    rval = self._match_operator( template_value, data_dict[ template_key ] )
+                    if rval :
+                        result_dict[template_key] = data_dict[template_key]
+                elif type(template_value) is str:
+                    if ( template_value != data_dict[ template_key ] ):
+                        result_dict[template_key] = data_dict[template_key]
+                else:
+                    raise NotImplementedError
+            return result_dict
+        elif template_dict['meta']['type']  == "env":
+            pass
+        else:
+            raise NotImplementedError
 
     def _match_operator( self, operator_list, data_value ):
         operator = operator_list[0]
         if operator == ">":
             if not int(data_value) > int(operator_list[1]):
-                print "Unmatch: [%i] not > [%i]" % ( int(data_value), int(operator_list[1]) )
+                return data_value
+            else:
+                return None
+        elif operator == "<":
+            if not int(data_value) < int(operator_list[1]):
+                return data_value
+            else:
+                return None           
         elif operator == "=":
             if not data_value == operator_list[1]:
-                print "Unmatch: [%s] not = [%s]" % ( data_value, operator_list[1] )
+                return data_value
+            else:
+                return None      
         elif operator == "!=":
             if not data_value != operator_list[1]:
-                print "Unmatch: [%s] not != [%s]" % ( data_value, operator_list[1] )
+                return data_value
+            else:
+                return None      
         elif operator == "~":
             if not re.match( r"%s" % operator_list[1], data_value ):
-                print "Unmatch: [%s] not ~ [%s]" % ( data_value, operator_list[1] )
+                return data_value
+            else:
+                return None      
         else:
             raise NotImplementedError
     
