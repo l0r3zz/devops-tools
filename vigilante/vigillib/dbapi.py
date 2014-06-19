@@ -72,12 +72,29 @@ class DbBaseAPI(object):
             if template_value == "None":
                 pass
             elif type(template_value) is list:
-                pass
+                self._match_operator( template_value, data_dict[ template_key ] )
             elif type(template_value) is str:
                 if ( template_value != data_dict[ template_key ] ):
                     print "Unmatch: template value [%s], real value [%s]" % ( template_value, data_dict[ template_key ] )
             else:
                 raise NotImplementedError
+
+    def _match_operator( self, operator_list, data_value ):
+        operator = operator_list[0]
+        if operator == ">":
+            if not int(data_value) > int(operator_list[1]):
+                print "Unmatch: [%i] not > [%i]" % ( int(data_value), int(operator_list[1]) )
+        elif operator == "=":
+            if not data_value == operator_list[1]:
+                print "Unmatch: [%s] not = [%s]" % ( data_value, operator_list[1] )
+        elif operator == "!=":
+            if not data_value != operator_list[1]:
+                print "Unmatch: [%s] not != [%s]" % ( data_value, operator_list[1] )
+        elif operator == "~":
+            if not re.match( r"%s" % operator_list[1], data_value ):
+                print "Unmatch: [%s] not ~ [%s]" % ( data_value, operator_list[1] )
+        else:
+            raise NotImplementedError
     
     def _update(self,d, u):
         for k, v in u.iteritems():
@@ -217,7 +234,7 @@ if __name__ == "__main__" :
     # print "Result Set : ", json.dumps( rs )
     # rs = s.find_one(templates, {"name" : "generic"})
     # print "Result Set : ", json.dumps( rs )
-    spectpl = s.find_one(templates, {"name" : "special"})
+    spectpl = s.find_one(templates, {"name" : "operators"})
     # print "Result Set : ", json.dumps( spectpl )
     s.match( templates, spectpl, collector, rs )
     
