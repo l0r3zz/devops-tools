@@ -99,6 +99,8 @@ class DbBaseAPI(object):
                 elif type(template_value) is str:
                     if ( template_value != data_dict[ template_key ] ):
                         result_dict['body'][template_key] = data_dict[template_key]
+                    else:
+                        pass
                 else:
                     raise NotImplementedError
             return result_dict
