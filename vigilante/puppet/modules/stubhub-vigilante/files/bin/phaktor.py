@@ -30,9 +30,9 @@ from yaml import load
 from optparse import OptionParser
 
 __all__ = []
-__version__ = 0.91
+__version__ = 0.92
 __date__ = '2013-12-11'
-__updated__ = '2014-06-16'
+__updated__ = '2014-06-20'
 program_name = os.path.basename(sys.argv[0])
 program_version = "v%s" % __version__
 program_build_date = str(__updated__)
@@ -112,14 +112,19 @@ if options.root_dir:
             os.remove(env_dir + remove_file)
 
     sys.stdout = recfd
-    
+
 print("{"),
+# Generate the meta
+print('"meta" : { "type" : "%s", "name" : "%s", "version" : "%s" },' % ( "phaktor", facts["meta"]["type"], facts["meta"]["version"]) ),
+# Generate the body
+print('"body" : { '),
 first_item = 1
 for key, value in event.iteritems():
     if ( not first_item ):
         print(","),
     print( '"%s" : "%s"' % (key, value)),
     first_item = 0
+print("}"),
 print("}")
 
 sys.stdout = sys.__stdout__
