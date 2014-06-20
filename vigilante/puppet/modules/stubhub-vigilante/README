@@ -21,6 +21,9 @@ Please log tickets and issues at our Projects site (https://wiki.stubcorp.dev/di
 
 Version History
 -------
+0.0.3
+Update generated report to have "meta" and "body" key structure
+
 0.0.2
 Use yaml library and reading templates from yaml
 

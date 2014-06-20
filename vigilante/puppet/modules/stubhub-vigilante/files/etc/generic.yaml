@@ -1,9 +1,11 @@
+# YAML
 # Template for generic roles
 # This file is in a form that can be read by the very simple YAML parser
 # That is a part of phaktor, it is designed to be able to read a generic
 # Template file, no validation is performed, basically it's used as a list
 # of facts that will be gathered for the role that is running phaktor at the
 # time.
+---
 # Top level is a "dict" with  two key mappings  "meta" is a dict containing control mappings
 # whereas "body" contains mappings of the actual facts gathered from phaktor".
 # Phaktor only cares about the "body" dict and only reads the keys to populate values for 
