@@ -70,23 +70,37 @@ class DbBaseAPI(object):
         """
         
         # Different processing for Roles and envs
-        result_dict = {}
+        result_dict = {"meta" : template_dict['meta'].copy(), "body": {}}
+
         if template_dict['meta']['type']  == "role":
+            result_dict['meta']['type'] = "role-diff"
             for template_key, template_value in template_dict['body'].iteritems():
                 if template_value == "None":
                     pass
                 elif type(template_value) is list:
                     rval = self._match_operator( template_value, data_dict[ template_key ] )
                     if rval :
-                        result_dict[template_key] = data_dict[template_key]
+                        result_dict['body'][template_key] = data_dict[template_key]
                 elif type(template_value) is str:
                     if ( template_value != data_dict[ template_key ] ):
-                        result_dict[template_key] = data_dict[template_key]
+                        result_dict['body'][template_key] = data_dict[template_key]
                 else:
                     raise NotImplementedError
             return result_dict
         elif template_dict['meta']['type']  == "env":
-            pass
+            result_dict['meta']['type'] = "env-diff"
+            for template_key, template_value in template_dict['body'].iteritems():
+                if template_value == "None":
+                    pass
+                elif type(template_value) is list:
+                    rval = self._match_operator( template_value, data_dict[ template_key ] )
+                    if rval :
+                        result_dict['body'][template_key] = data_dict[template_key]
+                elif type(template_value) is str:
+                    if ( template_value != data_dict[ template_key ] ):
+                        result_dict['body'][template_key] = data_dict[template_key]
+                else:
+                    raise NotImplementedError
             return result_dict
         else:
             raise NotImplementedError
@@ -261,5 +275,5 @@ if __name__ == "__main__" :
     # print "Result Set : ", json.dumps( rs )
     spectpl = s.find_one(templates, {"name" : "operators"})
     # print "Result Set : ", json.dumps( spectpl )
-    s.match( templates, spectpl, collector, rs )
+    rs = s.match( templates, spectpl, collector, rs )
     
