@@ -90,17 +90,22 @@ class DbBaseAPI(object):
         elif template_dict['meta']['type']  == "env":
             result_dict['meta']['type'] = "env-diff"
             for template_key, template_value in template_dict['body'].iteritems():
+                result_dict['body'][template_key] = []
                 if template_value == "None":
                     pass
                 elif type(template_value) is list:
-                    rval = self._match_operator( template_value, data_dict[ template_key ] )
-                    if rval :
-                        result_dict['body'][template_key] = data_dict[template_key]
+#                     rval = self._match_operator( template_value, data_dict[ template_key ] )
+#                     if rval :
+#                         result_dict['body'][template_key] = data_dict[template_key]
+                    pass
                 elif type(template_value) is str:
-                    if ( template_value != data_dict[ template_key ] ):
-                        result_dict['body'][template_key] = data_dict[template_key]
-                    else:
-                        pass
+                    # so the template value will be the name of a template to match the 
+                    # collector data to.  Which means that we need to use this name to fetch
+                    # the template to do a match with the provided collector data in
+                    # data_dict['body'][template_key][0]['current']
+                    role_match_template = self.find_one(tdbid, {"name" : template_value})
+                    role_match = s.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
+                    result_dict['body'][template_key][-1] = role_match 
                 else:
                     raise NotImplementedError
             return result_dict
@@ -111,7 +116,7 @@ class DbBaseAPI(object):
         operator = operator_list[0]
         if operator == ">":
             if not int(data_value) > int(operator_list[1]):
-                return data_value
+                return data_valuel
             else:
                 return None
         elif operator == "<":
