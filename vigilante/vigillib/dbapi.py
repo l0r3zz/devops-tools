@@ -210,13 +210,14 @@ class VigDBFS(DbBaseAPI):
         dbtype = self.threads[dbid]
         return_dict = {}
         if dbtype == "collector":
+            return_dict = {'meta' : { 'type' : 'phaktor-bundle'}, 'body' : {}}
             if "iso8601" not in query_dict:
                 timestamp = "current"
             else:
                 timestamp = query_dict["iso8601"]
             envid = query_dict["domain"]
             m = re.match( r"(^[A-z]+[0-9]{2})", envid)
-            return_dict[ 'envid' ] = envid
+            return_dict['meta'][ 'envid' ] = envid
             result_set_path = "%s/%s" % ( self.auditroot_path, envid )
             env_role_paths = [ role_path for role_path in listdir( result_set_path ) if os.path.isdir( os.path.join( result_set_path, role_path ) ) ]
             for role_path in env_role_paths:
@@ -225,12 +226,13 @@ class VigDBFS(DbBaseAPI):
                 for file_key, file_value in file_dict.iteritems():
                     if ( os.path.isfile( file_value ) ):
                         role_facter_in_time_range.append( { file_key: json.loads( open( file_value ).read() ) } )
-                return_dict[ role_path ] = role_facter_in_time_range
+                return_dict['body'][ role_path ] = role_facter_in_time_range
         elif dbtype == "template_library":
+            return_dict = {'meta' : { 'type' : 'template-bundle'}, 'body' : {}}
             tl_list = os.listdir(self.templib_path)
             for file in tl_list :
                 result_path = "%s/%s" % (self.templib_path, file)
-                return_dict[os.path.splitext(file)[0]] = self._resolve_template( dbid, yaml.load( open( result_path ).read() ) )
+                return_dict['body'][os.path.splitext(file)[0]] = self._resolve_template( dbid, yaml.load( open( result_path ).read() ) )
         return return_dict
 
     # Find the files in the directory based on timestamp
