@@ -18,11 +18,11 @@ def version( request, version ):
             content_type='application/json' )
 
 def collector_role_current( request, version, hostname ):
-    rs = s.find_one(collector, {"fqdn" : hostname,})
+    rs = s.find_one(collector, {"fqdn" : hostname } )
     return HttpResponse( json.dumps( rs ), content_type='application/json' )
 
 def collector_env_current( request, version, envid ):
-    rs = s.find(collector, {"domain" : envid,})
+    rs = s.find(collector, {"domain" : envid } )
     return HttpResponse( json.dumps( rs ), content_type='application/json' )
 
 def collector_env_time( request, version, starttime, endtime, envid ):
@@ -35,4 +35,10 @@ def templates_list( request, version ):
 
 def templates_get( request, version, template_name ):
     rs = s.find_one(templates, {"name" : template_name})
+    return HttpResponse( json.dumps( rs ), content_type='application/json' )
+
+def query_match_template( request, version, template, hostname ):
+    template_dict = s.find_one( templates, {"name" : template } )
+    data_dict = s.find_one( collector, {"fqdn" : hostname } )
+    rs = s.match( templates, template_dict, collector, data_dict )
     return HttpResponse( json.dumps( rs ), content_type='application/json' )

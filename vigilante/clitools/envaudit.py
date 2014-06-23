@@ -32,6 +32,9 @@ def api_request( query_type, query_dict ):
     if ( query_type == "collector" ):
         if "fqdn" in query_dict:
             request_url = "collector/role/current/%s" % query_dict[ "fqdn" ]
+    elif ( query_type == "query" ):
+        if "fqdn" in query_dict and "template" in query_dict:
+            request_url = "query/template/%s/collector/role/current/%s" % ( query_dict["template"], query_dict["fqdn"] )
     else:
         pass
 
@@ -94,6 +97,8 @@ def main(argv=None):  # IGNORE:C0111
 
     if args.list:
         print api_request( "collector", { "fqdn" : args.role } )
+    if args.template and args.role:
+        print api_request( "query", { "fqdn" : args.role, "template" : args.template } )
 
 if __name__ == "__main__":
     main()

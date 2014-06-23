@@ -78,12 +78,12 @@ class DbBaseAPI(object):
                 if template_value == "None":
                     pass
                 elif type(template_value) is list:
-                    rval = self._match_operator( template_value, data_dict[ template_key ] )
+                    rval = self._match_operator( template_value, data_dict['body'][ template_key ] )
                     if rval :
-                        result_dict['body'][template_key] = data_dict[template_key]
+                        result_dict['body'][template_key] = data_dict['body'][template_key]
                 elif type(template_value) is str:
-                    if ( template_value != data_dict[ template_key ] ):
-                        result_dict['body'][template_key] = data_dict[template_key]
+                    if ( template_value != data_dict['body'][ template_key ] ):
+                        result_dict['body'][template_key] = data_dict['body'][template_key]
                 else:
                     raise NotImplementedError
             return result_dict
@@ -278,4 +278,5 @@ if __name__ == "__main__" :
     spectpl = s.find_one(templates, {"name" : "operators"})
     # print "Result Set : ", json.dumps( spectpl )
     rs = s.match( templates, spectpl, collector, rs )
+    print json.dumps(rs)
     
