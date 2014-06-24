@@ -13,21 +13,21 @@ class DBIDnotpresentError(Exception) : pass
 
 class DbBaseAPI(object):
     """This is a Base or Abstract class and is not meant to be instantiated
-    or used directly.
+or used directly.
 
-    The DbBaseAPI object defines a set of methods that can be
-    reused across different versions of the  API. If querying for a
-    certain resource is done in an identical fashion across different versions
-    it will be implemented here and should be overridden in their respective
-    versions if they deviate.  So currently the implementation supports the filesystem
-    based database for vigilante, but you could easily create classes for puppetdb and 
-    mongo db back ends.
+The DbBaseAPI object defines a set of methods that can be
+reused across different versions of the API. If querying for a
+certain resource is done in an identical fashion across different versions
+it will be implemented here and should be overridden in their respective
+versions if they deviate. So currently the implementation supports the filesystem
+based database for vigilante, but you could easily create classes for puppetdb and
+mongo db back ends.
 
 
-    """
+"""
     def __init__(self, host='localhost', timeout=10):
         """Initialises our BaseAPI object passing the parameters needed in
-        order to be able to create the connection strings """
+order to be able to create the connection strings """
 
         self.api_version = "v0.1"
         self.host = host
@@ -38,41 +38,41 @@ class DbBaseAPI(object):
     def version(self):
         """The version of the API we're querying against.
 
-        :returns: Current API version.
-        :rtype: :obj:`string`"""
+:returns: Current API version.
+:rtype: :obj:`string`"""
         return self.api_version
-    
+
     def login(self, dbname):
         dbid = uuid.uuid1()
         self.threads[dbid] = dbname
         return dbid
-    
+
     def insert(self,dbid, insert_dict):
         raise NotImplementedError
 
-    def find_one(self, dbid,  query_dict):
+    def find_one(self, dbid, query_dict):
         raise NotImplementedError
-        
-    def find(self, dbid,  query_dict):
+
+    def find(self, dbid, query_dict):
         raise NotImplementedError
-    
+
     def match(self, tdbid, template_dict, cdbid, data_dict):
         """
-        Match strategy: If the template value of a key is "None",
-        then any data value is a match. If the template value is a 
-        scalar (not a list) then the value is interpreted as a string
-        and only an exact match is considered a match.  If the template
-        value is a list, then the first element of the list is an
-        operator and the following arguments are the operands. Roles
-        templates match their body keys to collector data on a 1-to-1
-        basis.  Env templates iterate through the keys in the body and
-        calls match on each role lookup found.
-        """
-        
+Match strategy: If the template value of a key is "None",
+then any data value is a match. If the template value is a
+scalar (not a list) then the value is interpreted as a string
+and only an exact match is considered a match. If the template
+value is a list, then the first element of the list is an
+operator and the following arguments are the operands. Roles
+templates match their body keys to collector data on a 1-to-1
+basis. Env templates iterate through the keys in the body and
+calls match on each role lookup found.
+"""
+
         # Different processing for Roles and envs
         result_dict = {"meta" : template_dict['meta'].copy(), "body": {}}
 
-        if template_dict['meta']['type']  == "role":
+        if template_dict['meta']['type'] == "role":
             result_dict['meta']['type'] = "role-diff"
             for template_key, template_value in template_dict['body'].iteritems():
                 if template_value == "None":
@@ -87,25 +87,26 @@ class DbBaseAPI(object):
                 else:
                     raise NotImplementedError
             return result_dict
-        elif template_dict['meta']['type']  == "env":
+        elif template_dict['meta']['type'] == "env":
             result_dict['meta']['type'] = "env-diff"
             for template_key, template_value in template_dict['body'].iteritems():
                 result_dict['body'][template_key] = []
                 if template_value == "None":
                     pass
                 elif type(template_value) is list:
-#                     rval = self._match_operator( template_value, data_dict[ template_key ] )
-#                     if rval :
-#                         result_dict['body'][template_key] = data_dict[template_key]
+# rval = self._match_operator( template_value, data_dict[ template_key ] )
+# if rval :
+# result_dict['body'][template_key] = data_dict[template_key]
                     pass
                 elif type(template_value) is str:
-                    # so the template value will be the name of a template to match the 
-                    # collector data to.  Which means that we need to use this name to fetch
+                    # so the template value will be the name of a template to match the
+                    # collector data to. Which means that we need to use this name to fetch
                     # the template to do a match with the provided collector data in
                     # data_dict['body'][template_key][0]['current']
                     role_match_template = self.find_one(tdbid, {"name" : template_value})
-                    role_match = s.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
-                    result_dict['body'][template_key][-1] = role_match 
+                    if template_key in data_dict['body'] :
+                        role_match = s.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
+                        result_dict['body'][template_key].append( role_match)
                 else:
                     raise NotImplementedError
             return result_dict
@@ -123,25 +124,25 @@ class DbBaseAPI(object):
             if not int(data_value) < int(operator_list[1]):
                 return data_value
             else:
-                return None           
+                return None
         elif operator == "=":
             if not data_value == operator_list[1]:
                 return data_value
             else:
-                return None      
+                return None
         elif operator == "!=":
             if not data_value != operator_list[1]:
                 return data_value
             else:
-                return None      
+                return None
         elif operator == "~":
             if not re.match( r"%s" % operator_list[1], data_value ):
                 return data_value
             else:
-                return None      
+                return None
         else:
             raise NotImplementedError
-    
+
     def _update(self,d, u):
         for k, v in u.iteritems():
             if isinstance(v, collections.Mapping):
@@ -159,13 +160,12 @@ class DbBaseAPI(object):
             next_template = self.find_one(dbid,{"name" : super})
             merged_template = self._resolve_template(dbid, next_template)
             return self._update(merged_template, template_dict)
-    
+
 class VigDBFS(DbBaseAPI):
     """ This is the current implementation that store data in the file system.
-    Don't call this implementation dependent class, use the generic wrapper instead.
-    
-    """
-    
+Don't call this implementation dependent class, use the generic wrapper instead.
+"""
+
     def __init__(self,auditroot='/nas/reg/log/jiralab/vigilante/auditor'
                  , tlroot='/nas/reg/log/jiralab/vigilante/template_library'):
         self.auditroot_path = auditroot
@@ -174,15 +174,15 @@ class VigDBFS(DbBaseAPI):
 
     def login(self,space="collector"):
         """ There are currently two possible databases, the "collector" database which holds raw data
-        gathered from the Environments, and the "template_library" which contains JSON templates that
-        are used in matching operations 
-        """
+gathered from the Environments, and the "template_library" which contains JSON templates that
+are used in matching operations
+"""
         if space in ("collector", "template_library"):
             return super(VigDBFS,self).login(space)
         else :
             raise DBUnimplementedError
-    
-    def find_one(self, dbid,  query_dict):
+
+    def find_one(self, dbid, query_dict):
         if dbid not in self.threads :
             raise DBIDnotpresentError
         dbtype = self.threads[dbid]
@@ -270,20 +270,23 @@ class VigDB(VigDBFS):
 if __name__ == "__main__" :
     s= VigDB()
     collector =  s.login()
-    rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
+    # rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
     # print "Result Set : ", rs
-    # rs = s.find(collector, {"domain" : "srwd83",} )
+    rs = s.find(collector, {"domain" : "srwd66",} )
     # print "Result Set : ", json.dumps( rs)
-    # rs = s.find(collector, {"domain" : "srwd83", "iso8601" : { "starttime" : "2014-06-17T00:03:01Z", "endtime" : "2014-06-18T18:24:01Z" } } )
-    # print "Result Set : ", json.dumps( rs)
+    # rs = s.find(collector, {"domain" : "srwd66", "iso8601" : { "starttime" : "2014-06-23T00:03:01Z", "endtime" : "2014-06-23T18:24:01Z" } } )
+    # rs = s.find(collector, {"domain" : "srwd66"} )
+    # print  json.dumps( rs)
     templates = s.login("template_library")
     # print "Result Set : ", json.dumps( rs)
     # rs = s.find(templates, {})
     # print "Result Set : ", json.dumps( rs )
     # rs = s.find_one(templates, {"name" : "generic"})
     # print "Result Set : ", json.dumps( rs )
-    spectpl = s.find_one(templates, {"name" : "operators"})
+    # spectpl = s.find_one(templates, {"name" : "operators"})
+    env = s.find_one(templates, {"name" : "srwd66"})
+    print "Result Set : ", json.dumps( env )
     # print "Result Set : ", json.dumps( spectpl )
-    rs = s.match( templates, spectpl, collector, rs )
+    # rs = s.match( templates, spectpl, collector, rs )
+    rs = s.match( templates, env, collector, rs )
     print json.dumps(rs)
-    
