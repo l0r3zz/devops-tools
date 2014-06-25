@@ -62,7 +62,7 @@ def pretty_print_audit(template_struct, result_struct, args):
     '''
     if result_struct['meta']['type'] == "role-diff" :
         compliantP = "NOT" if result_struct['body'] else ""
-        print (summary_msg % (args.role, compliantP, template_struct['meta']['name'])),
+        print (summary_msg % (args.role, compliantP, template_struct['meta']['name']))
         if compliantP :
             print (header_msg),
             for key in result_struct['body'] :
