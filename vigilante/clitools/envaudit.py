@@ -51,6 +51,12 @@ def api_request( query_type, query_dict ):
 
     return http_get( "%s/%s" % ( BASE_URL, request_url ) )
 
+def pretty_print_audit(template_struct, result_struct, args):
+    summary_msg = 'Role "%s" is %s compliant with template "%s" '
+    if result_struct['meta']['type'] == "role-diff" :
+        compliantP = "NOT" if result_struct['body'] else ""
+        print (summary_msg % (args.role, compliantP, template_struct['meta']['name']))
+
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
     DEBUG = 0
@@ -79,7 +85,7 @@ def main(argv=None):  # IGNORE:C0111
         parser.add_argument('-l', '--list', action='store_true', help="list the template or collection data ",
             dest="list" )
         parser.add_argument("-m", "--mgrmode", dest="mm",
-            default=None, help="print the information in a more human readable form")
+            action='store_true', help="print the information in a more human readable form")
         parser.add_argument('-v', '--version', action='version', help="print the version ",
             version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug",
@@ -116,12 +122,19 @@ def main(argv=None):  # IGNORE:C0111
                     print( json.dumps(rs, indent=4, sort_keys=True))
                 
         elif args.template :
+            tplstruct =  json.loads(api_request( "templates", { "template" : args.template } ))
             if args.role :
                 rs =  json.loads(api_request( "query", { "fqdn" : args.role, "template" : args.template } ))
-                print( json.dumps(rs, indent=4, sort_keys=True))
+                if args.mm:
+                    pretty_print_audit(tplstruct, rs, args)
+                else:
+                    print( json.dumps(rs, indent=4, sort_keys=True))
             elif args.envid :
                 rs =  json.loads(api_request( "query", { "domain" : args.envid, "template" : args.template } ))
-                print( json.dumps(rs, indent=4, sort_keys=True))
+                if args.mm :
+                    pretty_print_audit(tplstruct, rs, args)
+                else : 
+                    print( json.dumps(rs, indent=4, sort_keys=True))
                 
         sys.exit()
         
