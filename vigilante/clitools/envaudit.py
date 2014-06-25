@@ -12,6 +12,7 @@ env-audit -- cli tool to perform auditing operations on Dev/QA collection data
 import sys
 import os
 import urllib2
+import json
 
 
 from argparse import ArgumentParser
@@ -19,9 +20,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.3
+__version__ = 0.4
 __date__ = '2014-06-09'
-__updated__ = '2014-06-26'
+__updated__ = '2014-06-30'
 
 def http_get( request ):
     return urllib2.urlopen( request ).read()
@@ -96,29 +97,31 @@ def main(argv=None):  # IGNORE:C0111
 
         if args.list :
             if args.role :
-                rsstr =  api_request( "collector", { "fqdn" : args.role } )
+                rs =  json.loads(api_request( "collector", { "fqdn" : args.role } ))
                 if args.mm :
                     pass
                 else :
-                    print ("%s" % rsstr)
+                    print( json.dumps(rs, indent=4, sort_keys=True))
             elif args.envid :
-                rsstr =  api_request( "collector", { "domain" : args.envid } )
+                rs =  json.loads(api_request( "collector", { "domain" : args.envid } ))
                 if args.mm :
                     pass
                 else :
-                    print ("%s" % rsstr)
+                    print( json.dumps(rs, indent=4, sort_keys=True))
             elif args.template :
-                rsstr =  api_request( "templates", { "template" : args.template } )
+                rs =  json.loads(api_request( "templates", { "template" : args.template } ))
                 if args.mm :
                     pass
                 else :
-                    print ("%s" % rsstr)
+                    print( json.dumps(rs, indent=4, sort_keys=True))
                 
         elif args.template :
             if args.role :
-                print api_request( "query", { "fqdn" : args.role, "template" : args.template } )
+                rs =  json.loads(api_request( "query", { "fqdn" : args.role, "template" : args.template } ))
+                print( json.dumps(rs, indent=4, sort_keys=True))
             elif args.envid :
-                print api_request( "query", { "domain" : args.envid, "template" : args.template } )
+                rs =  json.loads(api_request( "query", { "domain" : args.envid, "template" : args.template } ))
+                print( json.dumps(rs, indent=4, sort_keys=True))
                 
         sys.exit()
         
