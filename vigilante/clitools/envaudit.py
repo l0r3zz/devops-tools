@@ -53,9 +53,21 @@ def api_request( query_type, query_dict ):
 
 def pretty_print_audit(template_struct, result_struct, args):
     summary_msg = 'Role "%s" is %s compliant with template "%s" '
+    header_msg = '''
+    Host                                   Key                 Template Value        Actual Value
+    ____________________________________________________________________________________________________
+    '''
+    column_msg = '''
+    %s            %s                %s              %s
+    '''
     if result_struct['meta']['type'] == "role-diff" :
         compliantP = "NOT" if result_struct['body'] else ""
-        print (summary_msg % (args.role, compliantP, template_struct['meta']['name']))
+        print (summary_msg % (args.role, compliantP, template_struct['meta']['name'])),
+        if compliantP :
+            print (header_msg),
+            for key in result_struct['body'] :
+                print(column_msg % (args.role, key, template_struct['body'][key], result_struct['body'][key])),
+                
 
 def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
