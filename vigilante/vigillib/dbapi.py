@@ -289,4 +289,4 @@ if __name__ == "__main__" :
     # print "Result Set : ", json.dumps( spectpl )
     # rs = s.match( templates, spectpl, collector, rs )
     rs = s.match( templates, env, collector, rs )
-    print json.dumps(rs)
+    print json.dumps(rs, indent=4, sort_keys=True)

@@ -20,9 +20,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.4
+__version__ = 0.5
 __date__ = '2014-06-09'
-__updated__ = '2014-06-30'
+__updated__ = '2014-07-01'
 
 def http_get( request ):
     return urllib2.urlopen( request ).read()
@@ -52,7 +52,8 @@ def api_request( query_type, query_dict ):
     return http_get( "%s/%s" % ( BASE_URL, request_url ) )
 
 def pretty_print_audit(template_struct, result_struct, args):
-    summary_msg = 'Role "%s" is %s compliant with template "%s" '
+    summary_msg_role = '\nRole "%s" is %s compliant with template "%s" '
+    summary_msg_env = '\nEnvironment "%s" is %s compliant with template "%s" '
     header_msg = '''
     Host                                   Key                 Template Value        Actual Value
     ____________________________________________________________________________________________________
@@ -62,11 +63,26 @@ def pretty_print_audit(template_struct, result_struct, args):
     '''
     if result_struct['meta']['type'] == "role-diff" :
         compliantP = "NOT" if result_struct['body'] else ""
-        print (summary_msg % (args.role, compliantP, template_struct['meta']['name']))
+        print (summary_msg_role % (args.role, compliantP, template_struct['meta']['name']))
         if compliantP :
             print (header_msg),
             for key in result_struct['body'] :
                 print(column_msg % (args.role, key, template_struct['body'][key], result_struct['body'][key])),
+    elif result_struct['meta']['type'] == "env-diff" :
+        compliantP = ""
+        for role_key in result_struct['body'] :
+            if result_struct['body'][role_key] :
+                if result_struct['body'][role_key][0]['body'] :
+                    compliantP = "NOT"
+        print (summary_msg_env % (args.envid, compliantP, template_struct['meta']['name']))
+        print( header_msg),
+        for role_key in result_struct['body'] :
+            if result_struct['body'][role_key] :
+                if result_struct['body'][role_key][0]['body'] :
+                    for key in result_struct['body'][role_key][0]['body'] :
+                        print(column_msg % (role_key, key, "xxxxxxx", result_struct['body'][role_key][0]['body'][key])),
+            
+            
                 
 
 def main(argv=None):  # IGNORE:C0111
