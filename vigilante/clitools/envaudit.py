@@ -96,7 +96,11 @@ def main(argv=None):  # IGNORE:C0111
         return 2
 
     if args.list:
-        print api_request( "collector", { "fqdn" : args.role } )
+        if arg.role :
+            print api_request( "collector", { "fqdn" : args.role } )
+        elif arg.env :
+            pass
+            
     if args.template and args.role:
         print api_request( "query", { "fqdn" : args.role, "template" : args.template } )
 
