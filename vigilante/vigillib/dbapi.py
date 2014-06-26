@@ -90,27 +90,31 @@ calls match on each role lookup found.
         elif template_dict['meta']['type'] == "env":
             result_dict['meta']['type'] = "env-diff"
             result_dict['template'] = {}  # env-diffs have a template dict added
+            role_list = data_dict['body'].keys()
             for template_key, template_value in template_dict['body'].iteritems():
-                result_dict['body'][template_key] = []
-                if template_value == "None":
-                    pass
-                elif type(template_value) is list:
-# rval = self._match_operator( template_value, data_dict[ template_key ] )
-# if rval :
-# result_dict['body'][template_key] = data_dict[template_key]
-                    pass
-                elif type(template_value) is str:
-                    # so the template value will be the name of a template to match the
-                    # collector data to. Which means that we need to use this name to fetch
-                    # the template to do a match with the provided collector data in
-                    # data_dict['body'][template_key][0]['current']
-                    role_match_template = self.find_one(tdbid, {"name" : template_value})
-                    result_dict['template'][template_key] = role_match_template
-                    if template_key in data_dict['body'] and data_dict['body'][template_key] :
-                        role_match = self.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
-                        result_dict['body'][template_key].append( role_match)
-                else:
-                    raise NotImplementedError
+
+                role_matches = []
+                for element in role_list:
+                    if re.match(template_key, element):
+                        role_matches.append(element)
+                for matched_key in role_matches:    
+                    result_dict['body'][matched_key] = []
+                    if template_value == "None":
+                        pass
+                    elif type(template_value) is list:
+                        pass
+                    elif type(template_value) is str:
+                        # so the template value will be the name of a template to match the
+                        # collector data to. Which means that we need to use this name to fetch
+                        # the template to do a match with the provided collector data in
+                        # data_dict['body'][template_key][0]['current']
+                        role_match_template = self.find_one(tdbid, {"name" : template_value})
+                        result_dict['template'][template_key] = role_match_template
+                        if matched_key in data_dict['body'] and data_dict['body'][matched_key] :
+                            role_match = self.match( tdbid, role_match_template, cdbid, data_dict['body'][matched_key][0]['current'] )
+                            result_dict['body'][matched_key].append( role_match)
+                    else:
+                        raise NotImplementedError
             return result_dict
         else:
             raise NotImplementedError
