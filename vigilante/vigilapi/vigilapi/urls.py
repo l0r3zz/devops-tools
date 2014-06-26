@@ -22,4 +22,6 @@ urlpatterns = patterns('',
         'api.views.templates_get'),
     url(r'^vigilante/api/v([\d\.]+)/query/template/([^\/]+)/collector/role/current/(.*)$',
         'api.views.query_match_template'),
+    url(r'^vigilante/api/v([\d\.]+)/query/template/([^\/]+)/collector/env/current/(.*)$',
+        'api.views.query_match_env_template'),
 )

@@ -32,9 +32,13 @@ def api_request( query_type, query_dict ):
     if ( query_type == "collector" ):
         if "fqdn" in query_dict:
             request_url = "collector/role/current/%s" % query_dict[ "fqdn" ]
+        elif "domain" in query_dict:
+            request_url = "collector/env/current/%s" % query_dict[ "domain" ]
     elif ( query_type == "query" ):
         if "fqdn" in query_dict and "template" in query_dict:
             request_url = "query/template/%s/collector/role/current/%s" % ( query_dict["template"], query_dict["fqdn"] )
+        if "domain" in query_dict and "template" in query_dict:
+            request_url = "query/template/%s/collector/env/current/%s" % ( query_dict["template"], query_dict["domain"] )
     else:
         pass
 
@@ -95,14 +99,17 @@ def main(argv=None):  # IGNORE:C0111
         sys.stderr.write(indent + "  for help use --help\n")
         return 2
 
-    if args.list:
-        if arg.role :
+    if args.list :
+        if args.role :
             print api_request( "collector", { "fqdn" : args.role } )
-        elif arg.env :
-            pass
+        elif args.envid :
+            print api_request( "collector", { "domain" : args.envid } )
             
-    if args.template and args.role:
-        print api_request( "query", { "fqdn" : args.role, "template" : args.template } )
+    if args.template :
+        if args.role :
+            print api_request( "query", { "fqdn" : args.role, "template" : args.template } )
+        elif args.envid :
+            print api_request( "query", { "domain" : args.envid, "template" : args.template } )
 
 if __name__ == "__main__":
     main()

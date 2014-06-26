@@ -105,7 +105,7 @@ calls match on each role lookup found.
                     # data_dict['body'][template_key][0]['current']
                     role_match_template = self.find_one(tdbid, {"name" : template_value})
                     if template_key in data_dict['body'] :
-                        role_match = s.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
+                        role_match = self.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
                         result_dict['body'][template_key].append( role_match)
                 else:
                     raise NotImplementedError
@@ -117,7 +117,7 @@ calls match on each role lookup found.
         operator = operator_list[0]
         if operator == ">":
             if not int(data_value) > int(operator_list[1]):
-                return data_valuel
+                return data_value
             else:
                 return None
         elif operator == "<":

@@ -42,3 +42,9 @@ def query_match_template( request, version, template, hostname ):
     data_dict = s.find_one( collector, {"fqdn" : hostname } )
     rs = s.match( templates, template_dict, collector, data_dict )
     return HttpResponse( json.dumps( rs ), content_type='application/json' )
+
+def query_match_env_template( request, version, template, envid ):
+    template_dict = s.find_one( templates, {"name" : template } )
+    data_dict = s.find( collector, {"domain" : envid } )
+    rs = s.match( templates, template_dict, collector, data_dict )
+    return HttpResponse( json.dumps( rs ), content_type='application/json' )
