@@ -13,6 +13,7 @@ import sys
 import os
 import urllib2
 import json
+from  vigillib.api import *
 
 
 from argparse import ArgumentParser
@@ -20,7 +21,7 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.6
+__version__ = 0.7
 __date__ = '2014-06-09'
 __updated__ = '2014-07-05'
 
@@ -141,10 +142,13 @@ def main(argv=None):  # IGNORE:C0111
         if args.debug:
             DEBUG = True
 
+        api = VigilanteApi('http://srwd00dvo002.stubcorp.dev',7000)
+
         if args.list:
             if args.role:
-                rs = json.loads(api_request("collector",
-                                {"fqdn": args.role}))
+#                 rs = json.loads(api_request("collector",
+#                                 {"fqdn": args.role}))
+                rs = json.loads(api.get_collector_role_data_current(args.role))
                 if args.mm:
                     pass
                 else:
