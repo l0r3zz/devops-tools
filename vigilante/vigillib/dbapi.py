@@ -109,7 +109,7 @@ calls match on each role lookup found.
                         # the template to do a match with the provided collector data in
                         # data_dict['body'][template_key][0]['current']
                         role_match_template = self.find_one(tdbid, {"name" : template_value})
-                        result_dict['template'][template_key] = role_match_template
+                        result_dict['template'][matched_key] = role_match_template
                         if matched_key in data_dict['body'] and data_dict['body'][matched_key] :
                             role_match = self.match( tdbid, role_match_template, cdbid, data_dict['body'][matched_key][0]['current'] )
                             result_dict['body'][matched_key].append( role_match)
