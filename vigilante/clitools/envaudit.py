@@ -19,9 +19,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.3
 __date__ = '2014-06-09'
-__updated__ = '2014-06-18'
+__updated__ = '2014-06-26'
 
 def http_get( request ):
     return urllib2.urlopen( request ).read()
@@ -39,6 +39,9 @@ def api_request( query_type, query_dict ):
             request_url = "query/template/%s/collector/role/current/%s" % ( query_dict["template"], query_dict["fqdn"] )
         if "domain" in query_dict and "template" in query_dict:
             request_url = "query/template/%s/collector/env/current/%s" % ( query_dict["template"], query_dict["domain"] )
+    elif ( query_type == "templates" ):
+        request_url = "templates/get/%s" %  query_dict["template"] 
+        pass
     else:
         pass
 
@@ -74,6 +77,8 @@ def main(argv=None):  # IGNORE:C0111
             default=None, help="fqdn of the role  to be used ")
         parser.add_argument('-l', '--list', action='store_true', help="list the template or collection data ",
             dest="list" )
+        parser.add_argument("-m", "--mgrmode", dest="mm",
+            default=None, help="print the information in a more human readable form")
         parser.add_argument('-v', '--version', action='version', help="print the version ",
             version=program_version_message)
         parser.add_argument('-D', '--debug', dest="debug",
@@ -88,6 +93,35 @@ def main(argv=None):  # IGNORE:C0111
 
         if args.debug:
             DEBUG = True
+
+        if args.list :
+            if args.role :
+                rsstr =  api_request( "collector", { "fqdn" : args.role } )
+                if args.mm :
+                    pass
+                else :
+                    print ("%s" % rsstr)
+            elif args.envid :
+                rsstr =  api_request( "collector", { "domain" : args.envid } )
+                if args.mm :
+                    pass
+                else :
+                    print ("%s" % rsstr)
+            elif args.template :
+                rsstr =  api_request( "templates", { "template" : args.template } )
+                if args.mm :
+                    pass
+                else :
+                    print ("%s" % rsstr)
+                
+        elif args.template :
+            if args.role :
+                print api_request( "query", { "fqdn" : args.role, "template" : args.template } )
+            elif args.envid :
+                print api_request( "query", { "domain" : args.envid, "template" : args.template } )
+                
+        sys.exit()
+        
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
@@ -98,18 +132,6 @@ def main(argv=None):  # IGNORE:C0111
         sys.stderr.write(program_name + ": " + str(e) + "\n")
         sys.stderr.write(indent + "  for help use --help\n")
         return 2
-
-    if args.list :
-        if args.role :
-            print api_request( "collector", { "fqdn" : args.role } )
-        elif args.envid :
-            print api_request( "collector", { "domain" : args.envid } )
-            
-    if args.template :
-        if args.role :
-            print api_request( "query", { "fqdn" : args.role, "template" : args.template } )
-        elif args.envid :
-            print api_request( "query", { "domain" : args.envid, "template" : args.template } )
 
 if __name__ == "__main__":
     main()
