@@ -131,6 +131,8 @@ def main(argv=None):  # IGNORE:C0111
         if args.debug:
             DEBUG = True
             log.setLevel("DEBUG")
+        else:
+            DEBUG = False
 
         envid = args.env.upper()
         if not re.search("SRW[DQE][0-9]{2}",envid):
