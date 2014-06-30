@@ -19,7 +19,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.28
+__version__ = 1.29
 __date__ = '2012-11-20'
 __updated__ = '2014-07-19'
 
@@ -31,7 +31,7 @@ QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
 TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
 AUTOPROV_TO = 4000
 CMD_TO = 120
-SIEBEL_DEP_TO = 2400
+SIEBEL_DEP_TO = 3600
 
 env_de_prefix_dict = {
                        "srwd00dbs008" : "$<delphix_db_prefix>",
