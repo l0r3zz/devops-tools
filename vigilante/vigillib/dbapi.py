@@ -89,6 +89,7 @@ calls match on each role lookup found.
             return result_dict
         elif template_dict['meta']['type'] == "env":
             result_dict['meta']['type'] = "env-diff"
+            result_dict['template'] = {}  # env-diffs have a template dict added
             for template_key, template_value in template_dict['body'].iteritems():
                 result_dict['body'][template_key] = []
                 if template_value == "None":
@@ -104,6 +105,7 @@ calls match on each role lookup found.
                     # the template to do a match with the provided collector data in
                     # data_dict['body'][template_key][0]['current']
                     role_match_template = self.find_one(tdbid, {"name" : template_value})
+                    result_dict['template'][template_key] = role_match_template
                     if template_key in data_dict['body'] :
                         role_match = self.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
                         result_dict['body'][template_key].append( role_match)
