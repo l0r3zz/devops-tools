@@ -80,7 +80,7 @@ def pretty_print_audit(template_struct, result_struct, args):
             if result_struct['body'][role_key] :
                 if result_struct['body'][role_key][0]['body'] :
                     for key in result_struct['body'][role_key][0]['body'] :
-                        print(column_msg % (role_key, key, "xxxxxxx", result_struct['body'][role_key][0]['body'][key])),
+                        print(column_msg % (role_key, key, result_struct['template'][role_key]['body'][key], result_struct['body'][role_key][0]['body'][key])),
             
             
                 
