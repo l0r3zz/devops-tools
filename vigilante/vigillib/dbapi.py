@@ -106,7 +106,7 @@ calls match on each role lookup found.
                     # data_dict['body'][template_key][0]['current']
                     role_match_template = self.find_one(tdbid, {"name" : template_value})
                     result_dict['template'][template_key] = role_match_template
-                    if template_key in data_dict['body'] :
+                    if template_key in data_dict['body'] and data_dict['body'][template_key] :
                         role_match = self.match( tdbid, role_match_template, cdbid, data_dict['body'][template_key][0]['current'] )
                         result_dict['body'][template_key].append( role_match)
                 else:
