@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.120
+__version__ = 1.121
 __date__ = '2012-11-20'
-__updated__ = '2014-04-16'
+__updated__ = '2014-07-25'
 
 REGSERVER = "srwd00reg015.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -245,6 +245,25 @@ class EOMdbgen(jiralab.Job):
             # Look for errors in the delphix-auto-provision output
             if 'Error' in ses.session.before:
                 log.warn("eom.dbcreate.err:(%s) dbgen encountered an error" % name)
+
+            #if there wasn't an error and if siebel was specified, create a GG dataset ticket
+            elif self.use_siebel:
+                jreg = jiralab.Reg(args.release)
+                jira_release = jreg.jira_release
+                #Create the DB ticket
+                db_summary = "%s : Please create GG dataset for siebel DB" % envid
+                db_dict = {
+                                'project': {'key':'DB'},
+                                'issuetype': {'name':'Task'},
+                                'assignee': {'name': user},
+                                'customfield_10170': {'value':envid},
+                                'customfield_10100': {'value':'unspecified'},
+                                'components': [{'name':'General'}],
+                                'summary': db_summary,
+                                'description': db_summary,
+                                'customfield_10130': {'value': jira_release},
+                                }
+                new_db = jira.create_issue(fields=db_dict)
 
             log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
                      (name, time.asctime(time.gmtime(time.time()))))
@@ -838,6 +857,7 @@ class Eom(object):
             dbgen_task.daemon = True
             dbgen_task.start()
             self.dbgen_task = dbgen_task
+
             rval = 1
             stage_exit(log)
             return rval
