@@ -21,40 +21,40 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.7
+__version__ = 0.75
 __date__ = '2014-06-09'
-__updated__ = '2014-07-05'
+__updated__ = '2014-07-09'
 
 
-def http_get(request):
-    return urllib2.urlopen(request).read()
-
-
-def api_request(query_type, query_dict):
-    BASE_URL = 'http://srwd00dvo002.stubcorp.dev:7000/vigilante/api/v0.1'
-    request_url = ''
-    if (query_type == "collector"):
-        if "fqdn" in query_dict:
-            request_url = "collector/role/current/%s" % query_dict["fqdn"]
-        elif "domain" in query_dict:
-            request_url = "collector/env/current/%s" % query_dict["domain"]
-    elif (query_type == "query"):
-        if "fqdn" in query_dict and "template" in query_dict:
-            request_url = "query/template/%s/collector/role/current/%s" % (
-                query_dict["template"], query_dict["fqdn"])
-        if "domain" in query_dict and "template" in query_dict:
-            request_url = "query/template/%s/collector/env/current/%s" % (
-                query_dict["template"], query_dict["domain"])
-    elif (query_type == "templates"):
-        request_url = "templates/get/%s" % query_dict["template"]
-        pass
-    else:
-        pass
-
-    if request_url == '':
-        return ''
-
-    return http_get("%s/%s" % (BASE_URL, request_url))
+# def http_get(request):
+#     return urllib2.urlopen(request).read()
+# 
+# 
+# def api_request(query_type, query_dict):
+#     BASE_URL = 'http://srwd00dvo002.stubcorp.dev:7000/vigilante/api/v0.1'
+#     request_url = ''
+#     if (query_type == "collector"):
+#         if "fqdn" in query_dict:
+#             request_url = "collector/role/current/%s" % query_dict["fqdn"]
+#         elif "domain" in query_dict:
+#             request_url = "collector/env/current/%s" % query_dict["domain"]
+#     elif (query_type == "query"):
+#         if "fqdn" in query_dict and "template" in query_dict:
+#             request_url = "query/template/%s/collector/role/current/%s" % (
+#                 query_dict["template"], query_dict["fqdn"])
+#         if "domain" in query_dict and "template" in query_dict:
+#             request_url = "query/template/%s/collector/env/current/%s" % (
+#                 query_dict["template"], query_dict["domain"])
+#     elif (query_type == "templates"):
+#         request_url = "templates/get/%s" % query_dict["template"]
+#         pass
+#     else:
+#         pass
+# 
+#     if request_url == '':
+#         return ''
+# 
+#     return http_get("%s/%s" % (BASE_URL, request_url))
 
 
 def pretty_print_audit(template_struct, result_struct, args):
