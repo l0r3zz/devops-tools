@@ -111,7 +111,8 @@ calls match on each role lookup found.
                         role_match_template = self.find_one(tdbid, {"name" : template_value})
                         result_dict['template'][matched_key] = role_match_template
                         if matched_key in data_dict['body'] and data_dict['body'][matched_key] :
-                            role_match = self.match( tdbid, role_match_template, cdbid, data_dict['body'][matched_key][0]['current'] )
+                            role_match = self.match( tdbid, role_match_template, 
+                                            cdbid, data_dict['body'][matched_key][0]['current'] )
                             result_dict['body'][matched_key].append( role_match)
                     else:
                         raise NotImplementedError
@@ -230,7 +231,8 @@ are used in matching operations
             m = re.match( r"(^[A-z]+[0-9]{2})", envid)
             return_dict['meta'][ 'envid' ] = envid
             result_set_path = "%s/%s" % ( self.auditroot_path, envid )
-            env_role_paths = [ role_path for role_path in listdir( result_set_path ) if os.path.isdir( os.path.join( result_set_path, role_path ) ) ]
+            env_role_paths = [ role_path for role_path in listdir( result_set_path ) 
+                              if os.path.isdir( os.path.join( result_set_path, role_path ) ) ]
             for role_path in env_role_paths:
                 file_dict = self._find_file_in_time( os.path.join( result_set_path, role_path ), timestamp )
                 role_facter_in_time_range = []

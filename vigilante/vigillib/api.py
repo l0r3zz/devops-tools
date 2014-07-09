@@ -89,7 +89,7 @@ class VigilanteApi(VigApiHelper):
     
     def query_current_env_with_template(self,tmplt,envid):
         return self.ws_get("/vigilante/api/v0.1/query/template/%s/collector/env/current/%s" %
-                           (tmplt,env))
+                           (tmplt,envid))
 
     def query_historic_role_with_template(self, tmplt, role, iso8601):
         return self.ws_get("/vigilante/api/v0.1/query/template/%s/collector/role/%s/%s" %
