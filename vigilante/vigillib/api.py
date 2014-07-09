@@ -6,8 +6,8 @@ import sys          # reads command-line args
 import json
 
 PORT = 7000
-USER = "admin"
-PASSWORD = "admin"
+# USER = "admin"
+# PASSWORD = "admin"
 
 
 class VigApiHelper: 
@@ -15,22 +15,22 @@ class VigApiHelper:
     methods to send HTTP requests.'''
 
     def __init__(self, host, port): 
-        self.httpcon = httplib.HTTPSConnection(host, port=PORT) 
+        self.httpcon = httplib.HTTPConnection(host, port=PORT) 
 
-    def login(self, user="admin", password="admin",timeout=30):
-        headers = { "Content-Type" : "application/x-www-form-urlencoded" }
-        body = urllib.urlencode({ "username": user, "password": password })
-        self.httpcon.timeout = timeout
-        self.httpcon.request("POST", "/vigilante/api/v0.1/login", body, headers)
-        response = self.httpcon.getresponse()
-        self.cookie = response.getheader("Set-Cookie", "")
-        if response.status != httplib.OK:
-            raise Exception("login failed")
-        self.httpcon.close()
+#     def login(self, user="admin", password="admin",timeout=30):
+#         headers = { "Content-Type" : "application/x-www-form-urlencoded" }
+#         body = urllib.urlencode({ "username": user, "password": password })
+#         self.httpcon.timeout = timeout
+#         self.httpcon.request("POST", "/vigilante/api/v0.1/login", body, headers)
+#         response = self.httpcon.getresponse()
+#         self.cookie = response.getheader("Set-Cookie", "")
+#         if response.status != httplib.OK:
+#             raise Exception("login failed")
+#         self.httpcon.close()
 
     def request(self, method, url, body, content_type="application/json"):
         #self.httpcon.debuglevel=1  ### set level for debug output
-        headers = { "Content-Type" : content_type, "Cookie" : self.cookie }
+        headers = { "Content-Type" : content_type }
         self.httpcon.request(method, url, body, headers)
         response = self.httpcon.getresponse()
         self.cookie = response.getheader("Set-Cookie", self.cookie)
