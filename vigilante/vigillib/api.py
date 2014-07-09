@@ -33,7 +33,7 @@ class VigApiHelper:
         headers = { "Content-Type" : content_type }
         self.httpcon.request(method, url, body, headers)
         response = self.httpcon.getresponse()
-        self.cookie = response.getheader("Set-Cookie", self.cookie)
+#        self.cookie = response.getheader("Set-Cookie", self.cookie)
         status = response.status
         if status != httplib.OK and status != httplib.CREATED and status != httplib.NO_CONTENT:
             print "%s to %s got unexpected response code: %d (content = '%s')" \
