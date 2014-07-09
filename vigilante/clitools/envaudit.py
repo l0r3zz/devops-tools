@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/nas/reg/local/bin/python
 # encoding: utf-8
 '''
 env-audit -- cli tool to perform auditing operations on Dev/QA collection data
@@ -13,7 +13,7 @@ import sys
 import os
 import urllib2
 import json
-from  vigillib.api import *
+from  api import *
 
 
 from argparse import ArgumentParser
@@ -142,7 +142,7 @@ def main(argv=None):  # IGNORE:C0111
         if args.debug:
             DEBUG = True
 
-        api = VigilanteApi('http://srwd00dvo002.stubcorp.dev',7000)
+        api = VigilanteApi('srwd00dvo002.stubcorp.dev',7000)
 
         if args.list:
             if args.role:
@@ -154,38 +154,45 @@ def main(argv=None):  # IGNORE:C0111
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
             elif args.envid:
-                rs = json.loads(
-                    api_request("collector", {"domain": args.envid}))
+#                rs = json.loads(
+#                    api_request("collector", {"domain": args.envid}))
+		rs = json.loads(api.get_collector_env_data_current(args.envid))
                 if args.mm:
                     pass
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
             elif args.template:
-                rs = json.loads(
-                    api_request("templates",
-                                {"template": args.template}))
+#                rs = json.loads(
+#                    api_request("templates",
+#                                {"template": args.template}))
+		rs = json.loads(api.get_template(args.template))
                 if args.mm:
                     pass
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
 
         elif args.template:
-            tplstruct = json.loads(
-                api_request("templates", {"template": args.template}))
+#            tplstruct = json.loads(
+#                api_request("templates", {"template": args.template}))
+            tplstruct = json.loads(api.get_template(args.template))
             if args.role:
+#                rs = json.loads(
+#                    api_request("query",
+#                                {"fqdn": args.role,
+#                                 "template": args.template}))
                 rs = json.loads(
-                    api_request("query",
-                                {"fqdn": args.role,
-                                 "template": args.template}))
+                    api.query_current_role_with_template(args.template,args.role))
                 if args.mm:
                     pretty_print_audit(tplstruct, rs, args)
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
             elif args.envid:
+#                rs = json.loads(
+#                    api_request("query",
+#                                {"domain": args.envid,
+#                                 "template": args.template}))
                 rs = json.loads(
-                    api_request("query",
-                                {"domain": args.envid,
-                                 "template": args.template}))
+                    api.query_current_env_with_template(args.template, args.envid))
                 if args.mm:
                     pretty_print_audit(tplstruct, rs, args)
                 else:
@@ -196,13 +203,13 @@ def main(argv=None):  # IGNORE:C0111
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 0
-    except Exception, e:
-        if DEBUG:
-            raise(e)
-        indent = len(program_name) * " "
-        sys.stderr.write(program_name + ": " + str(e) + "\n")
-        sys.stderr.write(indent + "  for help use --help\n")
-        return 2
+#    except Exception, e:
+#        if DEBUG:
+#            raise(e)
+#        indent = len(program_name) * " "
+#        sys.stderr.write(program_name + ": " + str(e) + "\n")
+#        sys.stderr.write(indent + "  for help use --help\n")
+#        return 2
 
 if __name__ == "__main__":
     main()
