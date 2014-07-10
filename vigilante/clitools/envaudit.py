@@ -21,40 +21,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 
 __all__ = []
-__version__ = 0.75
+__version__ = 0.76
 __date__ = '2014-06-09'
 __updated__ = '2014-07-09'
-
-
-# def http_get(request):
-#     return urllib2.urlopen(request).read()
-# 
-# 
-# def api_request(query_type, query_dict):
-#     BASE_URL = 'http://srwd00dvo002.stubcorp.dev:7000/vigilante/api/v0.1'
-#     request_url = ''
-#     if (query_type == "collector"):
-#         if "fqdn" in query_dict:
-#             request_url = "collector/role/current/%s" % query_dict["fqdn"]
-#         elif "domain" in query_dict:
-#             request_url = "collector/env/current/%s" % query_dict["domain"]
-#     elif (query_type == "query"):
-#         if "fqdn" in query_dict and "template" in query_dict:
-#             request_url = "query/template/%s/collector/role/current/%s" % (
-#                 query_dict["template"], query_dict["fqdn"])
-#         if "domain" in query_dict and "template" in query_dict:
-#             request_url = "query/template/%s/collector/env/current/%s" % (
-#                 query_dict["template"], query_dict["domain"])
-#     elif (query_type == "templates"):
-#         request_url = "templates/get/%s" % query_dict["template"]
-#         pass
-#     else:
-#         pass
-# 
-#     if request_url == '':
-#         return ''
-# 
-#     return http_get("%s/%s" % (BASE_URL, request_url))
 
 
 def pretty_print_audit(template_struct, result_struct, args):
@@ -146,25 +115,18 @@ def main(argv=None):  # IGNORE:C0111
 
         if args.list:
             if args.role:
-#                 rs = json.loads(api_request("collector",
-#                                 {"fqdn": args.role}))
                 rs = json.loads(api.get_collector_role_data_current(args.role))
                 if args.mm:
                     pass
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
             elif args.envid:
-#                rs = json.loads(
-#                    api_request("collector", {"domain": args.envid}))
 		rs = json.loads(api.get_collector_env_data_current(args.envid))
                 if args.mm:
                     pass
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
             elif args.template:
-#                rs = json.loads(
-#                    api_request("templates",
-#                                {"template": args.template}))
 		rs = json.loads(api.get_template(args.template))
                 if args.mm:
                     pass
@@ -172,14 +134,8 @@ def main(argv=None):  # IGNORE:C0111
                     print(json.dumps(rs, indent=4, sort_keys=True))
 
         elif args.template:
-#            tplstruct = json.loads(
-#                api_request("templates", {"template": args.template}))
             tplstruct = json.loads(api.get_template(args.template))
             if args.role:
-#                rs = json.loads(
-#                    api_request("query",
-#                                {"fqdn": args.role,
-#                                 "template": args.template}))
                 rs = json.loads(
                     api.query_current_role_with_template(args.template,args.role))
                 if args.mm:
@@ -187,10 +143,6 @@ def main(argv=None):  # IGNORE:C0111
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
             elif args.envid:
-#                rs = json.loads(
-#                    api_request("query",
-#                                {"domain": args.envid,
-#                                 "template": args.template}))
                 rs = json.loads(
                     api.query_current_env_with_template(args.template, args.envid))
                 if args.mm:
