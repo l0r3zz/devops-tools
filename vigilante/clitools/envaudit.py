@@ -10,10 +10,12 @@ env-audit -- cli tool to perform auditing operations on Dev/QA collection data
 '''
 
 import sys
+sys.path.insert(1, "/nas/home/minjzhang/github/devops-tools/vigilante/vigillib")
+
 import os
 import urllib2
 import json
-from  api import *
+from api import *
 
 
 from argparse import ArgumentParser
@@ -111,6 +113,7 @@ def main(argv=None):  # IGNORE:C0111
         if args.debug:
             DEBUG = True
 
+        reval = 0
         api = VigilanteApi('srwd00dvo002.stubcorp.dev',7000)
 
         if args.list:
@@ -142,6 +145,8 @@ def main(argv=None):  # IGNORE:C0111
                     pretty_print_audit(tplstruct, rs, args)
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
+                if rs['summary'] == 'fail':
+                    reval = 1
             elif args.envid:
                 rs = json.loads(
                     api.query_current_env_with_template(args.template, args.envid))
@@ -149,8 +154,10 @@ def main(argv=None):  # IGNORE:C0111
                     pretty_print_audit(tplstruct, rs, args)
                 else:
                     print(json.dumps(rs, indent=4, sort_keys=True))
+                if rs['summary'] == 'fail':
+                    reval = 1
 
-        sys.exit()
+        sys.exit( reval )
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###

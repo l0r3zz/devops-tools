@@ -70,7 +70,7 @@ calls match on each role lookup found.
 """
 
         # Different processing for Roles and envs
-        result_dict = {"meta" : template_dict['meta'].copy(), "body": {}}
+        result_dict = {"meta" : template_dict['meta'].copy(), "body": {}, "summary" : "success" }
 
         if template_dict['meta']['type'] == "role":
             result_dict['meta']['type'] = "role-diff"
@@ -81,9 +81,11 @@ calls match on each role lookup found.
                     rval = self._match_operator( template_value, data_dict['body'][ template_key ] )
                     if rval :
                         result_dict['body'][template_key] = data_dict['body'][template_key]
+                        result_dict['summary'] = 'fail'
                 elif type(template_value) is str:
                     if ( template_value != data_dict['body'][ template_key ] ):
                         result_dict['body'][template_key] = data_dict['body'][template_key]
+                        result_dict['summary'] = 'fail'
                 else:
                     raise NotImplementedError
             return result_dict
@@ -113,7 +115,9 @@ calls match on each role lookup found.
                         if matched_key in data_dict['body'] and data_dict['body'][matched_key] :
                             role_match = self.match( tdbid, role_match_template, 
                                             cdbid, data_dict['body'][matched_key][0]['current'] )
-                            result_dict['body'][matched_key].append( role_match)
+                            if role_match['summary'] == 'fail':
+                                result_dict['summary'] = 'fail'
+                            result_dict['body'][matched_key].append( role_match )
                     else:
                         raise NotImplementedError
             return result_dict

@@ -1,3 +1,3 @@
 import sys
 
-sys.path.insert(1, "/nas/home/geowhite/github/devops-tools/vigilante/vigillib")
+sys.path.insert(1, "/nas/home/minjzhang/github/devops-tools/vigilante/vigillib")
