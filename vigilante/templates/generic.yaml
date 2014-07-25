@@ -15,8 +15,8 @@
 meta :
 
     super                  : None
-    type                   : "role"
-    name                   : "generic"
+    type                   : "Generic"
+    version                : "0.1"
 
 body :
 
@@ -35,6 +35,12 @@ body :
     operatingsystemrelease : " 5.8"
     physicalprocessorcount : " 2"
     processorcount         : " 2"
+    sh_code_version        : None
+    sh_envloc              : None
+    sh_envnum              : None
+    sh_rolenum             : None
+    sh_shape_version       : None
+    sh_system_role         : None
     swapfree               : None
     swapsize               : " 1.97 GB"
     uniqueid               : None
