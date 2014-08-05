@@ -32,7 +32,7 @@ from argparse import SUPPRESS
 __all__ = []
 __version__ = 1.122
 __date__ = '2012-11-20'
-__updated__ = '2014-08-04'
+__updated__ = '2014-08-06'
 
 REGSERVER = "srwd00reg015.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -264,13 +264,14 @@ class EOMdbgen(jiralab.Job):
                                 'description': db_summary,
                                 'customfield_10130': {'value': jira_release},
                                 }
-                new_db = jira.create_issue(fields=db_dict)
+
                 # Login to JIRA so we can manipulate tickets...
                 jira_options = {'server': 'https://jira.stubcorp.com/',
                         'verify' : False,
-
                         }
-                jira = JIRA(jira_options,basic_auth= (user,password))
+                jira = JIRA(jira_options,basic_auth=(user,password))
+                new_db = jira.create_issue(fields=db_dict)
+                log.info("eom.dbcreate.siebelGG: creating GG ticket for siebel")
 
 
             log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
