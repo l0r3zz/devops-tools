@@ -256,7 +256,7 @@ class EOMdbgen(jiralab.Job):
                 db_dict = {
                                 'project': {'key':'DB'},
                                 'issuetype': {'name':'Task'},
-                                'assignee': {'name': user},
+                                'assignee': {'name': 'vmallavarapu'},
                                 'customfield_10170': {'value':envid},
                                 'customfield_10100': {'value':'unspecified'},
                                 'components': [{'name':'General'}],
