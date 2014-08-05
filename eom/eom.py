@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.121
+__version__ = 1.122
 __date__ = '2012-11-20'
-__updated__ = '2014-07-25'
+__updated__ = '2014-08-04'
 
 REGSERVER = "srwd00reg015.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -203,6 +203,7 @@ class EOMdbgen(jiralab.Job):
             ses = self.ses
             args = self.args
             user = self.auth.user
+            password = self.auth.password
             log = self.log
             dbt = self.pprd["dbtask"]
             name = self.name
@@ -264,6 +265,13 @@ class EOMdbgen(jiralab.Job):
                                 'customfield_10130': {'value': jira_release},
                                 }
                 new_db = jira.create_issue(fields=db_dict)
+                # Login to JIRA so we can manipulate tickets...
+                jira_options = {'server': 'https://jira.stubcorp.com/',
+                        'verify' : False,
+
+                        }
+                jira = JIRA(jira_options,basic_auth= (user,password))
+
 
             log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
                      (name, time.asctime(time.gmtime(time.time()))))
