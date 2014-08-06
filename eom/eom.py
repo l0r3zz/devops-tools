@@ -4,7 +4,7 @@
 eom (env-o-matic) - Basic automation to build-out a virtual environment
 
 @author:     Geoff White
-@copyright:  2013 StubHub. All rights reserved.
+@copyright:  2013, 2014 StubHub. All rights reserved.
 @license:    Apache License 2.0
 @contact:    geowhite@stubhub.com
 '''
@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.122
+__version__ = 1.123
 __date__ = '2012-11-20'
-__updated__ = '2014-08-06'
+__updated__ = '2014-08-07'
 
 REGSERVER = "srwd00reg015.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -44,15 +44,15 @@ PEXERR = 2     # Pexpect command found an error in the stream
 ###############################################################################
 #    Hardwired Timeout values that can be overridden by options
 ###############################################################################
-REIMAGE_TO = 3600
-DBGEN_TO = 4000
-VERIFY_TO = 720
-CMD_TO = 120
+REIMAGE_TO = 3600                # default time to wait for a reimage operation
+DBGEN_TO = 4000                  # default time to wait for ecomm db generation
+VERIFY_TO = 720                 # time to wait for verification after provision
+CMD_TO = 120                    # time to wait for a remote command to complete
 DEPLOY_TO = 4800
 DEPLOY_WAIT = 1200
-CONTENT_TO = 1200
-CTOOL_TO = 4000
-BPM_TO = 2400
+CONTENT_TO = 1200               # timeout to wait for content refresh operation
+CTOOL_TO = 4000                  # time to wait for content tool (deprecated)
+BPM_TO = 2400                    # time to wait for BPM operations to complete
 TJOIN_TO = 60.0
 PREPOST_TO = 240
 BIGIP_TO = 900
@@ -66,10 +66,10 @@ def assignSequence(seq):
     '''
     Decorator to assign a ranking to methods defined in the Eom class so that
     we can schedule the execution of the various stages.  If you don't use this
-    decorator the method will not be scheduled. Not e there is no need to
+    decorator the method will not be scheduled. Note there is no need to
     schedule __init__, it is the Eom constructor and will be the first routine
     to be executed on start-up.   Also any "private" methods should not be
-    sddigned a sequence number
+    assigned a sequence number
     '''
     def do_assignment(to_func):
         to_func.seq = seq
@@ -77,9 +77,15 @@ def assignSequence(seq):
     return do_assignment
 
 def stage_entry(log):
+    """
+    Code that should be executed at the entry of each stage
+    """
     log.info("eom.stgentry: stage %s ENTRY" % inspect.stack()[1][3])
 
 def stage_exit(log):
+    """
+    Code that should be executed at the exit of each stage
+    """
     log.info("eom.stgexit: stage %s EXIT" % inspect.stack()[1][3])
 
 def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
@@ -504,6 +510,10 @@ class eom_startup(object):
             exit(exit_status)
 
     def _parse_ini_file(self, inifile):
+        """
+        Open and parse the .eomini file. Values in the .eomini file can
+        can be overrided by command line arguments
+        """
         if os.path.isfile(inifile)and os.access(inifile, os.R_OK):
             with open(inifile) as yi:
                 try:
