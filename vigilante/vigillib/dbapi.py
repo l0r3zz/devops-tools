@@ -7,6 +7,7 @@ import sys
 import collections
 from os import listdir
 from datetime import datetime, timedelta
+from pymongo import MongoClient
 
 class DBUnimplementedError(Exception) : pass
 class DBIDnotpresentError(Exception) : pass
@@ -273,17 +274,56 @@ are used in matching operations
                         file_dict[ file_time.strftime( RANGE_TIME_FORMAT ) ] = os.path.join( role_dir_path, hist_file )
             return file_dict
 
+class VigDBMongo(DbBaseAPI):
+    """ This is the current implementation that store data in the file system.
+Don't call this implementation dependent class, use the generic wrapper instead.
+"""
+
+    def __init__(self, dbname="test_facts", hostname="srwd00dvo002.stubcorp.dev", port=27017 ):
+        self.db = MongoClient( hostname, port )[ dbname ]
+        self.collector = 'facts_current'
+        self.collector_history = 'facts_history'
+        self.template_library = 'template_library'
+        super(VigDBMongo,self).__init__( host=hostname )
+
+    def login(self,space="collector"):
+        """ This is collections in mongodb. """
+        if space in ("collector", "template_library"):
+            return super(VigDBMongo,self).login(space)
+        else :
+            raise DBUnimplementedError
+
+    def insert(self, dbid):
+        db_collectors = self.db[ self.collector ]
+        pass
+
+    def find_one(self, dbid, query_dict):
+        if dbid not in self.threads :
+            raise DBIDnotpresentError
+        dbtype = self.threads[dbid]
+        if dbtype == "collector" :
+            fqdn = query_dict["fqdn"]
+            m = re.match( r"([^\.]+)\.([^\.]+)\.com", fqdn )
+            hostname = m.group( 1 )
+            db_collectors_current = self.db[ self.collector ]
+            return db_collectors_current.find_one( { "host" : hostname } )
+        else :
+            raise NotImplementedError
+
+    def find(self, dbid, query_dict):
+        pass
+
 # This is the interface that you should use in your code
-class VigDB(VigDBFS):
+class VigDB(VigDBMongo):
     def __init__(self):
         super(VigDB,self).__init__()
-
 
 if __name__ == "__main__" :
     s= VigDB()
     collector =  s.login()
-    # rs = s.find_one(collector, {"fqdn" : "srwd66api001.srwd66.com",})
-    # print "Result Set : ", rs
+    rs = s.find_one(collector, {"fqdn" : "srwd66sws001.srwd66.com",})
+    print "Result Set : ", rs
+    sys.exit()
     rs = s.find(collector, {"domain" : "srwd66",} )
     # print "Result Set : ", json.dumps( rs)
     # rs = s.find(collector, {"domain" : "srwd66", "iso8601" : { "starttime" : "2014-06-23T00:03:01Z", "endtime" : "2014-06-23T18:24:01Z" } } )
