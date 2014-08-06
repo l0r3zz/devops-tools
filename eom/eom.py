@@ -13,7 +13,7 @@ import sys
 import os
 import errno
 import re
-from jira.client import JIRA
+from jira.client import JIRA    # http://jira-python.readthedocs.org/en/latest/
 import jiralab
 import json
 import time
@@ -91,6 +91,12 @@ def stage_exit(log):
 def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
     """
     Execute a remote command and look at the output with pexpect
+    s   -  Is a session handle from Jiralab.CLIHelper()
+    cmd -  The command to be run
+    log -  Logging object
+    to  -  timeout to wait for command completion
+    result_set - array of tuples, (see pexpect doc)
+    dbstring  -  debug string to print if debug switch is set
     """
     if result_set:
         rval = s.docmd(cmd, result_set, timeout=to)
@@ -134,6 +140,11 @@ def main():
         sys.exit(0)
 ###############################################################################
 #    These classes implement threads that can be started in parallel
+#    Right now there are two things that proceed in parallel, reimaging and db
+#    creation,  this is implemented by the two classes below, both inherit from
+#    jiralab.Job they employ a semaphore queue mechanism, see 
+#    http://www.ibm.com/developerworks/aix/library/au-threadingpython/
+#    As a general example of how this is coded
 ###############################################################################
 class EOMreimage(jiralab.Job):
     '''
@@ -236,6 +247,7 @@ class EOMdbgen(jiralab.Job):
                 dbgen_to = args.DBGEN_TO + SIEBEL_TO
             else:
                 dbgen_to = args.DBGEN_TO
+            # craft a dbgen command and call it, wait for completion
             dbgen_build_cmd = (
                 'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
                 ' |tee /dev/tty'
@@ -302,7 +314,10 @@ class eom_startup(object):
         '''
         Process command line arguments
         '''
-
+        # argparse is used in all of the command line utilities through out
+        # the eom universe, check out : 
+        # https://docs.python.org/2/howto/argparse.html
+        # https://docs.python.org/dev/library/argparse.html
         self.program_name = os.path.basename(sys.argv[0])
         self.program_version = "v%s" % __version__
         self.program_build_date = str(__updated__)
@@ -457,6 +472,7 @@ class eom_startup(object):
         # there look in the home directory of the user specified in the --user
         # option, if the user option is not specified, try the home directory
         # of the user running the program.
+
         eom_dir_path = [
                         "./.eom",
                         "~%s/.eom" % ( self.args.user
@@ -586,7 +602,7 @@ class Eom(object):
         #######################################################################
         if args.syslog is not None:
             if ':' in args.syslog:
-                sp =  "(?P<hst>.+):(?P<prt>[0-9]+)"
+                sp =  "(?P<hst>.+):(?P<prt>[0-9]+)" # Decode Host:port
                 ss = re.search(sp,args.syslog)
                 if ss:
                     syslog_obj =  ( ss.group("hst"), int(ss.group("prt")))
@@ -684,6 +700,7 @@ class Eom(object):
         log = self.log
         jira_release = self.jira_release
         ses = self.ses
+
         stage_entry(log)
         self. use_siebel = ("--withsiebel" if args.withsiebel else "")
 

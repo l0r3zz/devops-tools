@@ -106,4 +106,12 @@ Here is a break-down of what is in the current repository tree:
             |-- dbapi.py                    # backend DB API
 
 
+The repository DOES NOT contain the jira-python library which access the
+REST API of JIRA, the version that eom currently uses can be found at:
+ 
+/nas/reg/local/lib/python2.7/site-packages/jira_python-0.13-py2.7.egg/
+
+The library has progressed since I forked it, the most current version 
+can be found at https://bitbucket.org/bspeakmon/jira-python
+
 
