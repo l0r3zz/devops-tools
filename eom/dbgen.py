@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 1.27
+__version__ = 1.29
 __date__ = '2012-11-20'
-__updated__ = '2014-04-29'
+__updated__ = '2014-07-19'
 
 DEBUG = 0
 REGSERVER = "srwd00reg010.stubcorp.dev"
@@ -31,7 +31,7 @@ QA_TNSNAMES = "/nas/home/oracle/OraHome/network/admin/tnsnames.ora"
 TT_ENV_BASED_RO = "/nas/reg/etc//dev/properties/tokenization/token-table-env-based"
 AUTOPROV_TO = 4000
 CMD_TO = 120
-SIEBEL_DEP_TO = 2400
+SIEBEL_DEP_TO = 3600
 
 env_de_prefix_dict = {
                        "srwd00dbs008" : "$<delphix_db_prefix>",
@@ -131,6 +131,8 @@ def main(argv=None):  # IGNORE:C0111
         if args.debug:
             DEBUG = True
             log.setLevel("DEBUG")
+        else:
+            DEBUG = False
 
         envid = args.env.upper()
         if not re.search("SRW[DQE][0-9]{2}",envid):
@@ -381,8 +383,9 @@ def main(argv=None):  # IGNORE:C0111
                                    siebel_session.before,siebel_session.after))
 
                     siebel_service_name = service_name[0:4] + "S" + service_name[5:]
+                    dbhost_fqdn = dbhost + ".stubcorp.dev"
                     siebel_conf_cmd = ( "deploy-siebel -e %s -d %s -n %s  -x -k"
-                                                    % ( args.env, dbhost, siebel_service_name))
+                                                    % ( args.env, dbhost_fqdn, siebel_service_name))
                     log.info("Cmd: %s" % siebel_conf_cmd)
                     rval =siebel_session.docmd(siebel_conf_cmd,[siebel_session.session.PROMPT], timeout=SIEBEL_DEP_TO)
                     if rval == 1:

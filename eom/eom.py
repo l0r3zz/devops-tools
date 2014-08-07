@@ -4,7 +4,7 @@
 eom (env-o-matic) - Basic automation to build-out a virtual environment
 
 @author:     Geoff White
-@copyright:  2013 StubHub. All rights reserved.
+@copyright:  2013, 2014 StubHub. All rights reserved.
 @license:    Apache License 2.0
 @contact:    geowhite@stubhub.com
 '''
@@ -13,7 +13,7 @@ import sys
 import os
 import errno
 import re
-from jira.client import JIRA
+from jira.client import JIRA    # http://jira-python.readthedocs.org/en/latest/
 import jiralab
 import json
 import time
@@ -30,9 +30,9 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import REMAINDER
 from argparse import SUPPRESS
 __all__ = []
-__version__ = 1.120
+__version__ = 1.123
 __date__ = '2012-11-20'
-__updated__ = '2014-04-16'
+__updated__ = '2014-08-07'
 
 REGSERVER = "srwd00reg015.stubcorp.dev" # Use this server to run commands
 DEFAULT_LOG_PATH = "/nas/reg/log/jiralab/env-o-matic.log"
@@ -44,15 +44,15 @@ PEXERR = 2     # Pexpect command found an error in the stream
 ###############################################################################
 #    Hardwired Timeout values that can be overridden by options
 ###############################################################################
-REIMAGE_TO = 3600
-DBGEN_TO = 4000
-VERIFY_TO = 720
-CMD_TO = 120
+REIMAGE_TO = 3600                # default time to wait for a reimage operation
+DBGEN_TO = 4000                  # default time to wait for ecomm db generation
+VERIFY_TO = 720                 # time to wait for verification after provision
+CMD_TO = 120                    # time to wait for a remote command to complete
 DEPLOY_TO = 4800
 DEPLOY_WAIT = 1200
-CONTENT_TO = 1200
-CTOOL_TO = 4000
-BPM_TO = 2400
+CONTENT_TO = 1200               # timeout to wait for content refresh operation
+CTOOL_TO = 4000                  # time to wait for content tool (deprecated)
+BPM_TO = 2400                    # time to wait for BPM operations to complete
 TJOIN_TO = 60.0
 PREPOST_TO = 240
 BIGIP_TO = 900
@@ -66,10 +66,10 @@ def assignSequence(seq):
     '''
     Decorator to assign a ranking to methods defined in the Eom class so that
     we can schedule the execution of the various stages.  If you don't use this
-    decorator the method will not be scheduled. Not e there is no need to
+    decorator the method will not be scheduled. Note there is no need to
     schedule __init__, it is the Eom constructor and will be the first routine
     to be executed on start-up.   Also any "private" methods should not be
-    sddigned a sequence number
+    assigned a sequence number
     '''
     def do_assignment(to_func):
         to_func.seq = seq
@@ -77,14 +77,26 @@ def assignSequence(seq):
     return do_assignment
 
 def stage_entry(log):
+    """
+    Code that should be executed at the entry of each stage
+    """
     log.info("eom.stgentry: stage %s ENTRY" % inspect.stack()[1][3])
 
 def stage_exit(log):
+    """
+    Code that should be executed at the exit of each stage
+    """
     log.info("eom.stgexit: stage %s EXIT" % inspect.stack()[1][3])
 
 def execute(s, cmd, debug, log, to=CMD_TO, result_set=None, dbstring=None):
     """
     Execute a remote command and look at the output with pexpect
+    s   -  Is a session handle from Jiralab.CLIHelper()
+    cmd -  The command to be run
+    log -  Logging object
+    to  -  timeout to wait for command completion
+    result_set - array of tuples, (see pexpect doc)
+    dbstring  -  debug string to print if debug switch is set
     """
     if result_set:
         rval = s.docmd(cmd, result_set, timeout=to)
@@ -128,6 +140,11 @@ def main():
         sys.exit(0)
 ###############################################################################
 #    These classes implement threads that can be started in parallel
+#    Right now there are two things that proceed in parallel, reimaging and db
+#    creation,  this is implemented by the two classes below, both inherit from
+#    jiralab.Job they employ a semaphore queue mechanism, see 
+#    http://www.ibm.com/developerworks/aix/library/au-threadingpython/
+#    As a general example of how this is coded
 ###############################################################################
 class EOMreimage(jiralab.Job):
     '''
@@ -203,6 +220,7 @@ class EOMdbgen(jiralab.Job):
             ses = self.ses
             args = self.args
             user = self.auth.user
+            password = self.auth.password
             log = self.log
             dbt = self.pprd["dbtask"]
             name = self.name
@@ -229,6 +247,7 @@ class EOMdbgen(jiralab.Job):
                 dbgen_to = args.DBGEN_TO + SIEBEL_TO
             else:
                 dbgen_to = args.DBGEN_TO
+            # craft a dbgen command and call it, wait for completion
             dbgen_build_cmd = (
                 'time dbgen -u %s -e %s -r %s %s %s --timeout=%d %s'
                 ' |tee /dev/tty'
@@ -245,6 +264,33 @@ class EOMdbgen(jiralab.Job):
             # Look for errors in the delphix-auto-provision output
             if 'Error' in ses.session.before:
                 log.warn("eom.dbcreate.err:(%s) dbgen encountered an error" % name)
+
+            #if there wasn't an error and if siebel was specified, create a GG dataset ticket
+            elif self.use_siebel:
+                jreg = jiralab.Reg(args.release)
+                jira_release = jreg.jira_release
+                #Create the DB ticket
+                db_summary = "%s : Please create GG dataset for siebel DB" % envid
+                db_dict = {
+                                'project': {'key':'DB'},
+                                'issuetype': {'name':'Task'},
+                                'assignee': {'name': 'vmallavarapu'},
+                                'customfield_10170': {'value':envid},
+                                'customfield_10100': {'value':'unspecified'},
+                                'components': [{'name':'General'}],
+                                'summary': db_summary,
+                                'description': db_summary,
+                                'customfield_10130': {'value': jira_release},
+                                }
+
+                # Login to JIRA so we can manipulate tickets...
+                jira_options = {'server': 'https://jira.stubcorp.com/',
+                        'verify' : False,
+                        }
+                jira = JIRA(jira_options,basic_auth=(user,password))
+                new_db = jira.create_issue(fields=db_dict)
+                log.info("eom.dbcreate.siebelGG: creating GG ticket for siebel")
+
 
             log.info("eom.dbcreate.done:(%s) Database DONE @ %s UTC," %
                      (name, time.asctime(time.gmtime(time.time()))))
@@ -268,7 +314,10 @@ class eom_startup(object):
         '''
         Process command line arguments
         '''
-
+        # argparse is used in all of the command line utilities through out
+        # the eom universe, check out : 
+        # https://docs.python.org/2/howto/argparse.html
+        # https://docs.python.org/dev/library/argparse.html
         self.program_name = os.path.basename(sys.argv[0])
         self.program_version = "v%s" % __version__
         self.program_build_date = str(__updated__)
@@ -423,6 +472,7 @@ class eom_startup(object):
         # there look in the home directory of the user specified in the --user
         # option, if the user option is not specified, try the home directory
         # of the user running the program.
+
         eom_dir_path = [
                         "./.eom",
                         "~%s/.eom" % ( self.args.user
@@ -476,6 +526,10 @@ class eom_startup(object):
             exit(exit_status)
 
     def _parse_ini_file(self, inifile):
+        """
+        Open and parse the .eomini file. Values in the .eomini file can
+        can be overrided by command line arguments
+        """
         if os.path.isfile(inifile)and os.access(inifile, os.R_OK):
             with open(inifile) as yi:
                 try:
@@ -548,7 +602,7 @@ class Eom(object):
         #######################################################################
         if args.syslog is not None:
             if ':' in args.syslog:
-                sp =  "(?P<hst>.+):(?P<prt>[0-9]+)"
+                sp =  "(?P<hst>.+):(?P<prt>[0-9]+)" # Decode Host:port
                 ss = re.search(sp,args.syslog)
                 if ss:
                     syslog_obj =  ( ss.group("hst"), int(ss.group("prt")))
@@ -646,6 +700,7 @@ class Eom(object):
         log = self.log
         jira_release = self.jira_release
         ses = self.ses
+
         stage_entry(log)
         self. use_siebel = ("--withsiebel" if args.withsiebel else "")
 
@@ -838,6 +893,7 @@ class Eom(object):
             dbgen_task.daemon = True
             dbgen_task.start()
             self.dbgen_task = dbgen_task
+
             rval = 1
             stage_exit(log)
             return rval
