@@ -8,7 +8,7 @@ in the PATH of the user's .bashrc i.e. all of the eom directory is currently
 Installed at /nas/reg/bin/jiralab/
 This is also true for the envaudit command.
 
-
+```
 Here is a break-down of what is in the current repository tree:
 
 `-- devops-tools                            # Top level directory
@@ -114,4 +114,4 @@ REST API of JIRA, the version that eom currently uses can be found at:
 The library has progressed since I forked it, the most current version 
 can be found at https://bitbucket.org/bspeakmon/jira-python
 
-
+```
