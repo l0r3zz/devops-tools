@@ -36,6 +36,9 @@ Here is a break-down of what is in the current repository tree:
     |   |-- proproj.py                      # cmd to create proproj and DB tickets, (used by eom)
     |   |-- pxssh.py                        # part of pexpect module
     |   `-- setup.py                        # ezinstall
+    ├── sshdquery
+        `── sshdquery.py                    # process sshd logfiles with concurrency
+    |
     `-- vigilante                           # top level directory for auditor project
         |-- clitools                        # CLI client
         |   `-- envaudit.py                 # env-audit command (client)
