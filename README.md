@@ -37,8 +37,7 @@ Here is a break-down of what is in the current repository tree:
     |   |-- pxssh.py                        # part of pexpect module
     |   `-- setup.py                        # ezinstall
     ├── sshdquery
-        `── sshdquery.py                    # process sshd logfiles with concurrency
-    |
+    |   `── sshdquery.py                    # process sshd logfiles with concurrency
     `-- vigilante                           # top level directory for auditor project
         |-- clitools                        # CLI client
         |   `-- envaudit.py                 # env-audit command (client)
