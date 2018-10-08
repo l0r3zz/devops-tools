@@ -73,7 +73,7 @@ class SourceIP:
 def isaVCRaddr(addr):
     """Return True if the Address is a VCR address, false otherwise"""
     if addr == "UNKNOWN":
-        print "UNKNOWN IP! suspect Hacking Attempt"
+        print ("UNKNOWN IP! suspect Hacking Attempt")
         return False
     ipaddr = IPAddress(addr)
     for entry in vcrcidrdb :
