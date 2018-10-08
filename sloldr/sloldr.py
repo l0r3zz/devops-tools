@@ -23,6 +23,7 @@ import json
 import os
 import inspect
 import concurrent.futures
+import BLAMOController
 import mylog
 
 
@@ -90,6 +91,14 @@ def main():
             description="Load/unload SLO indicatiors")
         parser.add_argument('--file', "-f", default="-",
                             help="yaml file containing specifications")
+        parser.add_argument('--token', default="",
+                            help="file containing API token")
+        parser.add_argument('--cid', default="",
+                            help="file containing client ID")
+        parser.add_argument('--secret', "-s", default="",
+                            help="file containing secret")
+        parser.add_argument('--instance',"-i", default="",
+                            help="FQDN or IP of instance")
         parser.add_argument('--debug', "-d", action="store_true",
                      help="Enable various debugging output")
         parser.add_argument('--quiet', "-q", action="store_true",
