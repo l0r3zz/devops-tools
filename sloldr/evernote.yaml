@@ -1,0 +1,22 @@
+%TAG !! tag:ambientnetworks.net,2018:
+---
+# All SOldr specification files have the following 4 sections
+#services:            # define services
+#components:          # define components to be loaded and associated with services
+#projects:            # define projects
+#sloi:                # define Service Level Objective metrics bindings
+
+components:           # Load a list of components
+
+  - {"name" :"evernote202","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote203","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote204","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote205","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote206","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote207","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote208","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote209","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote210","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote211","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote212","componentType" : "shard", "serviceName" :"ua-s9"}
+  - {"name" :"evernote213","componentType" : "shard", "serviceName" :"ua-s9"}

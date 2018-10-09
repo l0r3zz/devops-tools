@@ -3,10 +3,8 @@
 import sys          # reads command-line args
 import ApiHelper
 import json
-import subprocess   # use this till we switch to the rquest library for restore
 
 PORT = 443
-NVPC_VERSION = "0.01"
 
 
 class BLAMOController(ApiHelper.ApiHelper):
@@ -22,6 +20,9 @@ class BLAMOController(ApiHelper.ApiHelper):
     def create_component(self, body):
         return self.ws_post("/components", body)
 
+    def delete_component(self, cid):
+        return self.ws_get("/components/%s" % (cid))
+
     def delete_components(self, uid):
         return self.ws_delete("/components/%s" %(uid))
 
@@ -30,6 +31,12 @@ class BLAMOController(ApiHelper.ApiHelper):
 
 
 # These are non-API helper functions
+
+    def find_serviceID_by_name(self, name, services_list):
+        for service in services_list["services"]:
+            if service["name"] == name:
+                return service["_id"]
+        return( None)
 
     def pretty_print(self, obj, ofd=sys.stdout):
         json.dump(obj, ofd, sort_keys=True, indent=4)
@@ -69,12 +76,7 @@ if __name__ == "__main__":
     session = instance.connect("/services", token=auth_token)
     instance.pretty_prints(session.text)
     services_list = json.loads(session.text)
-    def find_serviceID_by_name(name):
-        for service in services_list["services"]:
-            if service["name"] == name:
-                return service["_id"]
-        return( None)
-    sid = find_serviceID_by_name("ua-s9")
+    sid = instance.find_serviceID_by_name("ua-s9", services_list)
     for index in range(10):
         body = { "name": "evertest"+str(index), "componentType": "shard",
                 "serviceId": sid}

@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 #Copyright (c) 2018 Geoffrey White
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,12 +63,42 @@ def std_prints(str, ofd=sys.stdout):
 
 ###############################################################################
 #############################   main function Definitions  ####################
-def process_metrics(metrics):
-    pass
+def process_metrics(av,metrics):
+    if not av.unload:
+        instance = BLAMOController.BLAMOController(av.instance, 443)
+        if av.token:
+            with open(av.token, 'r') as tokenfile:
+                auth_token=tokenfile.read().replace('\n', '')
+        elif av.cid and av.secret:
+            with open(av.cid, 'r') as cidfile:
+                client_id=cidfile.read().replace('\n', '')
+            with open(av.secret, 'r') as secretfile:
+                secret=secretfile.read().replace('\n', '')
+        else:
+            Log.error("Need both client_id file and secret or API token")
+            sys.exit(1)
+
+        session = instance.connect("/services", token=auth_token)
+        services_list = json.loads(session.text)
+        for component in metrics["components"]:
+            sid = instance.find_serviceID_by_name(component["serviceName"], services_list)
+            body = component
+            body["serviceId"] = sid
+            instance.create_component(json.dumps(body))
+    else:
+        instance = BLAMOController.BLAMOController(av.instance, 443)
+        with open(av.token, 'r') as tokenfile:
+            auth_token=tokenfile.read().replace('\n', '')
+
+        session = instance.connect("/components", token=auth_token)
+        components_list = json.loads(session.text)
+        for component in metrics["components"]:
+            cid = instance.find_componentID_by_name(component["name"], components_list)
+            instance.delete_component(cid)
     return
 
 def read_spec(av):
-    """ Load the spec file (runbook)"""
+    """ Load the spec file """
     spec_path = av.file
     if os.path.exists(spec_path):
         try:
@@ -128,7 +159,7 @@ def main():
     else:
         Log = mylog.logg("sloldr", cnsl=True, llevel=loglevel)
     slometrics = read_spec(argv)
-    process_metrics(slometrics)
+    process_metrics(argv, slometrics)
     if Debug and not Quiet:
         pretty_print(slometrics)
     return 0
