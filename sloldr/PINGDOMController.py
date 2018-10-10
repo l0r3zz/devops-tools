@@ -32,6 +32,12 @@ class PINGDOMController(ApiHelper.ApiHelper):
 
 # These are non-API helper functions
 
+    def get_metric_by_name(self,name,list):
+        for m in list:
+            if m["name"] == name:
+                return m
+        return None
+
     def pretty_print(self, obj, ofd=sys.stdout):
         json.dump(obj, ofd, sort_keys=True, indent=4)
         ofd.flush()
@@ -47,12 +53,6 @@ class PINGDOMController(ApiHelper.ApiHelper):
         json.dump(json.loads(str), ofd)
         ofd.write("'")
         ofd.flush()
-
-    def save(self, ofd):
-        return
-
-    def restore(self, ifd):
-        return
 
 if __name__ == "__main__":
 

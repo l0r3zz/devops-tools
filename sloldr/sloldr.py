@@ -103,16 +103,38 @@ def process_metrics(av,metrics):
                 and "password" in metrics["slio"]
                 and "app-key" in metrics["slio"]
                 ):
-                pingdom = PINGDOMController(instance_ip, PORT)
+                pingdom = PINGDOMController.PINGDOMController(instance_ip, PORT)
                 session = pingdom.login("/checks",user = metrics["slio"]["user"],
                                         password = metrics["slio"]["password"],
                                         api_key = metric["slio"]["app-key"]
                                         )
                 metrics_list = json.loads(session.text)
-                slio_body = '{"sli_type": "availability", "tracked_resource.type": "service", "tracked_resource.id": "5b6cea0b82edb912be88259d", "data_source_metadata.name": "pingdom", "data_source_metadata.metric_id": "%s", "data_source_metadata.metric_name": "%s", "indicator_metric.value_type": "bool", "indicator_metric.unit": "", "indicator_metric.scope": "All backend services", "indicator_metric.ingestion_delay": 0, "indicator_metric.backfill_start_date": "2018-08-01 13:00:00", "slo.objective_value": "True", "slo.comparason_operator": "equal", "slo.objective_percentage": 99.9, "measurement_frequency": -1}'
                 if "trackers" in metrics["slio"]:
                     for sig in metrics["slio"]["trackers"]:
-                        pass
+                        cid = instance.find_componentID_by_name(sig["name"],
+                                                                components_list)
+                        m_signal = pingdom.get_metric_by_name(sig["name"],
+                                                              metrics_list["checks"])
+                        ds_metric_id = m_signal["id"]
+                        ds_metric_name = m_signal["name"]
+                        slio_body = {
+                            "sli_type": "availability",
+                            "tracked_resource.type": "service",
+                            "tracked_resource.id": cid,
+                            "data_source_metadata.name": "pingdom",
+                            "data_source_metadata.metric_id": ds_metric_id,
+                            "data_source_metadata.metric_name": ds_metric_name,
+                            "indicator_metric.value_type": "bool",
+                            "indicator_metric.unit": "",
+                            "indicator_metric.scope": "All backend services",
+                            "indicator_metric.ingestion_delay": 0,
+                            "indicator_metric.backfill_start_date": "2018-08-01 13:00:00",
+                            "slo.objective_value": "True",
+                            "slo.comparason_operator": "equal",
+                            "slo.objective_percentage": 99.9,
+                            "measurement_frequency": -1
+                        }
+                        instance.create_slio(slio_body)
     return
 
 def read_spec(av):
