@@ -20,3 +20,10 @@ components:           # Load a list of components
   - {"name" :"evernote211","componentType" : "shard", "serviceName" :"ua-s9"}
   - {"name" :"evernote212","componentType" : "shard", "serviceName" :"ua-s9"}
   - {"name" :"evernote213","componentType" : "shard", "serviceName" :"ua-s9"}
+slio:
+  pingdom-user: "moiz@blameless.com"
+  pingdom-password: "puo7AiX6hoh7uY4a"
+  pingdom-app-key: "3sqzlcv90rfwv5r0apzswca8r8rbx52g"
+  trackers:
+
+  - {"component_name" :"evernote202","metric_name" : "evernote"}

@@ -22,9 +22,8 @@ import sys
 import yaml
 import json
 import os
-import inspect
-import concurrent.futures
 import BLAMOController
+import PINGDOMController
 import mylog
 
 
@@ -64,20 +63,21 @@ def std_prints(str, ofd=sys.stdout):
 ###############################################################################
 #############################   main function Definitions  ####################
 def process_metrics(av,metrics):
-    if not av.unload:
-        instance = BLAMOController.BLAMOController(av.instance, 443)
-        if av.token:
-            with open(av.token, 'r') as tokenfile:
-                auth_token=tokenfile.read().replace('\n', '')
-        elif av.cid and av.secret:
-            with open(av.cid, 'r') as cidfile:
-                client_id=cidfile.read().replace('\n', '')
-            with open(av.secret, 'r') as secretfile:
-                secret=secretfile.read().replace('\n', '')
-        else:
-            Log.error("Need both client_id file and secret or API token")
-            sys.exit(1)
+    instance = BLAMOController.BLAMOController(av.instance, 443)
+    if av.token:
+        with open(av.token, 'r') as tokenfile:
+            auth_token=tokenfile.read().replace('\n', '')
+    elif av.cid and av.secret:
+        with open(av.cid, 'r') as cidfile:
+            client_id=cidfile.read().replace('\n', '')
+        with open(av.secret, 'r') as secretfile:
+            secret=secretfile.read().replace('\n', '')
+    else:
+        Log.error("Need both client_id file and secret or API token")
+        sys.exit(1)
 
+
+    if not av.unload: #only if you are unloading data
         session = instance.connect("/services", token=auth_token)
         services_list = json.loads(session.text)
         for component in metrics["components"]:
@@ -86,15 +86,33 @@ def process_metrics(av,metrics):
             body["serviceId"] = sid
             instance.create_component(json.dumps(body))
     else:
-        instance = BLAMOController.BLAMOController(av.instance, 443)
-        with open(av.token, 'r') as tokenfile:
-            auth_token=tokenfile.read().replace('\n', '')
+        if "components" in metrics:
+            session = instance.connect("/components", token=auth_token)
+            components_list = json.loads(session.text)
+            for component in metrics["components"]:
+                cid = instance.find_componentID_by_name(component["name"],
+                                                        components_list)
+                instance.delete_component(cid)
 
-        session = instance.connect("/components", token=auth_token)
-        components_list = json.loads(session.text)
-        for component in metrics["components"]:
-            cid = instance.find_componentID_by_name(component["name"], components_list)
-            instance.delete_component(cid)
+        if "services" in metrics:
+            pass
+        if "products" in metrics:
+            pass
+        if "slio" in metrics:
+            if ( "user" in metrics["slio"]
+                and "password" in metrics["slio"]
+                and "app-key" in metrics["slio"]
+                ):
+                pingdom = PINGDOMController(instance_ip, PORT)
+                session = pingdom.login("/checks",user = metrics["slio"]["user"],
+                                        password = metrics["slio"]["password"],
+                                        api_key = metric["slio"]["app-key"]
+                                        )
+                metrics_list = json.loads(session.text)
+                slio_body = '{"sli_type": "availability", "tracked_resource.type": "service", "tracked_resource.id": "5b6cea0b82edb912be88259d", "data_source_metadata.name": "pingdom", "data_source_metadata.metric_id": "%s", "data_source_metadata.metric_name": "%s", "indicator_metric.value_type": "bool", "indicator_metric.unit": "", "indicator_metric.scope": "All backend services", "indicator_metric.ingestion_delay": 0, "indicator_metric.backfill_start_date": "2018-08-01 13:00:00", "slo.objective_value": "True", "slo.comparason_operator": "equal", "slo.objective_percentage": 99.9, "measurement_frequency": -1}'
+                if "trackers" in metrics["slio"]:
+                    for sig in metrics["slio"]["trackers"]:
+                        pass
     return
 
 def read_spec(av):
@@ -116,6 +134,7 @@ def main():
     """
     Program main loop
     """
+    Log = mylog.logg("installtool", cnsl=True, llevel=loglevel, sh=devnull)
 
     def get_opts():
         parser = argparse.ArgumentParser(

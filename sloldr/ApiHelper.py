@@ -63,17 +63,6 @@ class ApiHelper(object):
         resp.raise_for_status()
         return resp
 
-    def connect(self, logincmd, token=None, client_id=None, secret=None, authurl=None,timeout=300):
-        self.timeout = timeout
-        if token :
-            self.headers["Authorization"] = "Bearer %s" % (token)
-        self.urlprefix = "https://%s:%s%s" % (
-            self.host, self.port, self.apiprefix)
-        resp = self.request("get",logincmd)
-        self.cookies = resp.cookies
-        resp.raise_for_status()
-        return resp
-
     def ws_get(self, url):
         return self.request("GET", url)
 

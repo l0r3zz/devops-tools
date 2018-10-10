@@ -20,11 +20,25 @@ class BLAMOController(ApiHelper.ApiHelper):
     def create_component(self, body):
         return self.ws_post("/components", body)
 
+    def create_slio(self, body):
+        return self.ws_post("/slt", body)
+
     def delete_component(self, cid):
         return self.ws_get("/components/%s" % (cid))
 
     def delete_components(self, uid):
         return self.ws_delete("/components/%s" %(uid))
+
+    def connect(self, logincmd, token=None, client_id=None, secret=None, authurl=None,timeout=300):
+        self.timeout = timeout
+        if token :
+            self.headers["Authorization"] = "Bearer %s" % (token)
+        self.urlprefix = "https://%s:%s%s" % (
+            self.host, self.port, self.apiprefix)
+        resp = self.request("get",logincmd)
+        self.cookies = resp.cookies
+        resp.raise_for_status()
+        return resp
 
 
 
@@ -36,6 +50,12 @@ class BLAMOController(ApiHelper.ApiHelper):
         for service in services_list["services"]:
             if service["name"] == name:
                 return service["_id"]
+        return( None)
+
+    def find_componentID_by_name(self, name, component_list):
+        for component in component_list["components"]:
+            if component["name"] == name:
+                return component["_id"]
         return( None)
 
     def pretty_print(self, obj, ofd=sys.stdout):
@@ -81,6 +101,7 @@ if __name__ == "__main__":
         body = { "name": "evertest"+str(index), "componentType": "shard",
                 "serviceId": sid}
         instance.create_component(json.dumps(body))
+        slio_body = '{"sli_type": "availability", "tracked_resource.type": "service", "tracked_resource.id": "5b6cea0b82edb912be88259d", "data_source_metadata.name": "pingdom", "data_source_metadata.metric_id": "%s", "data_source_metadata.metric_name": "%s", "indicator_metric.value_type": "bool", "indicator_metric.unit": "", "indicator_metric.scope": "All backend services", "indicator_metric.ingestion_delay": 0, "indicator_metric.backfill_start_date": "2018-08-01 13:00:00", "slo.objective_value": "True", "slo.comparason_operator": "equal", "slo.objective_percentage": 99.9, "measurement_frequency": -1}'
 
 
     print ("End of Program")
