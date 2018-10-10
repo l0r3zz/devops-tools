@@ -134,6 +134,10 @@ def main():
     """
     Program main loop
     """
+    global Debug
+    global Log
+    global Quiet
+
     Log = mylog.logg("installtool", cnsl=True, llevel=loglevel, sh=devnull)
 
     def get_opts():
@@ -163,9 +167,6 @@ def main():
         return args
 
     argv = get_opts()
-    global Debug
-    global Log
-    global Quiet
     Debug = argv.debug
     if Debug:
         loglevel = "DEBUG"
