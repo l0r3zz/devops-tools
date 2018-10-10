@@ -373,7 +373,7 @@ def main():
     process_sshkeys(argv)
     process_logfile(argv)
     write_csv(argv)
-    return 0
+    return
 
 
 if __name__ == '__main__':
