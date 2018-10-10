@@ -20,14 +20,11 @@ class BLAMOController(ApiHelper.ApiHelper):
     def create_component(self, body):
         return self.ws_post("/components", body)
 
-    def create_slio(self, body):
-        return self.ws_post("/slt", body)
-
-    def delete_component(self, cid):
-        return self.ws_get("/components/%s" % (cid))
-
     def delete_components(self, uid):
         return self.ws_delete("/components/%s" %(uid))
+
+    def create_slio(self, body):
+        return self.ws_post("/slt", body)
 
     def connect(self, logincmd, token=None, client_id=None, secret=None, authurl=None,timeout=300):
         self.timeout = timeout
