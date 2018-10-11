@@ -87,14 +87,13 @@ if __name__ == "__main__":
     instance_ip = sys.argv[1]
     client_id = sys.argv[2]
     secret = sys.argv[3]
-    auth_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlJFUTFRMFpETlRsRFJURTFNalJCUVVSRE9FWkVSalpFUTBZelF6WTBRVFEyTlVRek5EQTNOdyJ9.eyJpc3MiOiJodHRwczovL2JsYW1lbGVzc2hxLmF1dGgwLmNvbS8iLCJzdWIiOiJMUjJSWWdtYllCMFdja2ttbzE2Y2pSYkxiU1V0RGNQNEBjbGllbnRzIiwiYXVkIjoiYmxhbWVsZXNzY3JlLmJsYW1lbGVzcy5pbyIsImlhdCI6MTUzODg3ODI5NywiZXhwIjoxNTM4OTY0Njk3LCJhenAiOiJMUjJSWWdtYllCMFdja2ttbzE2Y2pSYkxiU1V0RGNQNCIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyJ9.eoc6OfX6OnawBTrpQNSgW415zU8n6CxnYkXYDkd94jAIIdx2XpslAw3nyu-_WyGIdkYeol1ypTeaMGKOKYSG951BDmNwAy2K0Yp41_53-fkzWEbqHyf8OZj7sqRRatdKDGUQDDHO_uhiaSU5ny9Sh8812rtv9iJFld4cSUhHmoG0EIFTSdeJyFwMldWM2fe1jZ7TETdAAW1CZXR1mr90wv_Dzcd7TcKlmJY3bbxWqTZTRR7X2o2SEgXpTRlvoufr5rb1tBzjllPOZ3QVtPrkxX4E6cpaZGXYl5OPGe63y8D36PCJ3I2DjFnzTwOqvLmAtW6hI-hVyCN6RRvILuUoyQ"
-
+    auth_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlJFUTFRMFpETlRsRFJURTFNalJCUVVSRE9FWkVSalpFUTBZelF6WTBRVFEyTlVRek5EQTNOdyJ9.eyJpc3MiOiJodHRwczovL2JsYW1lbGVzc2hxLmF1dGgwLmNvbS8iLCJzdWIiOiJMUjJSWWdtYllCMFdja2ttbzE2Y2pSYkxiU1V0RGNQNEBjbGllbnRzIiwiYXVkIjoiYmxhbWVsZXNzY3JlLmJsYW1lbGVzcy5pbyIsImlhdCI6MTUzOTI2OTEyMiwiZXhwIjoxNTM5MzU1NTIyLCJhenAiOiJMUjJSWWdtYllCMFdja2ttbzE2Y2pSYkxiU1V0RGNQNCIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyJ9.Kn6gAhyqR93IybdXWKZEMjMKX8i8RuvdX16wrFKVFITGqmpfiXqaCD03TZYI7N_mIOLqMHSOaj-tBbRJtT9xBJrj31tDDBZFX2_8zz9O8vU1_5Pvu76E18mfefJho9B0-ReAQfwDVEWEAAlPaRXTBony0Kp4SEbrzuK4CVr0hzt85zFKxsPqRgm8IS4Kd9BNkDq2hMC0wibqavg99ONyPE54ea_Sky2jA5bXDPOXHtYUxZCbGu_4s9mwnZuQ4CJooT4pVHkcx97ukIY6rFBDR1h943tB5XrS9tl6zurfHds-JwkqVc_8h2yU8Eml4yfTidzyUU9DJVelHcEzxUQPGw"
     instance = BLAMOController(instance_ip, PORT)
     session = instance.connect("/services", token=auth_token)
     instance.pretty_prints(session.text)
     services_list = json.loads(session.text)
     sid = instance.find_serviceID_by_name("ua-s9", services_list)
-    for index in range(10):
+    for index in range(40,50,1):
         body = { "name": "evertest"+str(index), "componentType": "shard",
                 "serviceId": sid}
         instance.create_component(json.dumps(body))

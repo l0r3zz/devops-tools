@@ -1,0 +1,18 @@
+%TAG !! tag:ambientnetworks.net,2018:
+---
+# All SOldr specification files have the following 4 sections
+#services:            # define services
+#components:          # define components to be loaded and associated with services
+#projects:            # define projects
+#sloi:                # define Service Level Objective metrics bindings
+
+components:           # Load a list of components
+
+  - {"name" :"evernote216","componentType" : "shard", "serviceName" :"ua-s9"}
+slio:
+  user: "moiz@blameless.com"
+  password: "puo7AiX6hoh7uY4a"
+  app-key: "3sqzlcv90rfwv5r0apzswca8r8rbx52g"
+  trackers:
+
+  - {"component_name" :"evernote216","metric_name" : "evernote"}

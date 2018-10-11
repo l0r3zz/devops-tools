@@ -77,15 +77,7 @@ def process_metrics(av,metrics):
         sys.exit(1)
 
 
-    if not av.unload: #only if you are unloading data
-        session = instance.connect("/services", token=auth_token)
-        services_list = json.loads(session.text)
-        for component in metrics["components"]:
-            sid = instance.find_serviceID_by_name(component["serviceName"], services_list)
-            body = component
-            body["serviceId"] = sid
-            instance.create_component(json.dumps(body))
-    else:
+    if  av.unload: #only if you are unloading data
         if "components" in metrics:
             session = instance.connect("/components", token=auth_token)
             components_list = json.loads(session.text)
@@ -93,48 +85,66 @@ def process_metrics(av,metrics):
                 cid = instance.find_componentID_by_name(component["name"],
                                                         components_list)
                 instance.delete_component(cid)
+    else:
+        session = instance.connect("/services", token=auth_token)
+        services_list = json.loads(session.text)
+        for component in metrics["components"]:
+            sid = instance.find_serviceID_by_name(component["serviceName"], services_list)
+            body = component
+            body["serviceId"] = sid
+            instance.create_component(json.dumps(body))
 
         if "services" in metrics:
             pass
         if "products" in metrics:
             pass
         if "slio" in metrics:
+            session = instance.connect("/components", token=auth_token)
+            components_list = json.loads(session.text)
             if ( "user" in metrics["slio"]
                 and "password" in metrics["slio"]
                 and "app-key" in metrics["slio"]
                 ):
-                pingdom = PINGDOMController.PINGDOMController(instance_ip, PORT)
+                pingdom = PINGDOMController.PINGDOMController()
                 session = pingdom.login("/checks",user = metrics["slio"]["user"],
                                         password = metrics["slio"]["password"],
-                                        api_key = metric["slio"]["app-key"]
+                                        api_key = metrics["slio"]["app-key"]
                                         )
                 metrics_list = json.loads(session.text)
                 if "trackers" in metrics["slio"]:
                     for sig in metrics["slio"]["trackers"]:
-                        cid = instance.find_componentID_by_name(sig["name"],
+                        cid = instance.find_componentID_by_name(sig["component_name"],
                                                                 components_list)
-                        m_signal = pingdom.get_metric_by_name(sig["name"],
+                        m_signal = pingdom.get_metric_by_name(sig["metric_name"],
                                                               metrics_list["checks"])
-                        ds_metric_id = m_signal["id"]
+                        ds_metric_id = str(m_signal["id"])
                         ds_metric_name = m_signal["name"]
                         slio_body = {
-                            "sli_type": "availability",
-                            "tracked_resource.type": "service",
-                            "tracked_resource.id": cid,
-                            "data_source_metadata.name": "pingdom",
-                            "data_source_metadata.metric_id": ds_metric_id,
-                            "data_source_metadata.metric_name": ds_metric_name,
-                            "indicator_metric.value_type": "bool",
-                            "indicator_metric.unit": "",
-                            "indicator_metric.scope": "All backend services",
-                            "indicator_metric.ingestion_delay": 0,
-                            "indicator_metric.backfill_start_date": "2018-08-01 13:00:00",
-                            "slo.objective_value": "True",
-                            "slo.comparason_operator": "equal",
-                            "slo.objective_percentage": 99.9,
-                            "measurement_frequency": -1
+                            "dataSourceMetadata": {
+                                "metricId": ds_metric_id,
+                                "metricName": ds_metric_name,
+                                "name": "Pingdom"
+                            },
+                            "indicatorMetric": {
+                                "backfillStartDate": "2018-02-01",
+                                "ingestionDelay": 0,
+                                "scope": "Evernote Test",
+                                "unit": "none",
+                                "valueType": "bool"
+                            },
+                            "measurementFrequency": -1,
+                            "sliType": "availability",
+                            "slo": {
+                                "comparasonOperator": "equal",
+                                "objectivePercentage": "99.95",
+                                "objectiveValue": "true"
+                            },
+                            "trackedResource": {
+                                "id": cid,
+                                "type": "component"
+                            }
                         }
-                        instance.create_slio(slio_body)
+                        instance.create_slio(json.dumps(slio_body))
     return
 
 def read_spec(av):
@@ -160,7 +170,6 @@ def main():
     global Log
     global Quiet
 
-    Log = mylog.logg("installtool", cnsl=True, llevel=loglevel, sh=devnull)
 
     def get_opts():
         parser = argparse.ArgumentParser(

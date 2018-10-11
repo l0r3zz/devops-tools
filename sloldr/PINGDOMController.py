@@ -10,7 +10,7 @@ PORT = 443
 class PINGDOMController(ApiHelper.ApiHelper):
     '''Object that represents The Pingdom  API'''
 
-    def __init__(self, host, port=443):
+    def __init__(self, port=443):
         # inherit from ApiHelper
         ApiHelper.ApiHelper.__init__(self, "api.pingdom.com", port,"/api/2.1", verify=False)
 
@@ -57,15 +57,14 @@ class PINGDOMController(ApiHelper.ApiHelper):
 if __name__ == "__main__":
 
     if len(sys.argv) != 4:
-        print("usage: %s <instance-addr>  <user> <password> "\
+        print("usage: %s  <user> <password> "\
                % sys.argv[0])
         sys.exit(1)
 
-    instance_ip = sys.argv[1]
-    user = sys.argv[2]
-    password = sys.argv[3]
+    user = sys.argv[1]
+    password = sys.argv[2]
 
-    instance = PINGDOMController(instance_ip, PORT)
+    instance = PINGDOMController( PORT)
     session = instance.login("/checks",user = "moiz@blameless.com",
                              password = "puo7AiX6hoh7uY4a",
                              api_key = "3sqzlcv90rfwv5r0apzswca8r8rbx52g")
