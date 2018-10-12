@@ -86,18 +86,22 @@ def process_metrics(av,metrics):
                                                         components_list)
                 instance.delete_component(cid)
     else:
-        session = instance.connect("/services", token=auth_token)
-        services_list = json.loads(session.text)
-        for component in metrics["components"]:
-            sid = instance.find_serviceID_by_name(component["serviceName"], services_list)
-            body = component
-            body["serviceId"] = sid
-            instance.create_component(json.dumps(body))
-
-        if "services" in metrics:
-            pass
         if "products" in metrics:
             pass
+            session = instance.connect("/products", token=auth_token)
+            products_list = json.loads(session.text)
+        if "services" in metrics:
+            pass
+            session = instance.connect("/services", token=auth_token)
+            services_list = json.loads(session.text)
+        if "components" in metrics:
+            session = instance.connect("/services", token=auth_token)
+            services_list = json.loads(session.text)
+            for component in metrics["components"]:
+                sid = instance.find_serviceID_by_name(component["serviceName"], services_list)
+                body = component
+                body["serviceId"] = sid
+                instance.create_component(json.dumps(body))
         if "slio" in metrics:
             session = instance.connect("/components", token=auth_token)
             components_list = json.loads(session.text)
