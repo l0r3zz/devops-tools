@@ -17,6 +17,12 @@ class BLAMOController(ApiHelper.ApiHelper):
     def get_services(self):
         return self.ws_get("/services")
 
+    def create_product(self, body):
+        return self.ws_post("/products", body)
+
+    def create_service(self, body):
+        return self.ws_post("/services", body)
+
     def create_component(self, body):
         return self.ws_post("/components", body)
 

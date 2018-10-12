@@ -87,13 +87,17 @@ def process_metrics(av,metrics):
                 instance.delete_component(cid)
     else:
         if "products" in metrics:
-            pass
             session = instance.connect("/products", token=auth_token)
             products_list = json.loads(session.text)
+            for product in metrics["products"]:
+                body = product
+                instance.create_product(json.dumps(body))
         if "services" in metrics:
-            pass
             session = instance.connect("/services", token=auth_token)
-            services_list = json.loads(session.text)
+            service_list = json.loads(session.text)
+            for service in metrics["services"]:
+                body = service
+                instance.create_service(json.dumps(body))
         if "components" in metrics:
             session = instance.connect("/services", token=auth_token)
             services_list = json.loads(session.text)
