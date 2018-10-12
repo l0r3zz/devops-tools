@@ -108,8 +108,10 @@ def process_metrics(av,metrics):
                 pingdom = PINGDOMController.PINGDOMController()
                 session = pingdom.login("/checks",user = metrics["slio"]["user"],
                                         password = metrics["slio"]["password"],
-                                        api_key = metrics["slio"]["app-key"]
+                                        api_key = metrics["slio"]["app-key"],
+                                        account_email = metrics["slio"]["account-email"]
                                         )
+#                session = instance.get_pingdom_checks()
                 metrics_list = json.loads(session.text)
                 if "trackers" in metrics["slio"]:
                     for sig in metrics["slio"]["trackers"]:
@@ -117,6 +119,8 @@ def process_metrics(av,metrics):
                                                                 components_list)
                         m_signal = pingdom.get_metric_by_name(sig["metric_name"],
                                                               metrics_list["checks"])
+                        if m_signal == None:
+                            continue
                         ds_metric_id = str(m_signal["id"])
                         ds_metric_name = m_signal["name"]
                         slio_body = {

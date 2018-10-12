@@ -756,13 +756,11 @@ components:           # Load a list of components
   - {"name" :"en-ns-745","componentType" : "shard", "serviceName" :"Evernote Business Production Service"}
   - {"name" :"en-ns-746","componentType" : "shard", "serviceName" :"Evernote Business Production Service"}
   - {"name" :"en-ns-747","componentType" : "shard", "serviceName" :"Evernote Business Production Service"}
-  - {"name" :"en-ns-748","componentType" : "shard", "serviceName" :"Evernote Business Production Service"}
-  - {"name" :"en-ns-749","componentType" : "shard", "serviceName" :"Evernote Business Production Service"}
 slio:
-
   user: "moglesby@evernote.com"
   password: "&3PrF170Bg6!zBh"
   app-key: "fptvagar4rqgza3957qy8ycsr120hogf"
+  account-email: "ops-vendors@evernote.com"
 
   trackers:
 
@@ -1513,6 +1511,4 @@ slio:
    - {"component_name" :"en-ns-745","metric_name" : "EN - Shard 745 Status"}
    - {"component_name" :"en-ns-746","metric_name" : "EN - Shard 746 Status"}
    - {"component_name" :"en-ns-747","metric_name" : "EN - Shard 747 Status"}
-   - {"component_name" :"en-ns-748","metric_name" : "EN - Shard 748 Status"}
-   - {"component_name" :"en-ns-749","metric_name" : "EN - Shard 749 Status"}
 

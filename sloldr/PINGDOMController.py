@@ -14,11 +14,13 @@ class PINGDOMController(ApiHelper.ApiHelper):
         # inherit from ApiHelper
         ApiHelper.ApiHelper.__init__(self, "api.pingdom.com", port,"/api/2.1", verify=False)
 
-    def login(self, logincmd, user="admin", password="admin",api_key=None, timeout=300):
+    def login(self, logincmd, user="admin", password="admin",api_key=None,
+                    account_email=None,timeout=300):
         self.auth = (user, password)
         self.timeout = timeout
         if api_key :
             self.headers["App-Key"] = api_key
+            self.headers["Account-Email"] = account_email
         self.urlprefix = "https://%s:%s%s" % (
             self.host, self.port, self.apiprefix)
     #    resp = self.session.get(url,auth=self.auth, timeout=timeout)
@@ -67,7 +69,8 @@ if __name__ == "__main__":
     instance = PINGDOMController( PORT)
     session = instance.login("/checks",user = "moiz@blameless.com",
                              password = "puo7AiX6hoh7uY4a",
-                             api_key = "3sqzlcv90rfwv5r0apzswca8r8rbx52g")
+                             api_key = "fptvagar4rqgza3957qy8ycsr120hogf",
+                             account_email="ops-vendors@evernote.com")
     instance.pretty_prints(session.text)
     check_list = json.loads(session.text)
 

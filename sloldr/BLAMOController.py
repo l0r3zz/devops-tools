@@ -26,6 +26,9 @@ class BLAMOController(ApiHelper.ApiHelper):
     def create_slio(self, body):
         return self.ws_post("/slt", body)
 
+    def get_pingdom_checks(self):
+        return self.ws_get("/pingdom/checks")
+
     def connect(self, logincmd, token=None, client_id=None, secret=None, authurl=None,timeout=300):
         self.timeout = timeout
         if token :
