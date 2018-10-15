@@ -20,7 +20,8 @@ class PINGDOMController(ApiHelper.ApiHelper):
         self.timeout = timeout
         if api_key :
             self.headers["App-Key"] = api_key
-            self.headers["Account-Email"] = account_email
+            if account_email:
+                self.headers["Account-Email"] = account_email
         self.urlprefix = "https://%s:%s%s" % (
             self.host, self.port, self.apiprefix)
     #    resp = self.session.get(url,auth=self.auth, timeout=timeout)
