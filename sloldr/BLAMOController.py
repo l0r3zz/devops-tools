@@ -15,7 +15,10 @@ class BLAMOController(ApiHelper.ApiHelper):
         ApiHelper.ApiHelper.__init__(self, host, port,"/api/v1", verify=False)
 
     def get_services(self):
-        return self.ws_get("/services")
+        return self.ws_get("/services", params={"expandFields": "False","limit":1000,"offset": 0 })
+
+    def get_components(self):
+        return self.ws_get("/components", params={"expandFields": "False","limit":1000,"offset": 0 })
 
     def create_product(self, body):
         return self.ws_post("/products", body)
@@ -24,13 +27,16 @@ class BLAMOController(ApiHelper.ApiHelper):
         return self.ws_post("/services", body)
 
     def create_component(self, body):
-        return self.ws_post("/components", body)
+        return self.ws_post("/components", body, params={"expandFields": "False"})
 
     def delete_components(self, uid):
-        return self.ws_delete("/components/%s" %(uid))
+        return self.ws_delete("/components/%s" %(uid), params={"expandFields": "False"})
 
     def create_slio(self, body):
         return self.ws_post("/slt", body)
+
+    def delete_slio(self, uid):
+        return self.ws_delete("/slt/%s" %(uid), params={"expandFields": "False"})
 
     def get_pingdom_checks(self):
         return self.ws_get("/pingdom/checks")
@@ -62,6 +68,12 @@ class BLAMOController(ApiHelper.ApiHelper):
         for component in component_list["components"]:
             if component["name"] == name:
                 return component["_id"]
+        return( None)
+
+    def find_slioID_by_name(self, name, slt_list):
+        for slt in slt_list["serviceLevelTrackers"]:
+            if slt["resource_name"] == name:
+                return slt["slio_id"]
         return( None)
 
     def pretty_print(self, obj, ofd=sys.stdout):

@@ -80,13 +80,31 @@ def process_metrics(av,metrics):
 
 
     if  av.unload: #only if you are unloading data
+        if "trackers" in metrics["slio"]:
+            session = instance.connect("/slt?resourceType=component&limit=1000&offset=0",
+                                       token=auth_token)
+            slt_list = json.loads(session.text)
+            for slt in metrics["slio"]["trackers"]:
+                slio_id = instance.find_slioID_by_name(slt["component_name"],
+                                                        slt_list)
+                Log.info(
+                    "blameless delete_slt(%s,%s) "
+                    % (slt["resource_name"],slio_id))
+                instance.delete_slio(slio_id)
+
         if "components" in metrics:
+
             session = instance.connect("/components", token=auth_token)
-            components_list = json.loads(session.text)
+            resp = instance.get_components()
+            components_list = json.loads(resp.text)
             for component in metrics["components"]:
                 cid = instance.find_componentID_by_name(component["name"],
                                                         components_list)
-                instance.delete_component(cid)
+                Log.info(
+                    "blameless delete_components(%s,%s) "
+                    % (component["name"],cid))
+                instance.delete_components(cid)
+            return
     else:
         if "products" in metrics:
             session = instance.connect("/products", token=auth_token)
@@ -119,9 +137,9 @@ def process_metrics(av,metrics):
                             component["serviceName"]))
                 instance.create_component(json.dumps(body))
         if "slio" in metrics:
-            time.sleep(5) # wait a bit for DB to settle ##HACK ALERT##
             session = instance.connect("/components", token=auth_token)
-            components_list = json.loads(session.text)
+            resp = instance.get_components()
+            components_list = json.loads(resp.text)
             if ( "user" in metrics["slio"]
                 and "password" in metrics["slio"]
                 and "app-key" in metrics["slio"]

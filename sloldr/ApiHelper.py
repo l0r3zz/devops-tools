@@ -8,7 +8,7 @@ class ApiHelper(object):
     methods to send HTTP requests.  Original code from Dan Wendlandt
     expanded and ported to requests/Pyhton3 by Geoff White
 
-    Copyright [2016] [Ambient Networks LLC]
+    Copyright [2018] [Ambient Networks LLC]
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,13 +35,14 @@ class ApiHelper(object):
         self.cookies = None
         self.auth = None
 
-    def request(self, method, op, body="",
+    def request(self, method, op, body="",params=None,
                 timeout=0):
         headers = self.headers
         requrl = self.urlprefix+op
         to = (timeout if timeout else self.timeout)
         resp = self.session.request(method, requrl, auth=self.auth,
                                     data=body, headers=headers,
+                                    params=params,
                                     timeout=to,
                                     cookies=self.cookies)
         status = resp.status_code
@@ -63,17 +64,17 @@ class ApiHelper(object):
         resp.raise_for_status()
         return resp
 
-    def ws_get(self, url):
-        return self.request("GET", url)
+    def ws_get(self, url, params=None):
+        return self.request("GET", url, params=params)
 
-    def ws_put(self, url, body):
-        return self.request("PUT", url, body)
+    def ws_put(self, url, body, params=None):
+        return self.request("PUT", url, body, params=params)
 
-    def ws_post(self, url, body):
-        return self.request("POST", url, body)
+    def ws_post(self, url, body, params=None):
+        return self.request("POST", url, body, params=params)
 
-    def ws_delete(self, url):
-        return self.request("DELETE", url)
+    def ws_delete(self, url, params=None):
+        return self.request("DELETE", url, params=params)
 
 # How to use it as a superclass
 #class SomeController(ApiHelper.ApiHelper):
