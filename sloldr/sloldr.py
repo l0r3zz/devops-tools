@@ -89,7 +89,7 @@ def process_metrics(av,metrics):
                                                         slt_list)
                 Log.info(
                     "blameless delete_slt(%s,%s) "
-                    % (slt["resource_name"],slio_id))
+                    % (slt["component_name"],slio_id))
                 instance.delete_slio(slio_id)
 
         if "components" in metrics:
