@@ -14,23 +14,32 @@ class BLAMOController(ApiHelper.ApiHelper):
         # inherit from ApiHelper
         ApiHelper.ApiHelper.__init__(self, host, port,"/api/v1", verify=False)
 
-    def get_services(self):
-        return self.ws_get("/services", params={"expandFields": "False","limit":1000,"offset": 0 })
-
-    def get_components(self):
-        return self.ws_get("/components", params={"expandFields": "False","limit":1000,"offset": 0 })
+    def get_products(self):
+        return self.ws_get("/products", params={"expandFields": "False","limit":1000,"offset": 0 })
 
     def create_product(self, body):
         return self.ws_post("/products", body)
 
-    def create_service(self, body):
-        return self.ws_post("/services", body)
+    def delete_product(self, uid):
+        return self.ws_delete("/products/%s" %(uid), params={"expandFields": "False"})
+
+    def get_components(self):
+        return self.ws_get("/components", params={"expandFields": "False","limit":1000,"offset": 0 })
 
     def create_component(self, body):
         return self.ws_post("/components", body, params={"expandFields": "False"})
 
     def delete_components(self, uid):
         return self.ws_delete("/components/%s" %(uid), params={"expandFields": "False"})
+
+    def create_service(self, body):
+        return self.ws_post("/services", body)
+
+    def get_services(self):
+        return self.ws_get("/services", params={"expandFields": "False","limit":1000,"offset": 0 })
+
+    def delete_service(self, uid):
+        return self.ws_delete("/services/%s" %(uid), params={"expandFields": "False"})
 
     def create_slio(self, body):
         return self.ws_post("/slt", body)
@@ -58,8 +67,8 @@ class BLAMOController(ApiHelper.ApiHelper):
 
 # These are non-API helper functions
 
-    def find_serviceID_by_name(self, name, services_list):
-        for service in services_list["services"]:
+    def find_serviceID_by_name(self, name, service_list):
+        for service in service_list["services"]:
             if service["name"] == name:
                 return service["_id"]
         return( None)
@@ -68,6 +77,12 @@ class BLAMOController(ApiHelper.ApiHelper):
         for component in component_list["components"]:
             if component["name"] == name:
                 return component["_id"]
+        return( None)
+
+    def find_productID_by_name(self, name, product_list):
+        for product in product_list["products"]:
+            if product["name"] == name:
+                return product["_id"]
         return( None)
 
     def find_slioID_by_name(self, name, slt_list):

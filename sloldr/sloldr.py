@@ -80,7 +80,13 @@ def process_metrics(av,metrics):
 
 
     if  av.unload: #only if you are unloading data
-        if "trackers" in metrics["slio"]:
+        # We delete SLO structure in the opposite order that they are created
+        # First delete the slts, then the components, then services, and then
+        # products. (Provided these groups are in the yaml file)
+
+        if not "silo" in metrics:
+            pass
+        elif "trackers" in metrics["slio"]:
             session = instance.connect("/slt?resourceType=component&limit=1000&offset=0",
                                        token=auth_token)
             slt_list = json.loads(session.text)
@@ -93,8 +99,9 @@ def process_metrics(av,metrics):
                 instance.delete_slio(slio_id)
 
         if "components" in metrics:
-
-            session = instance.connect("/components", token=auth_token)
+            session = instance.connect(
+                "/components?expandFields=False&limit=1000&ofset=0",
+                token=auth_token)
             resp = instance.get_components()
             components_list = json.loads(resp.text)
             for component in metrics["components"]:
@@ -104,7 +111,33 @@ def process_metrics(av,metrics):
                     "blameless delete_components(%s,%s) "
                     % (component["name"],cid))
                 instance.delete_components(cid)
-            return
+
+        if "services" in metrics:
+            session = instance.connect(
+                "/services?expandFields=False&limit=1000&ofset=0",
+                token=auth_token)
+            resp = instance.get_services()
+            service_list = json.loads(resp.text)
+            for service in metrics["services"]:
+                sid = instance.find_serviceID_by_name(service["name"],
+                                                        service_list)
+                Log.info(
+                    "blameless delete_service(%s,%s) "
+                    % (service["name"],sid))
+                instance.delete_service(sid)
+
+        if "products" in metrics:
+            session = instance.connect("/products", token=auth_token)
+            resp = instance.get_products()
+            product_list = json.loads(resp.text)
+            for product in metrics["products"]:
+                pid = instance.find_productID_by_name(product["name"],
+                                                        product_list)
+                Log.info(
+                    "blameless delete_product(%s,%s) "
+                    % (product["name"],pid))
+                instance.delete_product(pid)
+        return
     else:
         if "products" in metrics:
             session = instance.connect("/products", token=auth_token)
@@ -181,7 +214,7 @@ def process_metrics(av,metrics):
                                 "name": "Pingdom"
                             },
                             "indicatorMetric": {
-                                "backfillStartDate": "2018-02-01",
+                                "backfillStartDate": "2018-01-01",
                                 "ingestionDelay": 0,
                                 "scope": "Evernote Test",
                                 "unit": "none",
