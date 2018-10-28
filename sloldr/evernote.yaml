@@ -7,6 +7,10 @@
 #sloi:                # define Service Level Objective metrics bindings
 
 
+products:            # define projects
+  - {"description" :"Evernote Production Environment","name" : "evernote"}
+services:            # define services
+  - {"name" :"Evernote Business Production Service","serviceType" : "frontend", "description" :"Business shards"}
 components:           # Load a list of components
 
   - {"name" :"en-ns-1","componentType" : "shard", "serviceName" :"Evernote Business Production Service"}
