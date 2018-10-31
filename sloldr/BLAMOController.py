@@ -47,11 +47,20 @@ class BLAMOController(ApiHelper.ApiHelper):
     def delete_slio(self, uid):
         return self.ws_delete("/slt/%s" %(uid), params={"expandFields": "False"})
 
+    def get_slts(self):
+        return self.ws_get("/slt", params={"resourceType": "component",
+                                            "limit": 1000,
+                                            "offset": 0})
+
     def get_pingdom_checks(self):
         return self.ws_get("/pingdom/checks")
 
-    def connect(self, logincmd, token=None, client_id=None, secret=None, authurl=None,timeout=300):
+    def connect(self, logincmd=None, token=None, client_id=None,
+                secret=None, authurl=None,timeout=300):
         self.timeout = timeout
+        # If no explicit login command is supplied, use get_service_types
+        if not logincmd:
+            logincmd = "services/types?formatted=True"
         if token :
             self.headers["Authorization"] = "Bearer %s" % (token)
         self.urlprefix = "https://%s:%s%s" % (

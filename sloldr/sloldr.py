@@ -87,9 +87,9 @@ def process_metrics(av,metrics):
         if not "slio" in metrics:
             pass
         elif "trackers" in metrics["slio"]:
-            session = instance.connect("/slt?resourceType=component&limit=1000&offset=0",
-                                       token=auth_token)
-            slt_list = json.loads(session.text)
+            session = instance.connect(token=auth_token)
+            resp = instance.get_slts()
+            slt_list = json.loads(resp.text)
             for slt in metrics["slio"]["trackers"]:
                 slio_id = instance.find_slioID_by_name(slt["component_name"],
                                                         slt_list)
@@ -99,8 +99,7 @@ def process_metrics(av,metrics):
                 instance.delete_slio(slio_id)
 
         if "components" in metrics:
-            session = instance.connect(
-                "/services/types?formatted=True", token=auth_token)
+            session = instance.connect(token=auth_token)
             resp = instance.get_components()
             components_list = json.loads(resp.text)
             for component in metrics["components"]:
@@ -112,8 +111,7 @@ def process_metrics(av,metrics):
                 instance.delete_components(cid)
 
         if "services" in metrics:
-            session = instance.connect(
-                "/services/types?formatted=True", token=auth_token)
+            session = instance.connect(token=auth_token)
             resp = instance.get_services()
             service_list = json.loads(resp.text)
             for service in metrics["services"]:
@@ -125,8 +123,7 @@ def process_metrics(av,metrics):
                 instance.delete_service(sid)
 
         if "products" in metrics:
-            session = instance.connect(
-                "/services/types?formatted=True", token=auth_token)
+            session = instance.connect(token=auth_token)
             resp = instance.get_products()
             product_list = json.loads(resp.text)
             for product in metrics["products"]:
@@ -139,10 +136,9 @@ def process_metrics(av,metrics):
         return
     else:
         if "products" in metrics:
-            session = instance.connect(
-                "/products?expandFields=False&limit=1000&ofset=0",
-                token=auth_token)
-            products_list = json.loads(session.text)
+            session = instance.connect( token=auth_token)
+            resp = instance.get_products()
+            products_list = json.loads(resp.text)
             for product in metrics["products"]:
                 body = product
                 Log.info(
@@ -150,10 +146,9 @@ def process_metrics(av,metrics):
                     % (product["name"]))
                 instance.create_product(json.dumps(body))
         if "services" in metrics:
-            session = instance.connect(
-                "/services?expandFields=False&limit=1000&ofset=0",
-                token=auth_token)
-            service_list = json.loads(session.text)
+            session = instance.connect(token=auth_token)
+            resp = instance.get_services()
+            service_list = json.loads(resp.text)
             for service in metrics["services"]:
                 body = service
                 Log.info(
@@ -161,12 +156,12 @@ def process_metrics(av,metrics):
                     % (service["name"]))
                 instance.create_service(json.dumps(body))
         if "components" in metrics:
-            session = instance.connect(
-                "/services?expandFields=False&limit=1000&ofset=0",
-                token=auth_token)
-            services_list = json.loads(session.text)
+            session = instance.connect( token=auth_token)
+            resp = instance.get_services()
+            services_list = json.loads(resp.text)
             for component in metrics["components"]:
-                sid = instance.find_serviceID_by_name(component["serviceName"], services_list)
+                sid = instance.find_serviceID_by_name(component["serviceName"],
+                                                      services_list)
                 body = component
                 body["serviceId"] = sid
                 Log.info(
@@ -175,9 +170,7 @@ def process_metrics(av,metrics):
                             component["serviceName"]))
                 instance.create_component(json.dumps(body))
         if "slio" in metrics:
-            session = instance.connect(
-                "/components?expandFields=False&limit=1000&ofset=0",
-                token=auth_token)
+            session = instance.connect( token=auth_token)
             resp = instance.get_components()
             components_list = json.loads(resp.text)
             if ( "user" in metrics["slio"]
@@ -198,15 +191,17 @@ def process_metrics(av,metrics):
                 metrics_list = json.loads(session.text)
                 if "trackers" in metrics["slio"]:
                     for sig in metrics["slio"]["trackers"]:
-                        cid = instance.find_componentID_by_name(sig["component_name"],
-                                                                components_list)
+                        cid = instance.find_componentID_by_name(
+                            sig["component_name"],
+                            components_list)
                         if cid == None:
                             Log.warn(
                                 "blameless find_componentID_by_name(%s) returned 0, skipping"
                                 % (sig["component_name"]))
                             continue
-                        m_signal = pingdom.get_metric_by_name(sig["metric_name"],
-                                                              metrics_list["checks"])
+                        m_signal = pingdom.get_metric_by_name(
+                            sig["metric_name"],
+                            metrics_list["checks"])
                         if m_signal == None:
                             Log.warn(
                                 "pingdom get_metric_by_name(%s) returned 0, skipping"
